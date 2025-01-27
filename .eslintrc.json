@@ -1,0 +1,117 @@
+{
+  "env": {
+    "es2021": true,
+    "node": true,
+    "jasmine": true
+  },
+  "ignorePatterns": "**/build/*.ts",
+  "extends": [
+    "eslint:recommended",
+    "standard",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ],
+  "plugins": ["@typescript-eslint", "jasmine", "prettier"],
+  "rules": {
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        "packageDir": [".", "../../"],
+        "devDependencies": true
+      }
+    ],
+    "@typescript-eslint/await-thenable": "error",
+    "@typescript-eslint/no-restricted-imports": [
+      "error",
+      {
+        "patterns": ["../*", "./*"]
+      }
+    ],
+    "@typescript-eslint/switch-exhaustiveness-check": "error",
+    "@typescript-eslint/no-floating-promises": "error",
+    "no-void": "off",
+    "max-len": [
+      "error",
+      {
+        "code": 100,
+        "ignoreStrings": true
+      }
+    ],
+    "eqeqeq": ["error", "always"],
+    "radix": ["error", "as-needed"],
+    "@typescript-eslint/no-inferrable-types": [
+      "error",
+      {
+        "ignoreParameters": true,
+        "ignoreProperties": true
+      }
+    ],
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/explicit-function-return-type": [
+      "error",
+      {
+        "allowExpressions": true,
+        "allowTypedFunctionExpressions": true,
+        "allowHigherOrderFunctions": true,
+        "allowDirectConstAssertionInArrowFunctions": true,
+        "allowConciseArrowFunctionExpressionsStartingWithVoid": true
+      }
+    ],
+    "@typescript-eslint/explicit-module-boundary-types": "off",
+    "no-useless-constructor": "off",
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      { "varsIgnorePattern": "^_", "argsIgnorePattern": "^_" }
+    ],
+    "@typescript-eslint/no-useless-constructor": ["error"],
+    "@typescript-eslint/no-non-null-assertion": "error",
+    "no-restricted-imports": [
+      "error",
+      {
+        "paths": [
+          {
+            "name": "lodash",
+            "importNames": ["isNull"],
+            "message": "Please use isNull from @tribes/core instead."
+          },
+          {
+            "name": "ethers",
+            "importNames": ["logger"],
+            "message": "Please use logger from @tribes/core instead."
+          },
+          {
+            "name": "console",
+            "importNames": ["assert"],
+            "message": "Please use assert from 'assert' instead."
+          },
+          {
+            "name": "aws-sdk",
+            "importNames": ["DynamoDB"],
+            "message": "Please import AWS and use as AWS.DynamoDB instead."
+          },
+          {
+            "name": "@wagmi/core",
+            "importNames": ["getPublicClient"],
+            "message": "Do not use getPublicClient directly. Use basePublicClient instead."
+          },
+          {
+            "name": "@reown/appkit/networks",
+            "importNames": ["base", "mainnet"],
+            "message": "Do not use base directly. Use supported_chains instead."
+          }
+        ]
+      }
+    ],
+    "prettier/prettier": "error",
+    "no-async-promise-executor": "off",
+    "space-before-function-paren": "off",
+    "@typescript-eslint/no-unsafe-member-access": "error",
+    "@typescript-eslint/consistent-type-assertions": [
+      "error",
+      {
+        "assertionStyle": "never"
+      }
+    ]
+  }
+}

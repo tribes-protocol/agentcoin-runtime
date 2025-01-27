@@ -1,0 +1,8 @@
+dist
+.env
+node_modules
+dist/
+built
+data/
+db.sqlite
+.idea

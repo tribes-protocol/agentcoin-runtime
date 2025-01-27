@@ -1,0 +1,7 @@
+node_modules
+bun.lockb
+.next
+build
+dist
+.env
+data
