@@ -46,17 +46,13 @@ ENV PATH=$NVM_DIR/versions/node/v22.13.0/bin:$PATH
 # Install bun globally
 RUN npm i -g bun node-gyp rimraf tsup tsx dotenv-cli
 
+# clone the repository to /app
+RUN git clone https://github.com/tribes-protocol/agentcoin-runtime.git /app
+
 # Set the working directory
 WORKDIR /app
 
-# Copy package.json and other configuration files
-COPY package.json ./
-
 RUN bun install
-
-# Copy the rest of the application code
-COPY ./src ./src
-COPY tsconfig.json ./
 
 # Remove any .env files recursively under /app
 RUN find /app -name ".env" -type f -delete
