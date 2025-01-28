@@ -1,4 +1,4 @@
-import { ensureString } from '@/functions'
+import { ensureString, prepend0x } from '@/common/functions'
 import { EthAddressSchema } from '@memecoin/sdk'
 
 export const AGENTCOIN_FUN_API_URL = ensureString(
@@ -20,3 +20,7 @@ export const CODE_REPOSITORY = ensureString(
 )
 
 export const SQLITE_FILE = ensureString(process.env.SQLITE_FILE, 'SQLITE_FILE is not set')
+
+export const BOT_PRIVATE_KEY = prepend0x(
+  ensureString(process.env.BOT_PRIVATE_KEY, 'BOT_PRIVATE_KEY is not set')
+)

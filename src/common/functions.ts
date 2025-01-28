@@ -1,3 +1,11 @@
+export function prepend0x(value: string): `0x${string}` {
+  if (value.startsWith('0x')) {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return value as `0x${string}`
+  }
+  return `0x${value}`
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function isRequiredString(arg: any): arg is string {
   return typeof arg === 'string'

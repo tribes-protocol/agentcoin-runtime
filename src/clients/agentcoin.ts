@@ -1,6 +1,12 @@
-import { AGENTCOIN_FUN_API_URL, AGENTCOIN_CHANNEL, AGENTCOIN_SENDER } from '@/common/env'
-import { toJsonTree } from '@/functions'
-import { CreateMessage, HydratedMessageSchema } from '@/types'
+import { UserAPI } from '@/clients/user_api'
+import {
+  AGENTCOIN_CHANNEL,
+  AGENTCOIN_FUN_API_URL,
+  AGENTCOIN_SENDER,
+  BOT_PRIVATE_KEY
+} from '@/common/env'
+import { isNull, toJsonTree } from '@/common/functions'
+import { CreateMessage, HydratedMessageSchema } from '@/common/types'
 import { messageHandlerTemplate } from '@elizaos/client-direct'
 import {
   Client,
@@ -14,10 +20,15 @@ import {
   ModelClass,
   stringToUuid
 } from '@elizaos/core'
+import { EthAddress, EthAddressSchema } from '@memecoin/sdk'
 import { io, Socket } from 'socket.io-client'
+import { privateKeyToAddress } from 'viem/accounts'
 
 export class AgentcoinClient {
   private socket: Socket
+  private agentAddress: EthAddress
+  private userAPI: UserAPI
+  private jwtToken: Promise<string> | null = null
 
   constructor(private readonly runtime: IAgentRuntime) {
     elizaLogger.log('AgentcoinClient constructor')
@@ -31,6 +42,9 @@ export class AgentcoinClient {
       timeout: 20000,
       transports: ['websocket', 'polling']
     })
+
+    this.agentAddress = EthAddressSchema.parse(privateKeyToAddress(BOT_PRIVATE_KEY))
+    this.userAPI = new UserAPI()
   }
 
   public start(): void {
@@ -152,9 +166,15 @@ export class AgentcoinClient {
   }
 
   async sendMessage(message: CreateMessage): Promise<void> {
+    if (isNull(this.jwtToken)) {
+      this.jwtToken = this.userAPI.login(BOT_PRIVATE_KEY)
+    }
+
+    const cookie = await this.jwtToken
+
     const response = await fetch(`${AGENTCOIN_FUN_API_URL}/api/chat/send`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', Cookie: cookie },
       body: JSON.stringify(toJsonTree(message))
     })
     if (response.status !== 200) {
