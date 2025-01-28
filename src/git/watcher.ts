@@ -1,6 +1,6 @@
-import { CODE_REPOSITORY } from "@/common/env"
-import { execSync } from "child_process"
-import simpleGit, { SimpleGit } from "simple-git"
+import { CODE_REPOSITORY } from '@/common/env'
+import { execSync } from 'child_process'
+import simpleGit, { SimpleGit } from 'simple-git'
 
 const git: SimpleGit = simpleGit(CODE_REPOSITORY)
 
@@ -14,22 +14,20 @@ export const watchGitRepository = async (): Promise<void> => {
       const status = await git.status()
 
       if (status.behind > 0) {
-        console.log(
-          `Repository is ${status.behind} commits behind, pulling changes...`
-        )
+        console.log(`Repository is ${status.behind} commits behind, pulling changes...`)
 
         // Pull latest changes
         await git.pull()
 
-        console.log("Running build command...")
+        console.log('Running build command...')
         // Run build command
-        execSync("bun i && bun run build", { cwd: CODE_REPOSITORY })
+        execSync('bun i && bun run build', { cwd: CODE_REPOSITORY })
 
-        console.log("Build complete, restarting process...")
+        console.log('Build complete, restarting process...')
         process.exit(0)
       }
     } catch (error) {
-      console.error("Error in git watcher:", error)
+      console.error('Error in git watcher:', error)
     }
   }, 60000) // Run every 1 minute
 }
