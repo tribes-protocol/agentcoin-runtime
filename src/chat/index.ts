@@ -1,4 +1,4 @@
-import { AgentResponseSchema } from '@/types'
+import { AgentResponseSchema } from '@/common/types'
 import { settings } from '@elizaos/core'
 import readline from 'readline'
 

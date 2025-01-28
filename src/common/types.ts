@@ -1,4 +1,4 @@
-import { isRequiredString } from '@/functions'
+import { isRequiredString } from '@/common/functions'
 import { EthAddressSchema } from '@memecoin/sdk'
 import { z } from 'zod'
 
