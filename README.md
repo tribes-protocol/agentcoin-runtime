@@ -1,15 +1,8 @@
-# How to run agent manager
+# How to run agentcoin-runtime
 
 1. Duplicate the `.env.example` file, name it `.env` and fill in the values
 
-2. Build the image
-
-```bash
-cd agentcoin-runtime
-docker build -t agentcoin-runtime-image .
-```
-
-3. Run the manager
+2. Run it
 
 ```bash
 cd agentcoin-runtime
