@@ -31,5 +31,5 @@ export const watchGitRepository = async (): Promise<void> => {
     } catch (error) {
       console.error("Error in git watcher:", error)
     }
-  }, 60000) // Run every minute
+  }, 60000) // Run every 1 minute
 }
