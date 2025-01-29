@@ -1,10 +1,5 @@
 import { UserAPI } from '@/clients/user_api'
-import {
-  AGENTCOIN_CHANNEL,
-  AGENTCOIN_FUN_API_URL,
-  AGENTCOIN_SENDER,
-  BOT_PRIVATE_KEY
-} from '@/common/env'
+import { AGENTCOIN_CHANNEL, AGENTCOIN_FUN_API_URL, BOT_PRIVATE_KEY } from '@/common/env'
 import { isNull, toJsonTree } from '@/common/functions'
 import { CreateMessage, HydratedMessageSchema } from '@/common/types'
 import { messageHandlerTemplate } from '@elizaos/client-direct'
@@ -61,7 +56,7 @@ export class AgentcoinClient {
 
         const { message } = HydratedMessageSchema.array().parse(data)[0]
 
-        if (message.sender === AGENTCOIN_SENDER) {
+        if (message.sender === this.agentAddress) {
           return
         }
 
@@ -132,7 +127,7 @@ export class AgentcoinClient {
           await this.sendMessage({
             text: response.text,
             channel: message.channel,
-            sender: AGENTCOIN_SENDER,
+            sender: this.agentAddress,
             clientUuid: responseUuid
           })
         }
@@ -142,7 +137,7 @@ export class AgentcoinClient {
             await this.sendMessage({
               text: newMessage.text,
               channel: message.channel,
-              sender: AGENTCOIN_SENDER,
+              sender: this.agentAddress,
               clientUuid: responseUuid
             })
           } catch (e) {
