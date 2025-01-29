@@ -47,7 +47,7 @@ ENV PATH=$NVM_DIR/versions/node/v22.13.0/bin:$PATH
 RUN npm i -g bun node-gyp rimraf tsup tsx dotenv-cli
 
 # clone the repository to /app
-ARG CACHEBUST=5
+ARG CACHEBUST=6
 RUN git clone https://github.com/tribes-protocol/agentcoin-runtime.git /app
 
 # Set the working directory
