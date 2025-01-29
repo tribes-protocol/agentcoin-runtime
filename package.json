@@ -11,6 +11,7 @@
     "agent": "dotenv -e /data/.env -- tsx dist/index.js"
   },
   "dependencies": {
+    "@elizaos/client-farcaster": "0.1.7",
     "@elizaos/adapter-postgres": "0.1.7",
     "@elizaos/adapter-sqlite": "0.1.7",
     "@elizaos/client-auto": "0.1.7",
