@@ -6,8 +6,9 @@ export const AGENTCOIN_FUN_API_URL = ensureString(
   'AGENTCOIN_FUN_API_URL is not set'
 )
 
-export const AGENTCOIN_CHANNEL = EthAddressSchema.parse(
-  ensureString(process.env.AGENTCOIN_CHANNEL, 'AGENTCOIN_CHANNEL is not set')
+export const AGENTCOIN_CHANNEL = ensureString(
+  process.env.AGENTCOIN_CHANNEL,
+  'AGENTCOIN_CHANNEL is not set'
 )
 
 export const AGENTCOIN_SENDER = EthAddressSchema.parse('0xf4d70d2fd1de59ff34aa0350263ba742cb94b1c8')

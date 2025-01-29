@@ -11,10 +11,9 @@ export const AgentResponseSchema = z.object({
 export const MessageSchema = z.object({
   id: z.number(),
   clientUuid: z.string(),
-  channel: EthAddressSchema,
+  channel: z.string(),
   sender: EthAddressSchema,
   balance: z.union([z.bigint(), z.string().transform((arg) => BigInt(arg))]),
-  coinAddress: EthAddressSchema,
   text: z.string(),
   openGraphId: z.string().nullable(),
   createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
@@ -23,7 +22,6 @@ export const MessageSchema = z.object({
 export const CreateMessageSchema = MessageSchema.omit({
   id: true,
   createdAt: true,
-  coinAddress: true
 })
 
 export type CreateMessage = z.infer<typeof CreateMessageSchema>
