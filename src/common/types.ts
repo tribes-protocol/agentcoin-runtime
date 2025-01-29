@@ -58,7 +58,8 @@ export const MessageSchema = z.object({
 
 export const CreateMessageSchema = MessageSchema.omit({
   id: true,
-  createdAt: true
+  createdAt: true,
+  metadata: true
 })
 
 export type CreateMessage = z.infer<typeof CreateMessageSchema>

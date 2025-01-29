@@ -65,8 +65,6 @@ export class AgentcoinClient {
           return
         }
 
-        
-
         const roomId = stringToUuid(AGENTCOIN_CHANNEL)
         const userId = stringToUuid('temp-user') // FIXME: enable once fixed
 
@@ -135,8 +133,7 @@ export class AgentcoinClient {
             text: response.text,
             channel: message.channel,
             sender: AGENTCOIN_SENDER,
-            clientUuid: responseUuid,
-            balance: BigInt(0)
+            clientUuid: responseUuid
           })
         }
 
@@ -146,8 +143,7 @@ export class AgentcoinClient {
               text: newMessage.text,
               channel: message.channel,
               sender: AGENTCOIN_SENDER,
-              clientUuid: responseUuid,
-              balance: BigInt(0)
+              clientUuid: responseUuid
             })
           } catch (e) {
             console.log(`error sending`, e)
