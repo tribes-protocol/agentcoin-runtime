@@ -126,13 +126,14 @@ export class AgentcoinClient {
         await this.runtime.messageManager.createMemory(responseMessage)
 
         state = await this.runtime.updateRecentMessageState(state)
+        const responseUuid = crypto.randomUUID()
 
         if (response.action !== 'IGNORE') {
           await this.sendMessage({
             text: response.text,
-            channel: AGENTCOIN_CHANNEL,
+            channel: message.channel,
             sender: AGENTCOIN_SENDER,
-            clientUuid: this.runtime.agentId, // FIXME: enable once fixed
+            clientUuid: responseUuid,
             balance: BigInt(0)
           })
         }
@@ -141,9 +142,9 @@ export class AgentcoinClient {
           try {
             await this.sendMessage({
               text: newMessage.text,
-              channel: AGENTCOIN_CHANNEL,
+              channel: message.channel,
               sender: AGENTCOIN_SENDER,
-              clientUuid: this.runtime.agentId, // FIXME: enable once fixed
+              clientUuid: responseUuid,
               balance: BigInt(0)
             })
           } catch (e) {

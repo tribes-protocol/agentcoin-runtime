@@ -52,6 +52,8 @@ RUN git clone https://github.com/tribes-protocol/agentcoin-runtime.git /app
 # Set the working directory
 WORKDIR /app
 
+RUN git pull
+
 RUN bun install
 
 # Remove any .env files recursively under /app

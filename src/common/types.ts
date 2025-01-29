@@ -8,10 +8,34 @@ export const AgentResponseSchema = z.object({
   action: z.string().optional()
 })
 
+export enum ChatChannelKind {
+  COIN = 'coin',
+  DM = 'dm'
+}
+export const ChatChannelKindSchema = z.nativeEnum(ChatChannelKind)
+
+export const CoinChannelSchema = z.object({
+  kind: z.literal(ChatChannelKind.COIN),
+  chainId: z.coerce.number().int().positive(),
+  address: EthAddressSchema
+})
+
+export const DMChannelSchema = z
+  .object({
+    kind: z.literal(ChatChannelKind.DM),
+    firstAddress: EthAddressSchema,
+    secondAddress: EthAddressSchema
+  })
+  .refine((data) => BigInt(data.firstAddress) < BigInt(data.secondAddress), {
+    message: 'First address must be less than second address'
+  })
+
+export const ChatChannelSchema = z.union([CoinChannelSchema, DMChannelSchema])
+
 export const MessageSchema = z.object({
   id: z.number(),
   clientUuid: z.string(),
-  channel: z.string(),
+  channel: ChatChannelSchema,
   sender: EthAddressSchema,
   balance: z.union([z.bigint(), z.string().transform((arg) => BigInt(arg))]),
   text: z.string(),
@@ -21,7 +45,7 @@ export const MessageSchema = z.object({
 
 export const CreateMessageSchema = MessageSchema.omit({
   id: true,
-  createdAt: true,
+  createdAt: true
 })
 
 export type CreateMessage = z.infer<typeof CreateMessageSchema>
