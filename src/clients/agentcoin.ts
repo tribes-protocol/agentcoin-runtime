@@ -61,8 +61,7 @@ export class AgentcoinClient {
         }
 
         const roomId = stringToUuid(AGENTCOIN_CHANNEL)
-        const userId = stringToUuid('temp-user') // FIXME: enable once fixed
-
+        const userId = stringToUuid(message.sender.toString())
         const messageId = stringToUuid(Date.now().toString())
 
         await this.runtime.ensureConnection(roomId, userId)
