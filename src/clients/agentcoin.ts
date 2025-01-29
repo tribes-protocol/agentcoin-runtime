@@ -59,19 +59,24 @@ export class AgentcoinClient {
       try {
         elizaLogger.log('AgentcoinClient received message', { data })
 
+        elizaLogger.log('Parsing message data')
         const { message } = HydratedMessageSchema.array().parse(data)[0]
+        elizaLogger.log('Successfully parsed message', { message })
 
         if (message.sender === AGENTCOIN_SENDER) {
+          elizaLogger.log('Ignoring message from self')
           return
         }
 
+        elizaLogger.log('Generating IDs')
         const roomId = stringToUuid(AGENTCOIN_CHANNEL)
         const userId = stringToUuid('temp-user') // FIXME: enable once fixed
-
         const messageId = stringToUuid(Date.now().toString())
 
+        elizaLogger.log('Ensuring connection', { roomId, userId })
         await this.runtime.ensureConnection(roomId, userId)
 
+        elizaLogger.log('Creating content object')
         const content: Content = {
           text: message.text,
           attachments: [],
@@ -79,6 +84,7 @@ export class AgentcoinClient {
           inReplyTo: undefined
         }
 
+        elizaLogger.log('Creating user message')
         const userMessage = {
           content,
           userId,
@@ -86,6 +92,7 @@ export class AgentcoinClient {
           agentId: this.runtime.agentId
         }
 
+        elizaLogger.log('Creating memory object')
         const memory: Memory = {
           id: stringToUuid(messageId + '-' + userId),
           ...userMessage,
@@ -96,24 +103,31 @@ export class AgentcoinClient {
           createdAt: Date.now()
         }
 
+        elizaLogger.log('Adding embedding to memory')
         await this.runtime.messageManager.addEmbeddingToMemory(memory)
+
+        elizaLogger.log('Creating memory in runtime')
         await this.runtime.messageManager.createMemory(memory)
 
+        elizaLogger.log('Composing state')
         let state = await this.runtime.composeState(userMessage, {
           agentName: this.runtime.character.name
         })
 
+        elizaLogger.log('Creating context')
         const context = composeContext({
           state,
           template: messageHandlerTemplate
         })
 
+        elizaLogger.log('Generating message response')
         const response = await generateMessageResponse({
           runtime: this.runtime,
           context,
           modelClass: ModelClass.LARGE
         })
 
+        elizaLogger.log('Creating response memory')
         const responseMessage: Memory = {
           id: stringToUuid(messageId + '-' + this.runtime.agentId),
           ...userMessage,
@@ -123,12 +137,15 @@ export class AgentcoinClient {
           createdAt: Date.now()
         }
 
+        elizaLogger.log('Creating response memory in runtime')
         await this.runtime.messageManager.createMemory(responseMessage)
 
+        elizaLogger.log('Updating state')
         state = await this.runtime.updateRecentMessageState(state)
         const responseUuid = crypto.randomUUID()
 
         if (response.action !== 'IGNORE') {
+          elizaLogger.log('Sending response message')
           await this.sendMessage({
             text: response.text,
             channel: message.channel,
@@ -137,8 +154,10 @@ export class AgentcoinClient {
           })
         }
 
+        elizaLogger.log('Processing actions')
         await this.runtime.processActions(memory, [responseMessage], state, async (newMessage) => {
           try {
+            elizaLogger.log('Sending action message')
             await this.sendMessage({
               text: newMessage.text,
               channel: message.channel,
@@ -146,16 +165,18 @@ export class AgentcoinClient {
               clientUuid: responseUuid
             })
           } catch (e) {
-            console.log(`error sending`, e)
+            elizaLogger.error('Error sending action message', e)
             throw e
           }
 
           return [memory]
         })
 
+        elizaLogger.log('Evaluating memory')
         await this.runtime.evaluate(memory, state)
       } catch (error) {
         elizaLogger.error('Error processing message from agentcoin client', error)
+        console.log(`error processing message`, error, `${error}`)
       }
     })
   }
