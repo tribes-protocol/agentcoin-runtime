@@ -1,7 +1,5 @@
 import { AgentcoinClientInterface } from '@/clients/agentcoin'
-import { AutoClientInterface } from '@elizaos/client-auto'
-import DirectClientInterface, { DirectClient } from '@elizaos/client-direct'
-import { DiscordClientInterface } from '@elizaos/client-discord'
+import { FarcasterAgentClient } from '@elizaos/client-farcaster'
 import { TelegramClientInterface } from '@elizaos/client-telegram'
 import { TwitterClientInterface } from '@elizaos/client-twitter'
 import { AgentRuntime, Character, Client, Clients } from '@elizaos/core'
@@ -13,15 +11,6 @@ export async function initializeClients(
   const clients = []
   const clientTypes = character.clients?.map((str) => str.toLowerCase()) || []
 
-  if (clientTypes.includes(Clients.AUTO)) {
-    const autoClient = await AutoClientInterface.start(runtime)
-    if (autoClient) clients.push(autoClient)
-  }
-
-  if (clientTypes.includes(Clients.DISCORD)) {
-    clients.push(await DiscordClientInterface.start(runtime))
-  }
-
   if (clientTypes.includes(Clients.TELEGRAM)) {
     const telegramClient = await TelegramClientInterface.start(runtime)
     if (telegramClient) clients.push(telegramClient)
@@ -32,11 +21,9 @@ export async function initializeClients(
     clients.push(twitterClients)
   }
 
-  if (clientTypes.includes(Clients.DIRECT)) {
-    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    const directClient = (await DirectClientInterface.start(runtime)) as DirectClient
-    directClient.registerAgent(runtime)
-    if (directClient) clients.push(directClient)
+  if (clientTypes.includes(Clients.FARCASTER)) {
+    const farcasterClient = new FarcasterAgentClient(runtime)
+    if (farcasterClient) clients.push(farcasterClient)
   }
 
   // add the agentcoin client
