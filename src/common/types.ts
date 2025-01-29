@@ -8,6 +8,15 @@ export const AgentResponseSchema = z.object({
   action: z.string().optional()
 })
 
+export const BigintSchema = z.union([z.bigint(), z.string().transform((arg) => BigInt(arg))])
+
+export const AgentMessageMetadataSchema = z.object({
+  balance: z.coerce.bigint(),
+  coinAddress: EthAddressSchema
+})
+
+export type AgentMessageMetadata = z.infer<typeof AgentMessageMetadataSchema>
+
 export enum ChatChannelKind {
   COIN = 'coin',
   DM = 'dm'
@@ -32,14 +41,18 @@ export const DMChannelSchema = z
 
 export const ChatChannelSchema = z.union([CoinChannelSchema, DMChannelSchema])
 
+export type CoinChannel = z.infer<typeof CoinChannelSchema>
+export type DMChannel = z.infer<typeof DMChannelSchema>
+export type ChatChannel = z.infer<typeof ChatChannelSchema>
+
 export const MessageSchema = z.object({
   id: z.number(),
   clientUuid: z.string(),
   channel: ChatChannelSchema,
   sender: EthAddressSchema,
-  balance: z.union([z.bigint(), z.string().transform((arg) => BigInt(arg))]),
   text: z.string(),
   openGraphId: z.string().nullable(),
+  metadata: AgentMessageMetadataSchema,
   createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
 })
 
