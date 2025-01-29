@@ -67,5 +67,15 @@ export function getTokenForProvider(
       return undefined
     case ModelProviderName.LIVEPEER:
       return undefined
+    case ModelProviderName.MISTRAL:
+      return undefined
+    case ModelProviderName.NINETEEN_AI:
+      return undefined
+    case ModelProviderName.LETZAI:
+      return undefined
+    case ModelProviderName.DEEPSEEK:
+      return undefined
+    case ModelProviderName.INFERA:
+      return undefined
   }
 }
