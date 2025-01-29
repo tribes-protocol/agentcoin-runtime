@@ -57,13 +57,15 @@ export class AgentcoinClient {
 
     this.socket.on(AGENTCOIN_CHANNEL, async (data) => {
       try {
+        elizaLogger.log('AgentcoinClient received message', { data })
+
         const { message } = HydratedMessageSchema.array().parse(data)[0]
 
         if (message.sender === AGENTCOIN_SENDER) {
           return
         }
 
-        elizaLogger.log('AgentcoinClient received message', { message })
+        
 
         const roomId = stringToUuid(AGENTCOIN_CHANNEL)
         const userId = stringToUuid('temp-user') // FIXME: enable once fixed
