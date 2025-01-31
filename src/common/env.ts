@@ -22,3 +22,11 @@ export const SQLITE_FILE = ensureString(process.env.SQLITE_FILE, 'SQLITE_FILE is
 export const BOT_PRIVATE_KEY = prepend0x(
   ensureString(process.env.BOT_PRIVATE_KEY, 'BOT_PRIVATE_KEY is not set')
 )
+
+// Keys required by eliza plugins
+// LLM
+ensureString(process.env.OPENAI_API_KEY, 'OPENAI_API_KEY is not set')
+// Web search
+ensureString(process.env.TAVILY_API_KEY, 'TAVILY_API_KEY is not set')
+// Video generation
+ensureString(process.env.LUMA_API_KEY, 'LUMA_API_KEY is not set')

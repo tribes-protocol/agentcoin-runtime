@@ -21,7 +21,7 @@ export async function validateMemecoinConfig(runtime: IAgentRuntime): Promise<Me
       BASE_RPC_URL: runtime.getSetting('BASE_RPC_URL') || process.env.BASE_RPC_URL
     }
 
-    return memecoinEnvSchema.parse(config)
+    return config
   } catch (error) {
     if (error instanceof z.ZodError) {
       const errorMessages = error.errors
