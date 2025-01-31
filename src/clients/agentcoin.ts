@@ -132,9 +132,16 @@ export class AgentcoinClient {
         }
 
         await this.runtime.processActions(memory, [responseMessage], state, async (newMessage) => {
+          let text = newMessage.text
+          if (newMessage.attachments?.length > 0) {
+            for (const attachment of newMessage.attachments) {
+              text += `\n${attachment.url}\n`
+            }
+          }
+
           try {
             await this.sendMessage({
-              text: newMessage.text,
+              text,
               channel: message.channel,
               sender: this.agentAddress,
               clientUuid: responseUuid

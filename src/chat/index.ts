@@ -32,7 +32,7 @@ async function handleUserInput(input: string, agentId: string): Promise<void> {
     })
 
     const rawData = await response.json()
-    console.log({ rawData })
+    console.dir(rawData, { depth: null })
     const data = AgentResponseSchema.array().parse(rawData)
     data.forEach((message) => console.log(`${'Agent'}: ${message.text}`))
   } catch (error) {
