@@ -2,7 +2,6 @@ import { startChat } from '@/chat'
 import { initializeClients } from '@/clients'
 import { getTokenForProvider } from '@/common/config'
 import { initializeDatabase } from '@/common/db'
-import { watchGitRepository } from '@/git/watcher'
 import memecoinPlugin from '@/plugins/memecoin'
 import {
   Action,
@@ -18,11 +17,6 @@ import {
 import { bootstrapPlugin } from '@elizaos/plugin-bootstrap'
 import { createNodePlugin } from '@elizaos/plugin-node'
 import fs from 'fs'
-import path from 'path'
-import { fileURLToPath } from 'url'
-
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 export function createAgent(
   character: Character,
@@ -142,9 +136,6 @@ async function main(): Promise<void> {
   const character = await loadCharacter()
   const runtime = await startAgent(character)
   console.log('agent runtime started', runtime)
-
-  // starts watching for changes in the git repository, and restarts the agent if there are changes
-  void watchGitRepository()
 
   // console.log('restarting agent')
   // await restartAgent(runtime)

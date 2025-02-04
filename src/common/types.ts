@@ -88,3 +88,11 @@ export const HydratedMessageSchema = z.object({
   // user: UserSchema, // FIXME: enable once fixed
   openGraph: OpenGraphSchema.optional().nullable()
 })
+
+export const IpcResponseSchema = z.object({
+  requestId: z.string(),
+  data: z.unknown().optional(),
+  error: z.string().optional()
+})
+
+export type IpcResponse = z.infer<typeof IpcResponseSchema>
