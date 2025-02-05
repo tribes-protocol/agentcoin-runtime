@@ -8,7 +8,7 @@
     "lint": "eslint src/**/*.ts",
     "dev": "tsx src/index.ts",
     "start": "NODE_ENV=production tsx dist/index.js",
-    "agent": "dotenv --env-file $HOME/.agent-runtime/env.production -- tsx dist/index.js"
+    "agent": "dotenv --file $HOME/.agent-runtime/env.production -- tsx dist/index.js"
   },
   "dependencies": {
     "@elizaos/client-farcaster": "0.1.7",
