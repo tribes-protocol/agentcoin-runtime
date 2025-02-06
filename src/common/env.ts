@@ -12,11 +12,6 @@ export const AGENTCOIN_CHANNEL = ensureString(
 
 export const CHARACTER_FILE = ensureString(process.env.CHARACTER_FILE, 'CHARACTER_FILE is not set')
 
-export const CODE_REPOSITORY = ensureString(
-  process.env.CODE_REPOSITORY,
-  'CODE_REPOSITORY is not set'
-)
-
 export const SQLITE_FILE = ensureString(process.env.SQLITE_FILE, 'SQLITE_FILE is not set')
 
 export const BOT_PRIVATE_KEY = prepend0x(
