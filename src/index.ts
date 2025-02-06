@@ -2,7 +2,6 @@ import { startChat } from '@/chat'
 import { initializeClients } from '@/clients'
 import { getTokenForProvider } from '@/common/config'
 import { initializeDatabase } from '@/common/db'
-import { watchGitRepository } from '@/git/watcher'
 import memecoinPlugin from '@/plugins/memecoin'
 import {
   Action,
@@ -142,12 +141,6 @@ async function main(): Promise<void> {
   const character = await loadCharacter()
   const runtime = await startAgent(character)
   console.log('agent runtime started', runtime)
-
-  // starts watching for changes in the git repository, and restarts the agent if there are changes
-  void watchGitRepository()
-
-  // console.log('restarting agent')
-  // await restartAgent(runtime)
 }
 
 main().catch(console.error)
