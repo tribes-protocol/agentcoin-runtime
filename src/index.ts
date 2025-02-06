@@ -143,4 +143,10 @@ async function main(): Promise<void> {
   console.log('agent runtime started', runtime)
 }
 
+process.on('SIGTERM', () => {
+  console.log('Received SIGTERM signal')
+  // Perform cleanup if needed
+  process.exit(0)
+})
+
 main().catch(console.error)
