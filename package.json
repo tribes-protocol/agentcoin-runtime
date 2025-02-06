@@ -15,7 +15,7 @@
     "@elizaos/adapter-postgres": "0.1.7",
     "@elizaos/adapter-sqlite": "0.1.7",
     "@elizaos/client-auto": "0.1.7",
-    "@elizaos/client-direct": "0.1.7",
+    "@elizaos/client-direc": "0.1.7",
     "@elizaos/client-discord": "0.1.7",
     "@elizaos/client-telegram": "0.1.7",
     "@elizaos/client-twitter": "0.1.7",
