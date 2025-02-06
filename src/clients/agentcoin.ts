@@ -124,7 +124,7 @@ export class AgentcoinClient {
 
         if (response.action !== 'IGNORE') {
           await this.sendMessage({
-            text: 'BLAH =>' + response.text,
+            text: response.text,
             channel: message.channel,
             sender: this.agentAddress,
             clientUuid: responseUuid
