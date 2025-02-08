@@ -140,7 +140,7 @@ async function loadCharacter(): Promise<Character> {
 async function main(): Promise<void> {
   const character = await loadCharacter()
   const runtime = await startAgent(character)
-  console.log('agent runtime started', runtime)
+  console.log('agent runtime started', runtime.agentId, runtime.character.name)
 }
 
 process.on('SIGTERM', () => {
