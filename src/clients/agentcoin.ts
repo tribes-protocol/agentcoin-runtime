@@ -26,7 +26,7 @@ export class AgentcoinClient {
   private jwtToken: Promise<string> | null = null
 
   constructor(private readonly runtime: IAgentRuntime) {
-    elizaLogger.log('AgentcoinClient constructor')
+    elizaLogger.log('Connecting to Agentcoin API', AGENTCOIN_FUN_API_URL)
     this.socket = io(AGENTCOIN_FUN_API_URL, {
       reconnection: true,
       rejectUnauthorized: false,
