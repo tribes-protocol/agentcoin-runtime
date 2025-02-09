@@ -35,6 +35,7 @@ export class AgentcoinClient {
       reconnectionAttempts: 5,
       withCredentials: true,
       timeout: 20000,
+      autoConnect: true,
       transports: ['websocket', 'polling']
     })
 
