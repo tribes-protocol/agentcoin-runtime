@@ -15,7 +15,10 @@ import {
   type Character
 } from '@elizaos/core'
 import { bootstrapPlugin } from '@elizaos/plugin-bootstrap'
+import { imageGenerationPlugin } from '@elizaos/plugin-image-generation'
 import { createNodePlugin } from '@elizaos/plugin-node'
+import { videoGenerationPlugin } from '@elizaos/plugin-video-generation'
+import { webSearchPlugin } from '@elizaos/plugin-web-search'
 import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
@@ -39,7 +42,14 @@ export function createAgent(
     modelProvider: character.modelProvider,
     evaluators: [],
     character,
-    plugins: [bootstrapPlugin, nodePlugin, memecoinPlugin],
+    plugins: [
+      bootstrapPlugin,
+      nodePlugin,
+      memecoinPlugin,
+      imageGenerationPlugin,
+      videoGenerationPlugin,
+      webSearchPlugin
+    ],
     providers: [],
     actions: [],
     services: [],
