@@ -5,4 +5,3 @@ build
 dist
 .env
 data
-pnpm-lock.yaml
