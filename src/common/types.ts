@@ -1,6 +1,31 @@
 import { isRequiredString } from '@/common/functions'
-import { EthAddressSchema } from '@memecoin/sdk'
+import { isAddress } from 'viem'
 import { z } from 'zod'
+
+export const HexStringSchema = z.custom<`0x${string}`>(
+  (val): val is `0x${string}` => typeof val === 'string' && /^0x[a-fA-F0-9]+$/.test(val)
+)
+
+export type HexString = z.infer<typeof HexStringSchema>
+
+export const EthAddressSchema = z
+  .custom<`0x${string}`>((val): val is `0x${string}` => typeof val === 'string' && isAddress(val))
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  .transform((arg) => arg.toLowerCase() as `0x${string}`)
+
+export type EthAddress = z.infer<typeof EthAddressSchema>
+
+export const AgentIdentitySchema = z
+  .string()
+  .regex(/^agent:\d+$/, 'Must be in format agent:{numericId}')
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  .transform((val) => val.toLowerCase() as `agent:${number}`)
+
+export type AgentIdentity = z.infer<typeof AgentIdentitySchema>
+
+export const IdentitySchema = z.union([EthAddressSchema, AgentIdentitySchema])
+
+export type Identity = z.infer<typeof IdentitySchema>
 
 export const AgentResponseSchema = z.object({
   user: z.string().optional(),
@@ -49,7 +74,7 @@ export const MessageSchema = z.object({
   id: z.number(),
   clientUuid: z.string(),
   channel: ChatChannelSchema,
-  sender: EthAddressSchema,
+  sender: IdentitySchema,
   text: z.string(),
   openGraphId: z.string().nullable(),
   metadata: AgentMessageMetadataSchema,
@@ -66,7 +91,7 @@ export type CreateMessage = z.infer<typeof CreateMessageSchema>
 
 export const UserSchema = z.object({
   id: z.number(),
-  address: EthAddressSchema,
+  identity: IdentitySchema,
   username: z.string(),
   bio: z.string().nullable(),
   image: z.string().nullable(),

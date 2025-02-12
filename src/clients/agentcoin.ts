@@ -1,6 +1,8 @@
+import { SentinelClient } from '@/clients/sentinel'
 import { UserAPI } from '@/clients/user_api'
-import { AGENTCOIN_CHANNEL, AGENTCOIN_FUN_API_URL, BOT_PRIVATE_KEY } from '@/common/env'
-import { isNull, toJsonTree } from '@/common/functions'
+import { AGENT_SENTINEL_DIR } from '@/common/constants'
+import { AGENTCOIN_CHANNEL, AGENTCOIN_FUN_API_URL } from '@/common/env'
+import { getAgentIdentity, isNull, toJsonTree } from '@/common/functions'
 import { CreateMessage, HydratedMessageSchema } from '@/common/types'
 import { messageHandlerTemplate } from '@elizaos/client-direct'
 import {
@@ -15,17 +17,24 @@ import {
   ModelClass,
   stringToUuid
 } from '@elizaos/core'
-import { EthAddress, EthAddressSchema } from '@memecoin/sdk'
+import os from 'os'
+import path from 'path'
 import { io, Socket } from 'socket.io-client'
-import { privateKeyToAddress } from 'viem/accounts'
 
 export class AgentcoinClient {
   private socket: Socket
-  private agentAddress: EthAddress
   private userAPI: UserAPI
   private jwtToken: Promise<string> | null = null
+  private sentinelClient: SentinelClient
+  private agentId: Promise<number>
 
   constructor(private readonly runtime: IAgentRuntime) {
+    this.sentinelClient = new SentinelClient(
+      path.join(os.homedir(), AGENT_SENTINEL_DIR, 'sentinel.sock')
+    )
+
+    this.agentId = this.sentinelClient.getAgentId()
+
     elizaLogger.log('Connecting to Agentcoin API', AGENTCOIN_FUN_API_URL)
     this.socket = io(AGENTCOIN_FUN_API_URL, {
       reconnection: true,
@@ -39,8 +48,7 @@ export class AgentcoinClient {
       transports: ['websocket', 'polling']
     })
 
-    this.agentAddress = EthAddressSchema.parse(privateKeyToAddress(BOT_PRIVATE_KEY))
-    this.userAPI = new UserAPI()
+    this.userAPI = new UserAPI(this.sentinelClient, this.agentId)
   }
 
   public start(): void {
@@ -53,11 +61,14 @@ export class AgentcoinClient {
 
     this.socket.on(AGENTCOIN_CHANNEL, async (data) => {
       try {
-        elizaLogger.log('AgentcoinClient received message', { data })
+        elizaLogger.log('AgentcoinClient received message ---------->', { data })
+
+        const agentId = await this.agentId
+        const agentIdentity = getAgentIdentity(agentId)
 
         const { message } = HydratedMessageSchema.array().parse(data)[0]
 
-        if (message.sender === this.agentAddress) {
+        if (message.sender === agentIdentity) {
           return
         }
 
@@ -127,7 +138,7 @@ export class AgentcoinClient {
           await this.sendMessage({
             text: response.text,
             channel: message.channel,
-            sender: this.agentAddress,
+            sender: agentIdentity,
             clientUuid: responseUuid
           })
         }
@@ -137,7 +148,7 @@ export class AgentcoinClient {
             await this.sendMessage({
               text: newMessage.text,
               channel: message.channel,
-              sender: this.agentAddress,
+              sender: agentIdentity,
               clientUuid: responseUuid
             })
           } catch (e) {
@@ -162,7 +173,7 @@ export class AgentcoinClient {
 
   async sendMessage(message: CreateMessage): Promise<void> {
     if (isNull(this.jwtToken)) {
-      this.jwtToken = this.userAPI.login(BOT_PRIVATE_KEY)
+      this.jwtToken = this.userAPI.login()
     }
 
     const cookie = await this.jwtToken

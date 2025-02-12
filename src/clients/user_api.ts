@@ -1,7 +1,7 @@
+import { SentinelClient } from '@/clients/sentinel'
 import { AGENTCOIN_FUN_API_URL } from '@/common/env'
-import { isNull } from '@/common/functions'
-import { EthAddress } from '@memecoin/sdk'
-import { privateKeyToAccount } from 'viem/accounts'
+import { getAgentIdentity, isNull } from '@/common/functions'
+import { Identity } from '@/common/types'
 import { z } from 'zod'
 
 export const LoginMessageSchema = z.object({
@@ -9,24 +9,30 @@ export const LoginMessageSchema = z.object({
 })
 
 export class UserAPI {
-  public async login(privateKey: `0x${string}`): Promise<string> {
-    const account = privateKeyToAccount(privateKey)
-    const message = await this.loginMessageToSign(account.address)
-    const signature = await account.signMessage({ message })
+  constructor(
+    private readonly sentinelClient: SentinelClient,
+    private readonly agentId: Promise<number>
+  ) {}
+
+  public async login(): Promise<string> {
+    const agentId = await this.agentId
+    const agentIdentity = getAgentIdentity(agentId)
+    const message = await this.loginMessageToSign(agentIdentity)
+    const signature = await this.sentinelClient.signWithPubKey(message)
 
     if (isNull(signature)) {
       throw new Error('Failed to sign message')
     }
 
-    return this.generateJWT({ address: account.address, message, signature })
+    return this.generateJWT({ identity: agentIdentity, message, signature })
   }
 
   private async generateJWT({
-    address,
+    identity,
     message,
     signature
   }: {
-    address: EthAddress
+    identity: Identity
     message: string
     signature: string
   }): Promise<string> {
@@ -36,7 +42,7 @@ export class UserAPI {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        address,
+        identity,
         message,
         signature
       })
@@ -54,11 +60,11 @@ export class UserAPI {
     return setCookie
   }
 
-  private async loginMessageToSign(address: EthAddress): Promise<string> {
+  private async loginMessageToSign(identity: Identity): Promise<string> {
     const response = await fetch(`${AGENTCOIN_FUN_API_URL}/api/users/login-message`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ address })
+      body: JSON.stringify({ identity })
     })
     const data = await response.json()
     const parsed = LoginMessageSchema.parse(data)
