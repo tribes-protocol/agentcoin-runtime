@@ -84,7 +84,8 @@ export class AgentcoinClient {
       throw new Error('Failed to send message')
     }
 
-    const hydratedMessage = HydratedMessageSchema.parse(message)
+    const responseData = await response.json()
+    const hydratedMessage = HydratedMessageSchema.parse(responseData)
 
     return hydratedMessage
   }
