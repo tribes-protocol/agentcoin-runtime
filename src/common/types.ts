@@ -88,3 +88,5 @@ export const HydratedMessageSchema = z.object({
   // user: UserSchema, // FIXME: enable once fixed
   openGraph: OpenGraphSchema.optional().nullable()
 })
+
+export type HydratedMessage = z.infer<typeof HydratedMessageSchema>

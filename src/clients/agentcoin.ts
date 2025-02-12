@@ -1,23 +1,26 @@
 import { UserAPI } from '@/clients/user_api'
 import { AGENTCOIN_CHANNEL, AGENTCOIN_FUN_API_URL, BOT_PRIVATE_KEY } from '@/common/env'
 import { isNull, toJsonTree } from '@/common/functions'
-import { CreateMessage, HydratedMessageSchema } from '@/common/types'
+import { CreateMessage, HydratedMessage, HydratedMessageSchema } from '@/common/types'
 import { messageHandlerTemplate } from '@elizaos/client-direct'
 import {
   Client,
   composeContext,
-  Content,
   elizaLogger,
   generateMessageResponse,
-  getEmbeddingZeroVector,
   IAgentRuntime,
   Memory,
   ModelClass,
-  stringToUuid
+  stringToUuid,
+  UUID
 } from '@elizaos/core'
 import { EthAddress, EthAddressSchema } from '@memecoin/sdk'
 import { io, Socket } from 'socket.io-client'
 import { privateKeyToAddress } from 'viem/accounts'
+
+function messageIdToUuid(messageId: number): UUID {
+  return stringToUuid('agentcoin:' + messageId.toString())
+}
 
 export class AgentcoinClient {
   private socket: Socket
@@ -53,102 +56,7 @@ export class AgentcoinClient {
 
     this.socket.on(AGENTCOIN_CHANNEL, async (data) => {
       try {
-        elizaLogger.log('AgentcoinClient received message', { data })
-
-        const { message } = HydratedMessageSchema.array().parse(data)[0]
-
-        if (message.sender === this.agentAddress) {
-          return
-        }
-
-        const roomId = stringToUuid(AGENTCOIN_CHANNEL)
-        const userId = stringToUuid(message.sender.toString())
-        const messageId = stringToUuid(Date.now().toString())
-
-        await this.runtime.ensureConnection(roomId, userId)
-
-        const content: Content = {
-          text: message.text,
-          attachments: [],
-          source: 'agentcoin',
-          inReplyTo: undefined
-        }
-
-        const userMessage = {
-          content,
-          userId,
-          roomId,
-          agentId: this.runtime.agentId
-        }
-
-        const memory: Memory = {
-          id: stringToUuid(messageId + '-' + userId),
-          ...userMessage,
-          agentId: this.runtime.agentId,
-          userId,
-          roomId,
-          content,
-          createdAt: Date.now()
-        }
-
-        await this.runtime.messageManager.addEmbeddingToMemory(memory)
-        await this.runtime.messageManager.createMemory(memory)
-
-        let state = await this.runtime.composeState(userMessage, {
-          agentName: this.runtime.character.name
-        })
-
-        const context = composeContext({
-          state,
-          template: messageHandlerTemplate
-        })
-
-        const response = await generateMessageResponse({
-          runtime: this.runtime,
-          context,
-          modelClass: ModelClass.LARGE
-        })
-
-        const responseMessage: Memory = {
-          id: stringToUuid(messageId + '-' + this.runtime.agentId),
-          ...userMessage,
-          userId: this.runtime.agentId,
-          content: response,
-          embedding: getEmbeddingZeroVector(),
-          createdAt: Date.now()
-        }
-
-        await this.runtime.messageManager.createMemory(responseMessage)
-
-        state = await this.runtime.updateRecentMessageState(state)
-        const responseUuid = crypto.randomUUID()
-
-        if (response.action !== 'IGNORE') {
-          await this.sendMessage({
-            text: response.text,
-            channel: message.channel,
-            sender: this.agentAddress,
-            clientUuid: responseUuid
-          })
-        }
-
-        await this.runtime.processActions(memory, [responseMessage], state, async (newMessage) => {
-          try {
-            await this.sendMessage({
-              text: newMessage.text,
-              channel: message.channel,
-              sender: this.agentAddress,
-              clientUuid: responseUuid
-            })
-          } catch (e) {
-            elizaLogger.error(`error sending`, e)
-            throw e
-          }
-
-          return [memory]
-        })
-
-        await this.runtime.evaluate(memory, state)
+        await this.processMessage(data)
       } catch (error) {
         elizaLogger.error('Error processing message from agentcoin client', error)
         console.log(`error processing message`, error, `${error}`)
@@ -160,7 +68,7 @@ export class AgentcoinClient {
     this.socket.disconnect()
   }
 
-  async sendMessage(message: CreateMessage): Promise<void> {
+  async sendMessage(message: CreateMessage): Promise<HydratedMessage> {
     if (isNull(this.jwtToken)) {
       this.jwtToken = this.userAPI.login(BOT_PRIVATE_KEY)
     }
@@ -175,6 +83,110 @@ export class AgentcoinClient {
     if (response.status !== 200) {
       throw new Error('Failed to send message')
     }
+
+    const hydratedMessage = HydratedMessageSchema.parse(message)
+
+    return hydratedMessage
+  }
+
+  private async processMessage(data: unknown): Promise<void> {
+    elizaLogger.log('AgentcoinClient received message', { data })
+
+    const { message } = HydratedMessageSchema.array().parse(data)[0]
+
+    if (message.sender === this.agentAddress) {
+      return
+    }
+
+    const roomId = stringToUuid(AGENTCOIN_CHANNEL)
+    const userId = stringToUuid(message.sender.toString())
+    const messageId = messageIdToUuid(message.id)
+
+    await this.runtime.ensureConnection(roomId, userId)
+
+    const memory: Memory = {
+      id: messageId,
+      agentId: this.runtime.agentId,
+      userId,
+      roomId,
+      content: {
+        text: message.text,
+        attachments: [],
+        source: 'agentcoin',
+        inReplyTo: undefined,
+        agentCoinMessageId: message.id
+      },
+      createdAt: Date.now(),
+      unique: true
+    }
+
+    await this.runtime.messageManager.addEmbeddingToMemory(memory)
+    await this.runtime.messageManager.createMemory(memory)
+
+    let state = await this.runtime.composeState(memory, {
+      agentName: this.runtime.character.name
+    })
+
+    const context = composeContext({
+      state,
+      template: messageHandlerTemplate
+    })
+
+    const response = await generateMessageResponse({
+      runtime: this.runtime,
+      context,
+      modelClass: ModelClass.LARGE
+    })
+
+    const messageResponses: Memory[] = []
+    if (response.action !== 'IGNORE') {
+      const agentcoinResponse = await this.sendMessage({
+        text: response.text,
+        channel: message.channel,
+        sender: this.agentAddress,
+        clientUuid: crypto.randomUUID()
+      })
+
+      const responseMessage: Memory = {
+        id: stringToUuid(messageId + '-' + this.runtime.agentId),
+        agentId: this.runtime.agentId,
+        userId: this.runtime.agentId,
+        roomId,
+        content: {
+          ...response,
+          source: 'agentcoin',
+          inReplyTo: messageId,
+          agentCoinMessageId: agentcoinResponse.message.id
+        },
+        createdAt: Date.now(),
+        unique: true
+      }
+
+      await this.runtime.messageManager.addEmbeddingToMemory(responseMessage)
+      await this.runtime.messageManager.createMemory(responseMessage)
+
+      messageResponses.push(responseMessage)
+
+      state = await this.runtime.updateRecentMessageState(state)
+    }
+
+    await this.runtime.processActions(memory, messageResponses, state, async (newMessage) => {
+      try {
+        await this.sendMessage({
+          text: newMessage.text,
+          channel: message.channel,
+          sender: this.agentAddress,
+          clientUuid: crypto.randomUUID()
+        })
+      } catch (e) {
+        elizaLogger.error(`error sending`, e)
+        throw e
+      }
+
+      return [memory]
+    })
+
+    await this.runtime.evaluate(memory, state)
   }
 }
 
