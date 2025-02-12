@@ -170,7 +170,7 @@ export class AgentcoinClient {
 
       state = await this.runtime.updateRecentMessageState(state)
     } else {
-      elizaLogger.error('Agentcoin response is IGNORE', response)
+      elizaLogger.log('Agentcoin response is IGNORE', response)
     }
 
     await this.runtime.processActions(memory, messageResponses, state, async (newMessage) => {
