@@ -46,6 +46,7 @@ export class SentinelClient {
 
   async signTxnWithWallet(walletId: number, transaction: Transaction): Promise<string> {
     const response = await this.client.post('/sign-txn-with-wallet', { walletId, transaction })
+    console.log('got response', response.data)
     return SignedTransactionSchema.parse(response.data).signedTxn
   }
 

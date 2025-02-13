@@ -117,18 +117,6 @@ export const tipForJokeAction: Action = {
       const walletId = 8
       const walletAddress = '0xf83849e99fbdfd1ddd7b8c524ddd64e168059cdc'
 
-      const balance = await publicClient.readContract({
-        address: TOKEN_ADDRESS,
-        abi: erc20Abi,
-        functionName: 'balanceOf',
-        args: [walletAddress]
-      })
-
-      console.log('balance', balance)
-      console.log('recipientAddress', recipientAddress)
-      console.log('walletAddress', walletAddress)
-      console.log('tokenAddress', TOKEN_ADDRESS)
-
       const { request } = await publicClient.simulateContract({
         address: TOKEN_ADDRESS,
         account: walletAddress,
@@ -136,6 +124,8 @@ export const tipForJokeAction: Action = {
         functionName: 'transfer',
         args: [recipientAddress, parseEther('100')]
       })
+
+      console.log({ request })
 
       const transaction = {
         to: request.to,
@@ -146,10 +136,15 @@ export const tipForJokeAction: Action = {
         chainId: request.chainId
       }
 
+      console.log({ transaction })
+
       const signedTxn = await sentinelClient.signTxnWithWallet(walletId, transaction)
+      console.log({ signedTxn })
       const hash = await publicClient.sendRawTransaction({
         serializedTransaction: prepend0x(signedTxn)
       })
+
+      console.log({ hash })
 
       if (callback) {
         callback({
@@ -162,7 +157,7 @@ export const tipForJokeAction: Action = {
 
       return true
     } catch (error) {
-      elizaLogger.error('Error processing tip:', error)
+      elizaLogger.error('Error processing tip:', JSON.stringify(error, null, 2))
       if (callback) {
         callback({
           text: 'Sorry, there was an error processing the tip.',
