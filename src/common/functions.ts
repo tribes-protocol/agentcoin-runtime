@@ -70,7 +70,3 @@ export function ensureString(value: any, message: string | undefined = undefined
   }
   return value
 }
-
-export function getAgentIdentity(agentId: number): `agent:${number}` {
-  return `agent:${agentId}`
-}

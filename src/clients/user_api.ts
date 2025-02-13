@@ -1,6 +1,6 @@
-import { SentinelClient } from '@/clients/sentinel'
 import { AGENTCOIN_FUN_API_URL } from '@/common/env'
 import { isNull } from '@/common/functions'
+import { identityService } from '@/common/services'
 import { Identity } from '@/common/types'
 import { z } from 'zod'
 
@@ -9,21 +9,17 @@ export const LoginMessageSchema = z.object({
 })
 
 export class UserAPI {
-  constructor(
-    private readonly sentinelClient: SentinelClient,
-    private readonly agentId: Promise<number>
-  ) {}
+  constructor(private readonly agentId: number) {}
 
   public async login(): Promise<string> {
-    const agentId = await this.agentId
-    const message = await this.loginMessageToSign({ id: agentId })
-    const signature = await this.sentinelClient.signWithPubKey(message)
+    const message = await this.loginMessageToSign({ id: this.agentId })
+    const signature = await identityService.sign(this.agentId, message)
 
     if (isNull(signature)) {
       throw new Error('Failed to sign message')
     }
 
-    return this.generateJWT({ identity: { id: agentId }, message, signature })
+    return this.generateJWT({ identity: { id: this.agentId }, message, signature })
   }
 
   private async generateJWT({

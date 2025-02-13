@@ -1,8 +1,7 @@
-import { SentinelClient } from '@/clients/sentinel'
 import { UserAPI } from '@/clients/user_api'
-import { AGENT_SENTINEL_DIR } from '@/common/constants'
 import { AGENTCOIN_CHANNEL, AGENTCOIN_FUN_API_URL } from '@/common/env'
-import { isNull, toJsonTree } from '@/common/functions'
+import { toJsonTree } from '@/common/functions'
+import { identityService } from '@/common/services'
 import {
   AgentIdentitySchema,
   CreateMessage,
@@ -21,8 +20,6 @@ import {
   stringToUuid,
   UUID
 } from '@elizaos/core'
-import os from 'os'
-import path from 'path'
 import { io, Socket } from 'socket.io-client'
 
 function messageIdToUuid(messageId: number): UUID {
@@ -33,16 +30,12 @@ export class AgentcoinClient {
   private socket: Socket
   private userAPI: UserAPI
   private jwtToken: Promise<string> | null = null
-  private sentinelClient: SentinelClient
-  private agentId: Promise<number>
 
-  constructor(private readonly runtime: IAgentRuntime) {
-    this.sentinelClient = new SentinelClient(
-      path.join(os.homedir(), AGENT_SENTINEL_DIR, 'sentinel.sock')
-    )
-
-    this.agentId = this.sentinelClient.getAgentId()
-
+  constructor(
+    private readonly runtime: IAgentRuntime,
+    private readonly agentId: number,
+    private readonly cookie: string
+  ) {
     elizaLogger.log('Connecting to Agentcoin API', AGENTCOIN_FUN_API_URL)
     this.socket = io(AGENTCOIN_FUN_API_URL, {
       reconnection: true,
@@ -56,7 +49,7 @@ export class AgentcoinClient {
       transports: ['websocket', 'polling']
     })
 
-    this.userAPI = new UserAPI(this.sentinelClient, this.agentId)
+    this.userAPI = new UserAPI(this.agentId)
   }
 
   public start(): void {
@@ -82,15 +75,9 @@ export class AgentcoinClient {
   }
 
   async sendMessage(message: CreateMessage): Promise<HydratedMessage> {
-    if (isNull(this.jwtToken)) {
-      this.jwtToken = this.userAPI.login()
-    }
-
-    const cookie = await this.jwtToken
-
     const response = await fetch(`${AGENTCOIN_FUN_API_URL}/api/chat/send`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: cookie },
+      headers: { 'Content-Type': 'application/json', Cookie: this.cookie },
       body: JSON.stringify(toJsonTree(message))
     })
     if (response.status !== 200) {
@@ -106,12 +93,10 @@ export class AgentcoinClient {
   private async processMessage(data: unknown): Promise<void> {
     elizaLogger.log('AgentcoinClient received message', { data })
 
-    const agentId = await this.agentId
-
     const { message } = HydratedMessageSchema.array().parse(data)[0]
 
     if (AgentIdentitySchema.safeParse(message.sender).success) {
-      if (AgentIdentitySchema.parse(message.sender).id === agentId) {
+      if (AgentIdentitySchema.parse(message.sender).id === this.agentId) {
         return
       }
     }
@@ -161,7 +146,7 @@ export class AgentcoinClient {
       const agentcoinResponse = await this.sendMessage({
         text: response.text,
         channel: message.channel,
-        sender: { id: agentId },
+        sender: { id: this.agentId },
         clientUuid: crypto.randomUUID()
       })
 
@@ -195,7 +180,7 @@ export class AgentcoinClient {
         await this.sendMessage({
           text: newMessage.text,
           channel: message.channel,
-          sender: { id: agentId },
+          sender: { id: this.agentId },
           clientUuid: crypto.randomUUID()
         })
       } catch (e) {
@@ -213,7 +198,12 @@ export class AgentcoinClient {
 export const AgentcoinClientInterface: Client = {
   start: async (_runtime: IAgentRuntime) => {
     elizaLogger.log('AgentcoinClientInterface start')
-    const client = new AgentcoinClient(_runtime)
+    const agentId = await identityService.getAgentId()
+
+    const userAPI = new UserAPI(agentId)
+    const cookie = await userAPI.login()
+
+    const client = new AgentcoinClient(_runtime, agentId, cookie)
     client.start()
     return client
   },
