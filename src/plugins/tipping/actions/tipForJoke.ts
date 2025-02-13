@@ -1,6 +1,6 @@
 import { sentinelClient } from '@/clients'
 import { BASE_RPC_URL, TOKEN_ADDRESS } from '@/common/env'
-import { prepend0x } from '@/common/functions'
+import { isNull, prepend0x } from '@/common/functions'
 import {
   Action,
   composeContext,
@@ -109,20 +109,33 @@ export const tipForJokeAction: Action = {
 
       // FIXME: how to get the recipient address?
       const recipientAddress = EthAddressSchema.parse('0xf4D70D2fd1DE59ff34aA0350263ba742cb94b1c8')
-      if (!recipientAddress) {
+      if (isNull(recipientAddress)) {
         throw new Error('No recipient address found')
       }
-
-      const { request } = await publicClient.simulateContract({
-        address: TOKEN_ADDRESS,
-        abi: erc20Abi,
-        functionName: 'transfer',
-        args: [recipientAddress, parseEther('100')]
-      })
 
       // FIXME: how to get the wallet info?
       const walletId = 8
       const walletAddress = '0xf83849e99fbdfd1ddd7b8c524ddd64e168059cdc'
+
+      const balance = await publicClient.readContract({
+        address: TOKEN_ADDRESS,
+        abi: erc20Abi,
+        functionName: 'balanceOf',
+        args: [walletAddress]
+      })
+
+      console.log('balance', balance)
+      console.log('recipientAddress', recipientAddress)
+      console.log('walletAddress', walletAddress)
+      console.log('tokenAddress', TOKEN_ADDRESS)
+
+      const { request } = await publicClient.simulateContract({
+        address: TOKEN_ADDRESS,
+        account: walletAddress,
+        abi: erc20Abi,
+        functionName: 'transfer',
+        args: [recipientAddress, parseEther('100')]
+      })
 
       const transaction = {
         to: request.to,
