@@ -1,6 +1,5 @@
 import { SentinelClient } from '@/clients/sentinel'
 import { UserAPI } from '@/clients/user_api'
-import { AGENT_SENTINEL_DIR } from '@/common/constants'
 import { AGENTCOIN_CHANNEL, AGENTCOIN_FUN_API_URL } from '@/common/env'
 import { getAgentIdentity, isNull, toJsonTree } from '@/common/functions'
 import { CreateMessage, HydratedMessageSchema } from '@/common/types'
@@ -17,22 +16,19 @@ import {
   ModelClass,
   stringToUuid
 } from '@elizaos/core'
-import os from 'os'
-import path from 'path'
 import { io, Socket } from 'socket.io-client'
+import { sentinelClient } from '.'
 
 export class AgentcoinClient {
   private socket: Socket
   private userAPI: UserAPI
   private jwtToken: Promise<string> | null = null
-  private sentinelClient: SentinelClient
   private agentId: Promise<number>
 
-  constructor(private readonly runtime: IAgentRuntime) {
-    this.sentinelClient = new SentinelClient(
-      path.join(os.homedir(), AGENT_SENTINEL_DIR, 'sentinel.sock')
-    )
-
+  constructor(
+    private readonly runtime: IAgentRuntime,
+    private readonly sentinelClient: SentinelClient
+  ) {
     this.agentId = this.sentinelClient.getAgentId()
 
     elizaLogger.log('Connecting to Agentcoin API', AGENTCOIN_FUN_API_URL)
@@ -192,7 +188,7 @@ export class AgentcoinClient {
 export const AgentcoinClientInterface: Client = {
   start: async (_runtime: IAgentRuntime) => {
     elizaLogger.log('AgentcoinClientInterface start')
-    const client = new AgentcoinClient(_runtime)
+    const client = new AgentcoinClient(_runtime, sentinelClient)
     client.start()
     return client
   },
