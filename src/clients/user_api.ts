@@ -1,6 +1,6 @@
 import { SentinelClient } from '@/clients/sentinel'
 import { AGENTCOIN_FUN_API_URL } from '@/common/env'
-import { getAgentIdentity, isNull } from '@/common/functions'
+import { isNull } from '@/common/functions'
 import { Identity } from '@/common/types'
 import { z } from 'zod'
 
@@ -16,15 +16,14 @@ export class UserAPI {
 
   public async login(): Promise<string> {
     const agentId = await this.agentId
-    const agentIdentity = getAgentIdentity(agentId)
-    const message = await this.loginMessageToSign(agentIdentity)
+    const message = await this.loginMessageToSign({ id: agentId })
     const signature = await this.sentinelClient.signWithPubKey(message)
 
     if (isNull(signature)) {
       throw new Error('Failed to sign message')
     }
 
-    return this.generateJWT({ identity: agentIdentity, message, signature })
+    return this.generateJWT({ identity: { id: agentId }, message, signature })
   }
 
   private async generateJWT({
