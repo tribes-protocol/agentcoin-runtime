@@ -2,6 +2,7 @@ import { startChat } from '@/chat'
 import { initializeClients } from '@/clients'
 import { getTokenForProvider } from '@/common/config'
 import { initializeDatabase } from '@/common/db'
+import tippingPlugin from '@/plugins/tipping'
 import {
   Action,
   AgentRuntime,
@@ -38,7 +39,7 @@ export function createAgent(
     modelProvider: character.modelProvider,
     evaluators: [],
     character,
-    plugins: [bootstrapPlugin, nodePlugin],
+    plugins: [bootstrapPlugin, nodePlugin, tippingPlugin],
     providers: [],
     actions: [],
     services: [],

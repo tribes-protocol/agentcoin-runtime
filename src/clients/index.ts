@@ -1,8 +1,12 @@
 import { AgentcoinClientInterface } from '@/clients/agentcoin'
+import { SentinelClient } from '@/clients/sentinel'
+import { AGENT_SENTINEL_DIR } from '@/common/constants'
 import { FarcasterAgentClient } from '@elizaos/client-farcaster'
 import { TelegramClientInterface } from '@elizaos/client-telegram'
 import { TwitterClientInterface } from '@elizaos/client-twitter'
 import { AgentRuntime, Character, Client, Clients } from '@elizaos/core'
+import os from 'os'
+import path from 'path'
 
 export async function initializeClients(
   character: Character,
@@ -41,3 +45,7 @@ export async function initializeClients(
 
   return clients
 }
+
+export const sentinelClient = new SentinelClient(
+  path.join(os.homedir(), AGENT_SENTINEL_DIR, 'sentinel.sock')
+)
