@@ -114,8 +114,8 @@ export const tipForJokeAction: Action = {
       }
 
       // FIXME: how to get the wallet info?
-      const walletId = 8
-      const walletAddress = '0xf83849e99fbdfd1ddd7b8c524ddd64e168059cdc'
+      const walletId = 10
+      const walletAddress = EthAddressSchema.parse('0x464aae45da734941d911b2676da69dd952e7f078')
 
       const request = await publicClient.prepareTransactionRequest({
         account: walletAddress,
