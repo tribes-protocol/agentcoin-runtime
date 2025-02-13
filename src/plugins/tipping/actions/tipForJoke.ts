@@ -14,7 +14,7 @@ import {
   State
 } from '@elizaos/core'
 import { EthAddressSchema } from '@memecoin/sdk'
-import { createPublicClient, erc20Abi, http, parseEther } from 'viem'
+import { createPublicClient, encodeFunctionData, erc20Abi, http, parseEther } from 'viem'
 import { base } from 'viem/chains'
 import { z } from 'zod'
 
@@ -117,23 +117,38 @@ export const tipForJokeAction: Action = {
       const walletId = 8
       const walletAddress = '0xf83849e99fbdfd1ddd7b8c524ddd64e168059cdc'
 
-      const { request } = await publicClient.simulateContract({
-        address: TOKEN_ADDRESS,
+      const request = await publicClient.prepareTransactionRequest({
         account: walletAddress,
-        abi: erc20Abi,
-        functionName: 'transfer',
-        args: [recipientAddress, parseEther('100')]
+        to: TOKEN_ADDRESS,
+        data: encodeFunctionData({
+          abi: erc20Abi,
+          functionName: 'transfer',
+          args: [recipientAddress, parseEther('100')]
+        }),
+        kzg: null,
+        chain: base
       })
 
       console.log({ request })
+
+      const gasEstimate = await publicClient.estimateGas({
+        account: walletAddress,
+        to: TOKEN_ADDRESS,
+        data: request.data,
+        value: request.value
+      })
+
+      const gasLimit = (gasEstimate * 120n) / 100n
+
+      console.log({ gasLimit })
 
       const transaction = {
         to: request.to,
         value: request.value,
         data: request.data,
-        nonce: await publicClient.getTransactionCount({ address: walletAddress }),
-        gasLimit: await publicClient.estimateGas(request),
-        chainId: request.chainId
+        nonce: request.nonce,
+        gasLimit,
+        chainId: base.id
       }
 
       console.log({ transaction })
