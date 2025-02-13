@@ -2,8 +2,8 @@ import { SentinelClient } from '@/clients/sentinel'
 import { UserAPI } from '@/clients/user_api'
 import { AGENT_SENTINEL_DIR } from '@/common/constants'
 import { AGENTCOIN_CHANNEL, AGENTCOIN_FUN_API_URL } from '@/common/env'
-import { getAgentIdentity, isNull, toJsonTree } from '@/common/functions'
-import { CreateMessage, HydratedMessageSchema } from '@/common/types'
+import { isNull, toJsonTree } from '@/common/functions'
+import { AgentIdentitySchema, CreateMessage, HydratedMessageSchema } from '@/common/types'
 import { messageHandlerTemplate } from '@elizaos/client-direct'
 import {
   Client,
@@ -64,12 +64,13 @@ export class AgentcoinClient {
         elizaLogger.log('AgentcoinClient received message ---------->', { data })
 
         const agentId = await this.agentId
-        const agentIdentity = getAgentIdentity(agentId)
 
         const { message } = HydratedMessageSchema.array().parse(data)[0]
 
-        if (message.sender === agentIdentity) {
-          return
+        if (AgentIdentitySchema.safeParse(message.sender).success) {
+          if (AgentIdentitySchema.parse(message.sender).id === agentId) {
+            return
+          }
         }
 
         const roomId = stringToUuid(AGENTCOIN_CHANNEL)
@@ -138,7 +139,9 @@ export class AgentcoinClient {
           await this.sendMessage({
             text: response.text,
             channel: message.channel,
-            sender: agentIdentity,
+            sender: {
+              id: agentId
+            },
             clientUuid: responseUuid
           })
         }
@@ -148,7 +151,9 @@ export class AgentcoinClient {
             await this.sendMessage({
               text: newMessage.text,
               channel: message.channel,
-              sender: agentIdentity,
+              sender: {
+                id: agentId
+              },
               clientUuid: responseUuid
             })
           } catch (e) {

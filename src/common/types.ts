@@ -15,11 +15,9 @@ export const EthAddressSchema = z
 
 export type EthAddress = z.infer<typeof EthAddressSchema>
 
-export const AgentIdentitySchema = z
-  .string()
-  .regex(/^agent:\d+$/, 'Must be in format agent:{numericId}')
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  .transform((val) => val.toLowerCase() as `agent:${number}`)
+export const AgentIdentitySchema = z.object({
+  id: z.number()
+})
 
 export type AgentIdentity = z.infer<typeof AgentIdentitySchema>
 
