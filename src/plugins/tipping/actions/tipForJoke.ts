@@ -135,7 +135,7 @@ export const tipForJokeAction: Action = {
         account: walletAddress,
         to: TOKEN_ADDRESS,
         data: request.data,
-        value: request.value
+        value: 0n
       })
 
       const gasLimit = (gasEstimate * 120n) / 100n
@@ -144,7 +144,7 @@ export const tipForJokeAction: Action = {
 
       const transaction = {
         to: request.to,
-        value: request.value,
+        value: 0n,
         data: request.data,
         nonce: request.nonce,
         gasLimit,
