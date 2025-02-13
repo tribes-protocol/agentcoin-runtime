@@ -106,6 +106,7 @@ export const createMemecoinAction: Action = {
         runtime,
         context: memecoinContext,
         modelClass: ModelClass.MEDIUM,
+        // @ts-expect-error Multiple zod package issue
         schema: MemecoinSchema
       })
     ).object

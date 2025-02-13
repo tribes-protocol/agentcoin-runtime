@@ -2,7 +2,6 @@ import { startChat } from '@/chat'
 import { initializeClients } from '@/clients'
 import { getTokenForProvider } from '@/common/config'
 import { initializeDatabase } from '@/common/db'
-import memecoinPlugin from '@/plugins/memecoin'
 import {
   Action,
   AgentRuntime,
@@ -39,7 +38,7 @@ export function createAgent(
     modelProvider: character.modelProvider,
     evaluators: [],
     character,
-    plugins: [bootstrapPlugin, nodePlugin, memecoinPlugin],
+    plugins: [bootstrapPlugin, nodePlugin],
     providers: [],
     actions: [],
     services: [],
