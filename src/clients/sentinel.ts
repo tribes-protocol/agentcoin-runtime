@@ -6,7 +6,10 @@ interface Transaction {
   value?: bigint
   data?: string
   nonce: number
-  gasLimit: bigint
+  gas: bigint
+  gasPrice: bigint
+  maxFeePerGas: bigint
+  maxPriorityFeePerGas: bigint
   chainId: number
 }
 

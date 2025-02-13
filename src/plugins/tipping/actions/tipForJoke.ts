@@ -114,8 +114,8 @@ export const tipForJokeAction: Action = {
       }
 
       // FIXME: how to get the wallet info?
-      const walletId = 10
-      const walletAddress = EthAddressSchema.parse('0x464aae45da734941d911b2676da69dd952e7f078')
+      const walletId = 11
+      const walletAddress = EthAddressSchema.parse('0xe54740858f1abf35bbbdbf08b1d950c24ccc9aaf')
 
       const request = await publicClient.prepareTransactionRequest({
         account: walletAddress,
@@ -129,25 +129,15 @@ export const tipForJokeAction: Action = {
         chain: base
       })
 
-      console.log({ request })
-
-      const gasEstimate = await publicClient.estimateGas({
-        account: walletAddress,
-        to: TOKEN_ADDRESS,
-        data: request.data,
-        value: 0n
-      })
-
-      const gasLimit = (gasEstimate * 120n) / 100n
-
-      console.log({ gasLimit })
-
       const transaction = {
         to: request.to,
         value: 0n,
         data: request.data,
         nonce: request.nonce,
-        gasLimit,
+        gas: request.gas,
+        gasPrice: request.gasPrice,
+        maxFeePerGas: request.maxFeePerGas,
+        maxPriorityFeePerGas: request.maxPriorityFeePerGas,
         chainId: base.id
       }
 
