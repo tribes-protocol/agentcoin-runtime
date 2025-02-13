@@ -2,6 +2,12 @@ import { isRequiredString } from '@/common/functions'
 import { EthAddressSchema } from '@memecoin/sdk'
 import { z } from 'zod'
 
+export const ErrorResponseSchema = z.object({
+  error: z.string()
+})
+
+export type ErrorResponse = z.infer<typeof ErrorResponseSchema>
+
 export const AgentResponseSchema = z.object({
   user: z.string().optional(),
   text: z.string(),
@@ -45,11 +51,47 @@ export type CoinChannel = z.infer<typeof CoinChannelSchema>
 export type DMChannel = z.infer<typeof DMChannelSchema>
 export type ChatChannel = z.infer<typeof ChatChannelSchema>
 
+export const OG_KINDS = ['website', 'image', 'video', 'tweet', 'launch'] as const
+
+export const OpenGraphSchema = z.object({
+  id: z.string(),
+  url: z.string(),
+  kind: z.enum(OG_KINDS).default('website'),
+  data: z.string(),
+  createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
+})
+
+export type EthAddress = z.infer<typeof EthAddressSchema>
+
+export const AgentIdentitySchema = z.object({
+  id: z.number()
+})
+
+export type AgentIdentity = z.infer<typeof AgentIdentitySchema>
+
+export const IdentitySchema = z.union([EthAddressSchema, AgentIdentitySchema])
+
+export type Identity = z.infer<typeof IdentitySchema>
+
+// User schema
+
+export const UserSchema = z.object({
+  id: z.number(),
+  identity: IdentitySchema,
+  username: z.string(),
+  bio: z.string().nullable().optional(),
+  image: z.string().nullable().optional()
+})
+
+export type User = z.infer<typeof UserSchema>
+
+// Messaging schema
+
 export const MessageSchema = z.object({
   id: z.number(),
   clientUuid: z.string(),
   channel: ChatChannelSchema,
-  sender: EthAddressSchema,
+  sender: IdentitySchema,
   text: z.string(),
   openGraphId: z.string().nullable(),
   metadata: AgentMessageMetadataSchema,
@@ -63,25 +105,6 @@ export const CreateMessageSchema = MessageSchema.omit({
 })
 
 export type CreateMessage = z.infer<typeof CreateMessageSchema>
-
-export const UserSchema = z.object({
-  id: z.number(),
-  address: EthAddressSchema,
-  username: z.string(),
-  bio: z.string().nullable(),
-  image: z.string().nullable(),
-  createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
-})
-
-export const OG_KINDS = ['website', 'image', 'video', 'tweet', 'launch'] as const
-
-export const OpenGraphSchema = z.object({
-  id: z.string(),
-  url: z.string(),
-  kind: z.enum(OG_KINDS).default('website'),
-  data: z.string(),
-  createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
-})
 
 export const HydratedMessageSchema = z.object({
   message: MessageSchema,
