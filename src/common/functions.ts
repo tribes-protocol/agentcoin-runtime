@@ -1,3 +1,6 @@
+import { AgentIdentitySchema, Identity } from '@/common/types'
+import { EthAddressSchema } from '@memecoin/sdk'
+
 export function prepend0x(value: string): `0x${string}` {
   if (value.startsWith('0x')) {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
@@ -71,6 +74,17 @@ export function ensureString(value: any, message: string | undefined = undefined
   return value
 }
 
-export function getAgentIdentity(agentId: number): `agent:${number}` {
-  return `agent:${agentId}`
+export function serializeIdentity(identity: Identity): string {
+  const parsedAddress = EthAddressSchema.safeParse(identity)
+  if (parsedAddress.success) return parsedAddress.data
+
+  const parsedAgent = AgentIdentitySchema.safeParse(identity)
+  if (parsedAgent.success) return `agent-${parsedAgent.data.id.toString()}`
+  throw new Error('Invalid identity')
+}
+
+export function sortIdentities(first: Identity, second: Identity): [Identity, Identity] {
+  const firstStr = serializeIdentity(first).toLowerCase()
+  const secondStr = serializeIdentity(second).toLowerCase()
+  return firstStr <= secondStr ? [first, second] : [second, first]
 }

@@ -1,64 +1,12 @@
-import { toJsonTree } from '@/common/functions'
-import axios, { AxiosInstance } from 'axios'
-import { z } from 'zod'
-interface Transaction {
-  to: string
-  value?: bigint
-  data?: string
-  nonce: number
-  gas: bigint
-  gasPrice: bigint
-  maxFeePerGas: bigint
-  maxPriorityFeePerGas: bigint
-  chainId: number
-}
+import { AGENT_SENTINEL_DIR } from '@/common/constants'
+import axios from 'axios'
+import os from 'os'
+import path from 'path'
 
-const SignatureSchema = z.object({
-  signature: z.string()
+export const sentinelClient = axios.create({
+  socketPath: path.join(os.homedir(), AGENT_SENTINEL_DIR, 'sentinel.sock'),
+  baseURL: 'http://unix',
+  headers: {
+    'Content-Type': 'application/json'
+  }
 })
-
-const SignedTransactionSchema = z.object({
-  signedTxn: z.string()
-})
-
-const AgentIdSchema = z.object({
-  agentId: z.coerce.number()
-})
-
-export class SentinelClient {
-  private readonly client: AxiosInstance
-
-  constructor(socketPath: string) {
-    this.client = axios.create({
-      socketPath,
-      baseURL: 'http://unix',
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-  }
-
-  async signWithPubKey(message: string): Promise<string> {
-    const response = await this.client.post('/sign-with-pubkey', { message })
-    return SignatureSchema.parse(response.data).signature
-  }
-
-  async signWithWallet(walletId: number, message: string): Promise<string> {
-    const response = await this.client.post('/sign-with-wallet', { walletId, message })
-    return SignatureSchema.parse(response.data).signature
-  }
-
-  async signTxnWithWallet(walletId: number, transaction: Transaction): Promise<string> {
-    const response = await this.client.post(
-      '/sign-txn-with-wallet',
-      toJsonTree({ walletId, transaction })
-    )
-    console.log('got response', response.data)
-    return SignedTransactionSchema.parse(response.data).signedTxn
-  }
-
-  async getAgentId(): Promise<number> {
-    const response = await this.client.get('/agent-id')
-    return AgentIdSchema.parse(response.data).agentId
-  }
-}

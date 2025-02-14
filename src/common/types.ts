@@ -1,4 +1,4 @@
-import { isRequiredString } from '@/common/functions'
+import { isRequiredString, sortIdentities } from '@/common/functions'
 import { isAddress } from 'viem'
 import { z } from 'zod'
 
@@ -34,8 +34,8 @@ export const AgentResponseSchema = z.object({
 export const BigintSchema = z.union([z.bigint(), z.string().transform((arg) => BigInt(arg))])
 
 export const AgentMessageMetadataSchema = z.object({
-  balance: z.coerce.bigint(),
-  coinAddress: EthAddressSchema
+  balance: z.coerce.bigint().nullable(),
+  coinAddress: EthAddressSchema.nullable()
 })
 
 export type AgentMessageMetadata = z.infer<typeof AgentMessageMetadataSchema>
@@ -55,11 +55,16 @@ export const CoinChannelSchema = z.object({
 export const DMChannelSchema = z
   .object({
     kind: z.literal(ChatChannelKind.DM),
-    firstAddress: EthAddressSchema,
-    secondAddress: EthAddressSchema
+    firstIdentity: IdentitySchema,
+    secondIdentity: IdentitySchema
   })
-  .refine((data) => BigInt(data.firstAddress) < BigInt(data.secondAddress), {
-    message: 'First address must be less than second address'
+  .transform((data) => {
+    const [first, second] = sortIdentities(data.firstIdentity, data.secondIdentity)
+    return {
+      ...data,
+      firstIdentity: first,
+      secondIdentity: second
+    }
   })
 
 export const ChatChannelSchema = z.union([CoinChannelSchema, DMChannelSchema])
@@ -111,3 +116,5 @@ export const HydratedMessageSchema = z.object({
   // user: UserSchema, // FIXME: enable once fixed
   openGraph: OpenGraphSchema.optional().nullable()
 })
+
+export type HydratedMessage = z.infer<typeof HydratedMessageSchema>
