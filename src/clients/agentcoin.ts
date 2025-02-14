@@ -4,6 +4,9 @@ import { toJsonTree } from '@/common/functions'
 import { identityService } from '@/common/services'
 import {
   AgentIdentitySchema,
+  AgentWallet,
+  AgentWalletKind,
+  AgentWalletSchema,
   CreateMessage,
   HydratedMessage,
   HydratedMessageSchema
@@ -28,8 +31,6 @@ function messageIdToUuid(messageId: number): UUID {
 
 export class AgentcoinClient {
   private socket: Socket
-  private userAPI: UserAPI
-  private jwtToken: Promise<string> | null = null
 
   constructor(
     private readonly runtime: IAgentRuntime,
@@ -48,8 +49,6 @@ export class AgentcoinClient {
       autoConnect: true,
       transports: ['websocket', 'polling']
     })
-
-    this.userAPI = new UserAPI(this.agentId)
   }
 
   public start(): void {
@@ -88,6 +87,25 @@ export class AgentcoinClient {
     const hydratedMessage = HydratedMessageSchema.parse(responseData)
 
     return hydratedMessage
+  }
+
+  async fetchDefaultWallet(kind: AgentWalletKind): Promise<AgentWallet> {
+    const response = await fetch(`${AGENTCOIN_FUN_API_URL}/api/wallets/get-default`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: this.cookie },
+      body: JSON.stringify({
+        agentId: this.agentId,
+        kind
+      })
+    })
+    if (response.status !== 200) {
+      throw new Error('Failed to fetch default wallet')
+    }
+
+    const responseData = await response.json()
+    const wallet = AgentWalletSchema.parse(responseData)
+
+    return wallet
   }
 
   private async processMessage(data: unknown): Promise<void> {

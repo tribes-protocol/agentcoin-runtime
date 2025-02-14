@@ -15,6 +15,21 @@ export const EthAddressSchema = z
 
 export type EthAddress = z.infer<typeof EthAddressSchema>
 
+export const SolAddressSchema = z.string().refine(
+  (val) => {
+    return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(val)
+  },
+  {
+    message: 'Invalid Solana address format'
+  }
+)
+
+export type SolAddress = z.infer<typeof SolAddressSchema>
+
+export const WalletAddressSchema = z.union([EthAddressSchema, SolAddressSchema])
+
+export type WalletAddress = z.infer<typeof WalletAddressSchema>
+
 export const AgentIdentitySchema = z.object({
   id: z.number()
 })
@@ -118,3 +133,22 @@ export const HydratedMessageSchema = z.object({
 })
 
 export type HydratedMessage = z.infer<typeof HydratedMessageSchema>
+
+export const AgentWalletKindSchema = z.enum(['evm', 'solana'])
+
+export type AgentWalletKind = z.infer<typeof AgentWalletKindSchema>
+
+export const AgentWalletSchema = z.object({
+  id: z.number(),
+  address: WalletAddressSchema,
+  kind: AgentWalletKindSchema,
+  label: z.string(),
+  subOrganizationId: z.string(),
+  agentId: z.number().nullable(),
+  isDefault: z.boolean().default(false),
+  isRevoked: z.boolean().default(false),
+  agentUserId: z.string(),
+  createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
+})
+
+export type AgentWallet = z.infer<typeof AgentWalletSchema>
