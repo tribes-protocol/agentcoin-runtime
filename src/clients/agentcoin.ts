@@ -1,6 +1,6 @@
 import { UserAPI } from '@/clients/user_api'
 import { AGENTCOIN_CHANNEL, AGENTCOIN_FUN_API_URL } from '@/common/env'
-import { toJsonTree } from '@/common/functions'
+import { serializeIdentity, toJsonTree } from '@/common/functions'
 import { identityService } from '@/common/services'
 import {
   AgentIdentitySchema,
@@ -11,6 +11,7 @@ import {
   HydratedMessage,
   HydratedMessageSchema
 } from '@/common/types'
+import { GetUserStore } from '@/plugins/agentcoin/stores/users'
 import { messageHandlerTemplate } from '@elizaos/client-direct'
 import {
   Client,
@@ -120,10 +121,13 @@ export class AgentcoinClient {
     }
 
     const roomId = stringToUuid(AGENTCOIN_CHANNEL)
-    const userId = stringToUuid(message.sender.toString())
+    const userId = stringToUuid(serializeIdentity(message.sender))
     const messageId = messageIdToUuid(message.id)
 
     await this.runtime.ensureConnection(roomId, userId)
+
+    const userStore = GetUserStore(this.runtime)
+    await userStore.linkUserIdentity(message.sender)
 
     const memory: Memory = {
       id: messageId,

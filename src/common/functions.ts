@@ -83,6 +83,15 @@ export function serializeIdentity(identity: Identity): string {
   throw new Error('Invalid identity')
 }
 
+export function deserializeIdentity(identityString: string): Identity {
+  if (identityString.startsWith('agent-')) {
+    return AgentIdentitySchema.parse({ id: parseInt(identityString.slice(6)) })
+  }
+  const parsedAddress = EthAddressSchema.safeParse(identityString)
+  if (parsedAddress.success) return parsedAddress.data
+  throw new Error('Invalid identity')
+}
+
 export function sortIdentities(first: Identity, second: Identity): [Identity, Identity] {
   const firstStr = serializeIdentity(first).toLowerCase()
   const secondStr = serializeIdentity(second).toLowerCase()

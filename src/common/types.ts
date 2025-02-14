@@ -2,6 +2,11 @@ import { isRequiredString, sortIdentities } from '@/common/functions'
 import { isAddress } from 'viem'
 import { z } from 'zod'
 
+export const ErrorResponseSchema = z.object({
+  error: z.string()
+})
+
+export type ErrorResponse = z.infer<typeof ErrorResponseSchema>
 export const HexStringSchema = z.custom<`0x${string}`>(
   (val): val is `0x${string}` => typeof val === 'string' && /^0x[a-fA-F0-9]+$/.test(val)
 )
@@ -88,6 +93,20 @@ export type CoinChannel = z.infer<typeof CoinChannelSchema>
 export type DMChannel = z.infer<typeof DMChannelSchema>
 export type ChatChannel = z.infer<typeof ChatChannelSchema>
 
+// User schema
+
+export const UserSchema = z.object({
+  id: z.number(),
+  identity: IdentitySchema,
+  username: z.string(),
+  bio: z.string().nullable().optional(),
+  image: z.string().nullable().optional()
+})
+
+export type User = z.infer<typeof UserSchema>
+
+// Messaging schema
+
 export const MessageSchema = z.object({
   id: z.number(),
   clientUuid: z.string(),
@@ -106,15 +125,6 @@ export const CreateMessageSchema = MessageSchema.omit({
 })
 
 export type CreateMessage = z.infer<typeof CreateMessageSchema>
-
-export const UserSchema = z.object({
-  id: z.number(),
-  identity: IdentitySchema,
-  username: z.string(),
-  bio: z.string().nullable(),
-  image: z.string().nullable(),
-  createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
-})
 
 export const OG_KINDS = ['website', 'image', 'video', 'tweet', 'launch'] as const
 
