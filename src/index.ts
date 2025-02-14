@@ -1,5 +1,4 @@
 import { AgentcoinAPI } from '@/apis/agentcoinfun'
-import { startChat } from '@/chat'
 import { initializeClients } from '@/clients'
 import { getTokenForProvider } from '@/common/config'
 import { initializeDatabase } from '@/common/db'
@@ -106,12 +105,6 @@ async function main(): Promise<void> {
     await runtime.initialize()
     runtime.clients = await initializeClients(character, runtime)
     elizaLogger.debug(`Started ${character.name} as ${runtime.agentId}`)
-
-    if (process.env.NODE_ENV !== 'production') {
-      elizaLogger.log("Chat started. Type 'exit' to quit.")
-      const chat = startChat(runtime.agentId)
-      chat()
-    }
   } catch (error) {
     elizaLogger.error(`Error starting agent for character ${character.name}:`, error)
     console.error(error)
