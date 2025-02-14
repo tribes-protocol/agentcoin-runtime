@@ -131,11 +131,9 @@ export const tipForJokeAction: Action = {
         base.id
       )
 
-      console.log({ txHash })
-
       if (callback) {
         callback({
-          text: `Great joke! I've sent you 100 tokens as a tip. Transaction: ${txHash}`,
+          text: `Great joke! I've sent you 100 tokens as a tip, https://basescan.org/tx/${txHash}`,
           content: { ...res, txHash }
         }).catch((error) => {
           elizaLogger.error('Error sending callback:', error)
