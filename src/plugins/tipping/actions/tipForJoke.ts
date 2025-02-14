@@ -108,12 +108,10 @@ export const tipForJokeAction: Action = {
         throw new Error('No recipient address found')
       }
 
-      console.log(runtime.clients)
-      console.log('----------------')
-      console.log(runtime.clients.agentcoin)
+      const agentcoinClient: AgentcoinClient = runtime.clients.find(
+        (client) => client instanceof AgentcoinClient
+      )
 
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      const agentcoinClient = runtime.clients.agentcoin as AgentcoinClient
       const wallet = await agentcoinClient.fetchDefaultWallet('evm')
 
       const data = encodeFunctionData({
