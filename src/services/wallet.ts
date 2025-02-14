@@ -1,12 +1,10 @@
 import { AxiosInstance } from 'axios'
 import { z } from 'zod'
+
 interface Transaction {
   to: string
   value?: bigint
   data?: string
-  nonce: number
-  gasLimit: bigint
-  chainId: number
 }
 
 const SignatureSchema = z.object({

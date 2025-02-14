@@ -1,6 +1,7 @@
-import { sentinelClient } from '@/clients'
-import { BASE_RPC_URL, TOKEN_ADDRESS } from '@/common/env'
-import { isNull, prepend0x } from '@/common/functions'
+import { AgentcoinClient } from '@/clients/agentcoin'
+import { TOKEN_ADDRESS } from '@/common/env'
+import { isNull } from '@/common/functions'
+import { walletService } from '@/common/services'
 import {
   Action,
   composeContext,
@@ -14,8 +15,7 @@ import {
   State
 } from '@elizaos/core'
 import { EthAddressSchema } from '@memecoin/sdk'
-import { createPublicClient, encodeFunctionData, erc20Abi, http, parseEther } from 'viem'
-import { base } from 'viem/chains'
+import { encodeFunctionData, erc20Abi, parseEther } from 'viem'
 import { z } from 'zod'
 
 const JokeEvaluationSchema = z.object({
@@ -102,59 +102,37 @@ export const tipForJokeAction: Action = {
     }
 
     try {
-      const publicClient = createPublicClient({
-        chain: base,
-        transport: http(BASE_RPC_URL)
-      })
-
       // FIXME: how to get the recipient address?
       const recipientAddress = EthAddressSchema.parse('0xf4D70D2fd1DE59ff34aA0350263ba742cb94b1c8')
       if (isNull(recipientAddress)) {
         throw new Error('No recipient address found')
       }
 
-      // FIXME: how to get the wallet info?
-      const walletId = 11
-      const walletAddress = EthAddressSchema.parse('0xe54740858f1abf35bbbdbf08b1d950c24ccc9aaf')
+      console.log(runtime.clients)
+      console.log('----------------')
+      console.log(runtime.clients.agentcoin)
 
-      const request = await publicClient.prepareTransactionRequest({
-        account: walletAddress,
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      const agentcoinClient = runtime.clients.agentcoin as AgentcoinClient
+      const wallet = await agentcoinClient.fetchDefaultWallet('evm')
+
+      const data = encodeFunctionData({
+        abi: erc20Abi,
+        functionName: 'transfer',
+        args: [recipientAddress, parseEther('100')]
+      })
+
+      const txHash = await walletService.signTransaction(wallet.id, {
         to: TOKEN_ADDRESS,
-        data: encodeFunctionData({
-          abi: erc20Abi,
-          functionName: 'transfer',
-          args: [recipientAddress, parseEther('100')]
-        }),
-        kzg: null,
-        chain: base
+        data
       })
 
-      const transaction = {
-        to: request.to,
-        value: 0n,
-        data: request.data,
-        nonce: request.nonce,
-        gas: request.gas,
-        gasPrice: request.gasPrice,
-        maxFeePerGas: request.maxFeePerGas,
-        maxPriorityFeePerGas: request.maxPriorityFeePerGas,
-        chainId: base.id
-      }
-
-      console.log({ transaction })
-
-      const signedTxn = await sentinelClient.signTxnWithWallet(walletId, transaction)
-      console.log({ signedTxn })
-      const hash = await publicClient.sendRawTransaction({
-        serializedTransaction: prepend0x(signedTxn)
-      })
-
-      console.log({ hash })
+      console.log({ txHash })
 
       if (callback) {
         callback({
-          text: `Great joke! I've sent you 100 tokens as a tip. Transaction: ${hash}`,
-          content: { ...res, hash }
+          text: `Great joke! I've sent you 100 tokens as a tip. Transaction: ${txHash}`,
+          content: { ...res, txHash }
         }).catch((error) => {
           elizaLogger.error('Error sending callback:', error)
         })
