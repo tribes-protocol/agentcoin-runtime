@@ -88,8 +88,6 @@ async function startAgent(character: Character): Promise<AgentRuntime> {
       chat()
     }
 
-    console.log(runtime.clients)
-
     return runtime
   } catch (error) {
     elizaLogger.error(`Error starting agent for character ${character.name}:`, error)

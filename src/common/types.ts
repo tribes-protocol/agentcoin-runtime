@@ -28,6 +28,8 @@ export type SolAddress = z.infer<typeof SolAddressSchema>
 
 export const WalletAddressSchema = z.union([EthAddressSchema, SolAddressSchema])
 
+export type WalletAddress = z.infer<typeof WalletAddressSchema>
+
 export const AgentIdentitySchema = z.object({
   id: z.number()
 })

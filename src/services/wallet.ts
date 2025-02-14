@@ -1,3 +1,4 @@
+import { WalletAddress } from '@/common/types'
 import { AxiosInstance } from 'axios'
 import { z } from 'zod'
 
@@ -23,8 +24,16 @@ export class WalletService {
     return SignatureSchema.parse(response.data).signature
   }
 
-  async signTransaction(walletId: number, transaction: Transaction): Promise<string> {
-    const response = await this.client.post('/sign-txn-with-wallet', { walletId, transaction })
+  async signTransaction(
+    walletAddress: WalletAddress,
+    subOrganizationId: string,
+    transaction: Transaction
+  ): Promise<string> {
+    const response = await this.client.post('/sign-txn-with-wallet', {
+      walletAddress,
+      subOrganizationId,
+      transaction
+    })
     return SignedTransactionSchema.parse(response.data).signedTxn
   }
 }

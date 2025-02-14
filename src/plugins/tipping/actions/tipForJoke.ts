@@ -120,7 +120,7 @@ export const tipForJokeAction: Action = {
         args: [recipientAddress, parseEther('100')]
       })
 
-      const txHash = await walletService.signTransaction(wallet.id, {
+      const txHash = await walletService.signTransaction(wallet.address, wallet.subOrganizationId, {
         to: TOKEN_ADDRESS,
         data
       })
