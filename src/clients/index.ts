@@ -1,4 +1,4 @@
-import { AgentcoinClientInterface } from '@/clients/agentcoin'
+import { AgentcoinClientInterface } from '@/clients/agentcoinfun'
 import { FarcasterAgentClient } from '@elizaos/client-farcaster'
 import { TelegramClientInterface } from '@elizaos/client-telegram'
 import { TwitterClientInterface } from '@elizaos/client-twitter'
