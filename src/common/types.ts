@@ -1,6 +1,29 @@
-import { isRequiredString } from '@/common/functions'
-import { EthAddressSchema } from '@memecoin/sdk'
+import { isRequiredString, sortIdentities } from '@/common/functions'
+import { isAddress } from 'viem'
 import { z } from 'zod'
+
+export const HexStringSchema = z.custom<`0x${string}`>(
+  (val): val is `0x${string}` => typeof val === 'string' && /^0x[a-fA-F0-9]+$/.test(val)
+)
+
+export type HexString = z.infer<typeof HexStringSchema>
+
+export const EthAddressSchema = z
+  .custom<`0x${string}`>((val): val is `0x${string}` => typeof val === 'string' && isAddress(val))
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  .transform((arg) => arg.toLowerCase() as `0x${string}`)
+
+export type EthAddress = z.infer<typeof EthAddressSchema>
+
+export const AgentIdentitySchema = z.object({
+  id: z.number()
+})
+
+export type AgentIdentity = z.infer<typeof AgentIdentitySchema>
+
+export const IdentitySchema = z.union([EthAddressSchema, AgentIdentitySchema])
+
+export type Identity = z.infer<typeof IdentitySchema>
 
 export const AgentResponseSchema = z.object({
   user: z.string().optional(),
@@ -11,8 +34,8 @@ export const AgentResponseSchema = z.object({
 export const BigintSchema = z.union([z.bigint(), z.string().transform((arg) => BigInt(arg))])
 
 export const AgentMessageMetadataSchema = z.object({
-  balance: z.coerce.bigint(),
-  coinAddress: EthAddressSchema
+  balance: z.coerce.bigint().nullable(),
+  coinAddress: EthAddressSchema.nullable()
 })
 
 export type AgentMessageMetadata = z.infer<typeof AgentMessageMetadataSchema>
@@ -32,11 +55,16 @@ export const CoinChannelSchema = z.object({
 export const DMChannelSchema = z
   .object({
     kind: z.literal(ChatChannelKind.DM),
-    firstAddress: EthAddressSchema,
-    secondAddress: EthAddressSchema
+    firstIdentity: IdentitySchema,
+    secondIdentity: IdentitySchema
   })
-  .refine((data) => BigInt(data.firstAddress) < BigInt(data.secondAddress), {
-    message: 'First address must be less than second address'
+  .transform((data) => {
+    const [first, second] = sortIdentities(data.firstIdentity, data.secondIdentity)
+    return {
+      ...data,
+      firstIdentity: first,
+      secondIdentity: second
+    }
   })
 
 export const ChatChannelSchema = z.union([CoinChannelSchema, DMChannelSchema])
@@ -49,7 +77,7 @@ export const MessageSchema = z.object({
   id: z.number(),
   clientUuid: z.string(),
   channel: ChatChannelSchema,
-  sender: EthAddressSchema,
+  sender: IdentitySchema,
   text: z.string(),
   openGraphId: z.string().nullable(),
   metadata: AgentMessageMetadataSchema,
@@ -66,7 +94,7 @@ export type CreateMessage = z.infer<typeof CreateMessageSchema>
 
 export const UserSchema = z.object({
   id: z.number(),
-  address: EthAddressSchema,
+  identity: IdentitySchema,
   username: z.string(),
   bio: z.string().nullable(),
   image: z.string().nullable(),
