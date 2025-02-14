@@ -14,17 +14,16 @@ import {
   UUID
 } from '@elizaos/core'
 
+interface AgentcoinDependencies {
+  agent: IAgentcoinService
+  wallet: IWalletService
+}
+
 export class AgentcoinRuntime extends AgentRuntime {
-  public readonly agentcoin: {
-    agent: IAgentcoinService
-    wallet: IWalletService
-  }
+  public readonly agentcoin: AgentcoinDependencies
 
   public constructor(opts: {
-    agentcoin: {
-      wallet: IWalletService
-      agent: IAgentcoinService
-    }
+    agentcoin: AgentcoinDependencies
     eliza: {
       conversationLength?: number
       agentId?: UUID
