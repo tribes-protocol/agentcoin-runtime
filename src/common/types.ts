@@ -1,5 +1,5 @@
-import { isRequiredString } from '@/common/functions'
-import { EthAddressSchema } from '@memecoin/sdk'
+import { isRequiredString, sortIdentities } from '@/common/functions'
+import { isAddress } from 'viem'
 import { z } from 'zod'
 
 export const ErrorResponseSchema = z.object({
@@ -7,6 +7,43 @@ export const ErrorResponseSchema = z.object({
 })
 
 export type ErrorResponse = z.infer<typeof ErrorResponseSchema>
+export const HexStringSchema = z.custom<`0x${string}`>(
+  (val): val is `0x${string}` => typeof val === 'string' && /^0x[a-fA-F0-9]+$/.test(val)
+)
+
+export type HexString = z.infer<typeof HexStringSchema>
+
+export const EthAddressSchema = z
+  .custom<`0x${string}`>((val): val is `0x${string}` => typeof val === 'string' && isAddress(val))
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  .transform((arg) => arg.toLowerCase() as `0x${string}`)
+
+export type EthAddress = z.infer<typeof EthAddressSchema>
+
+export const SolAddressSchema = z.string().refine(
+  (val) => {
+    return /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(val)
+  },
+  {
+    message: 'Invalid Solana address format'
+  }
+)
+
+export type SolAddress = z.infer<typeof SolAddressSchema>
+
+export const WalletAddressSchema = z.union([EthAddressSchema, SolAddressSchema])
+
+export type WalletAddress = z.infer<typeof WalletAddressSchema>
+
+export const AgentIdentitySchema = z.object({
+  id: z.number()
+})
+
+export type AgentIdentity = z.infer<typeof AgentIdentitySchema>
+
+export const IdentitySchema = z.union([EthAddressSchema, AgentIdentitySchema])
+
+export type Identity = z.infer<typeof IdentitySchema>
 
 export const AgentResponseSchema = z.object({
   user: z.string().optional(),
@@ -17,8 +54,8 @@ export const AgentResponseSchema = z.object({
 export const BigintSchema = z.union([z.bigint(), z.string().transform((arg) => BigInt(arg))])
 
 export const AgentMessageMetadataSchema = z.object({
-  balance: z.coerce.bigint(),
-  coinAddress: EthAddressSchema
+  balance: z.coerce.bigint().nullable(),
+  coinAddress: EthAddressSchema.nullable()
 })
 
 export type AgentMessageMetadata = z.infer<typeof AgentMessageMetadataSchema>
@@ -38,11 +75,16 @@ export const CoinChannelSchema = z.object({
 export const DMChannelSchema = z
   .object({
     kind: z.literal(ChatChannelKind.DM),
-    firstAddress: EthAddressSchema,
-    secondAddress: EthAddressSchema
+    firstIdentity: IdentitySchema,
+    secondIdentity: IdentitySchema
   })
-  .refine((data) => BigInt(data.firstAddress) < BigInt(data.secondAddress), {
-    message: 'First address must be less than second address'
+  .transform((data) => {
+    const [first, second] = sortIdentities(data.firstIdentity, data.secondIdentity)
+    return {
+      ...data,
+      firstIdentity: first,
+      secondIdentity: second
+    }
   })
 
 export const ChatChannelSchema = z.union([CoinChannelSchema, DMChannelSchema])
@@ -50,28 +92,6 @@ export const ChatChannelSchema = z.union([CoinChannelSchema, DMChannelSchema])
 export type CoinChannel = z.infer<typeof CoinChannelSchema>
 export type DMChannel = z.infer<typeof DMChannelSchema>
 export type ChatChannel = z.infer<typeof ChatChannelSchema>
-
-export const OG_KINDS = ['website', 'image', 'video', 'tweet', 'launch'] as const
-
-export const OpenGraphSchema = z.object({
-  id: z.string(),
-  url: z.string(),
-  kind: z.enum(OG_KINDS).default('website'),
-  data: z.string(),
-  createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
-})
-
-export type EthAddress = z.infer<typeof EthAddressSchema>
-
-export const AgentIdentitySchema = z.object({
-  id: z.number()
-})
-
-export type AgentIdentity = z.infer<typeof AgentIdentitySchema>
-
-export const IdentitySchema = z.union([EthAddressSchema, AgentIdentitySchema])
-
-export type Identity = z.infer<typeof IdentitySchema>
 
 // User schema
 
@@ -106,6 +126,16 @@ export const CreateMessageSchema = MessageSchema.omit({
 
 export type CreateMessage = z.infer<typeof CreateMessageSchema>
 
+export const OG_KINDS = ['website', 'image', 'video', 'tweet', 'launch'] as const
+
+export const OpenGraphSchema = z.object({
+  id: z.string(),
+  url: z.string(),
+  kind: z.enum(OG_KINDS).default('website'),
+  data: z.string(),
+  createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
+})
+
 export const HydratedMessageSchema = z.object({
   message: MessageSchema,
   // user: UserSchema, // FIXME: enable once fixed
@@ -113,3 +143,22 @@ export const HydratedMessageSchema = z.object({
 })
 
 export type HydratedMessage = z.infer<typeof HydratedMessageSchema>
+
+export const AgentWalletKindSchema = z.enum(['evm', 'solana'])
+
+export type AgentWalletKind = z.infer<typeof AgentWalletKindSchema>
+
+export const AgentWalletSchema = z.object({
+  id: z.number(),
+  address: WalletAddressSchema,
+  kind: AgentWalletKindSchema,
+  label: z.string(),
+  subOrganizationId: z.string(),
+  agentId: z.number().nullable(),
+  isDefault: z.boolean().default(false),
+  isRevoked: z.boolean().default(false),
+  agentUserId: z.string(),
+  createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
+})
+
+export type AgentWallet = z.infer<typeof AgentWalletSchema>

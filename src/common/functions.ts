@@ -91,3 +91,9 @@ export function deserializeIdentity(identityString: string): Identity {
   if (parsedAddress.success) return parsedAddress.data
   throw new Error('Invalid identity')
 }
+
+export function sortIdentities(first: Identity, second: Identity): [Identity, Identity] {
+  const firstStr = serializeIdentity(first).toLowerCase()
+  const secondStr = serializeIdentity(second).toLowerCase()
+  return firstStr <= secondStr ? [first, second] : [second, first]
+}

@@ -1,4 +1,5 @@
-import { ensureString, prepend0x } from '@/common/functions'
+import { ensureString } from '@/common/functions'
+import { EthAddressSchema } from '@/common/types'
 
 export const AGENTCOIN_FUN_API_URL = ensureString(
   process.env.AGENTCOIN_FUN_API_URL,
@@ -14,6 +15,8 @@ export const CHARACTER_FILE = ensureString(process.env.CHARACTER_FILE, 'CHARACTE
 
 export const SQLITE_FILE = ensureString(process.env.SQLITE_FILE, 'SQLITE_FILE is not set')
 
-export const BOT_PRIVATE_KEY = prepend0x(
-  ensureString(process.env.BOT_PRIVATE_KEY, 'BOT_PRIVATE_KEY is not set')
+export const TOKEN_ADDRESS = EthAddressSchema.parse(
+  ensureString(process.env.TOKEN_ADDRESS, 'TOKEN_ADDRESS is not set')
 )
+
+export const BASE_RPC_URL = ensureString(process.env.BASE_RPC_URL, 'BASE_RPC_URL is not set')
