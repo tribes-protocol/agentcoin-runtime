@@ -13,27 +13,37 @@ const SignatureSchema = z.object({
 })
 
 const SignedTransactionSchema = z.object({
-  signedTxn: z.string()
+  txHash: z.string()
 })
 
 export class WalletService {
   constructor(private readonly client: AxiosInstance) {}
 
-  async signPersonalMessage(walletId: number, message: string): Promise<string> {
-    const response = await this.client.post('/sign-with-wallet', { walletId, message })
+  async signPersonalMessage(
+    walletAddress: WalletAddress,
+    subOrganizationId: string,
+    message: string
+  ): Promise<string> {
+    const response = await this.client.post('/sign-with-wallet', {
+      walletAddress,
+      subOrganizationId,
+      message
+    })
     return SignatureSchema.parse(response.data).signature
   }
 
   async signTransaction(
     walletAddress: WalletAddress,
     subOrganizationId: string,
-    transaction: Transaction
+    transaction: Transaction,
+    chainId: number
   ): Promise<string> {
     const response = await this.client.post('/sign-txn-with-wallet', {
       walletAddress,
       subOrganizationId,
-      transaction
+      transaction,
+      chainId
     })
-    return SignedTransactionSchema.parse(response.data).signedTxn
+    return SignedTransactionSchema.parse(response.data).txHash
   }
 }

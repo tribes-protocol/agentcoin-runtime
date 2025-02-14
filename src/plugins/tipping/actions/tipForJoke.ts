@@ -16,6 +16,7 @@ import {
 } from '@elizaos/core'
 import { EthAddressSchema } from '@memecoin/sdk'
 import { encodeFunctionData, erc20Abi, parseEther } from 'viem'
+import { base } from 'viem/chains'
 import { z } from 'zod'
 
 const JokeEvaluationSchema = z.object({
@@ -120,10 +121,15 @@ export const tipForJokeAction: Action = {
         args: [recipientAddress, parseEther('100')]
       })
 
-      const txHash = await walletService.signTransaction(wallet.address, wallet.subOrganizationId, {
-        to: TOKEN_ADDRESS,
-        data
-      })
+      const txHash = await walletService.signTransaction(
+        wallet.address,
+        wallet.subOrganizationId,
+        {
+          to: TOKEN_ADDRESS,
+          data
+        },
+        base.id
+      )
 
       console.log({ txHash })
 
