@@ -154,11 +154,49 @@ export const AgentWalletSchema = z.object({
   kind: AgentWalletKindSchema,
   label: z.string(),
   subOrganizationId: z.string(),
-  agentId: z.number().nullable(),
-  isDefault: z.boolean().default(false),
-  isRevoked: z.boolean().default(false),
-  agentUserId: z.string(),
   createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
 })
 
 export type AgentWallet = z.infer<typeof AgentWalletSchema>
+
+export const KeyPairSchema = z.object({
+  publicKey: z.string(),
+  privateKey: z.string()
+})
+
+export type KeyPair = z.infer<typeof KeyPairSchema>
+
+// Transactions
+
+export const TransactionSchema = z.object({
+  to: EthAddressSchema,
+  value: z
+    .union([z.string(), z.bigint()])
+    .transform((val) => (typeof val === 'string' ? BigInt(val) : val))
+    .optional(),
+  data: HexStringSchema.optional(),
+  chainId: z.number().optional()
+})
+
+export type Transaction = z.infer<typeof TransactionSchema>
+
+export const AgentRegistrationSchema = z.object({
+  registrationToken: z.string()
+})
+
+export type AgentRegistration = z.infer<typeof AgentRegistrationSchema>
+
+export const AgentProvisionResponseSchema = z.object({
+  success: z.boolean(),
+  agentId: IdentitySchema
+})
+
+export type AgentProvisionResponse = z.infer<typeof AgentProvisionResponseSchema>
+
+export const GitStateSchema = z.object({
+  repositoryUrl: z.string(),
+  branch: z.string(),
+  commit: z.string().optional().nullable()
+})
+
+export type GitState = z.infer<typeof GitStateSchema>

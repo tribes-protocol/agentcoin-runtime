@@ -1,7 +1,6 @@
-import { AgentcoinClient } from '@/clients/agentcoin'
 import { TOKEN_ADDRESS } from '@/common/env'
 import { isNull } from '@/common/functions'
-import { walletService } from '@/common/services'
+import { AgentcoinRuntime } from '@/common/runtime'
 import {
   Action,
   composeContext,
@@ -9,14 +8,12 @@ import {
   elizaLogger,
   generateObject,
   HandlerCallback,
-  IAgentRuntime,
   Memory,
   ModelClass,
   State
 } from '@elizaos/core'
 import { EthAddressSchema } from '@memecoin/sdk'
 import { encodeFunctionData, erc20Abi, parseEther } from 'viem'
-import { base } from 'viem/chains'
 import { z } from 'zod'
 
 const JokeEvaluationSchema = z.object({
@@ -59,7 +56,7 @@ export const tipForJokeAction: Action = {
     return true
   },
   handler: async (
-    runtime: IAgentRuntime,
+    runtime: AgentcoinRuntime,
     message: Memory,
     state: State,
     _options: { [key: string]: unknown },
@@ -109,11 +106,9 @@ export const tipForJokeAction: Action = {
         throw new Error('No recipient address found')
       }
 
-      const agentcoinClient: AgentcoinClient = runtime.clients.find(
-        (client) => client instanceof AgentcoinClient
-      )
-
-      const wallet = await agentcoinClient.fetchDefaultWallet('evm')
+      const walletService = runtime.agentcoin.wallet
+      const agentcoinService = runtime.agentcoin.agent
+      const wallet = await agentcoinService.getDefaultWallet('evm')
 
       const data = encodeFunctionData({
         abi: erc20Abi,
@@ -121,15 +116,10 @@ export const tipForJokeAction: Action = {
         args: [recipientAddress, parseEther('100')]
       })
 
-      const txHash = await walletService.signTransaction(
-        wallet.address,
-        wallet.subOrganizationId,
-        {
-          to: TOKEN_ADDRESS,
-          data
-        },
-        base.id
-      )
+      const txHash = await walletService.signAndSubmitTransaction(wallet, {
+        to: TOKEN_ADDRESS,
+        data
+      })
 
       if (callback) {
         callback({

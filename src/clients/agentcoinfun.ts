@@ -1,18 +1,10 @@
-import { UserAPI } from '@/clients/user_api'
 import { AGENTCOIN_CHANNEL, AGENTCOIN_FUN_API_URL } from '@/common/env'
-import { serializeIdentity, toJsonTree } from '@/common/functions'
-import { identityService } from '@/common/services'
-import {
-  AgentIdentitySchema,
-  AgentWallet,
-  AgentWalletKind,
-  AgentWalletSchema,
-  CreateMessage,
-  HydratedMessage,
-  HydratedMessageSchema
-} from '@/common/types'
+import { serializeIdentity } from '@/common/functions'
+import { AgentcoinRuntime } from '@/common/runtime'
+import { HydratedMessageSchema } from '@/common/types'
 import { GetUserStore } from '@/plugins/agentcoin/stores/users'
 import { messageHandlerTemplate } from '@elizaos/client-direct'
+
 import {
   Client,
   composeContext,
@@ -33,11 +25,7 @@ function messageIdToUuid(messageId: number): UUID {
 export class AgentcoinClient {
   private socket: Socket
 
-  constructor(
-    private readonly runtime: IAgentRuntime,
-    private readonly agentId: number,
-    private readonly cookie: string
-  ) {
+  constructor(private readonly runtime: AgentcoinRuntime) {
     elizaLogger.log('Connecting to Agentcoin API', AGENTCOIN_FUN_API_URL)
     this.socket = io(AGENTCOIN_FUN_API_URL, {
       reconnection: true,
@@ -74,50 +62,15 @@ export class AgentcoinClient {
     this.socket.disconnect()
   }
 
-  async sendMessage(message: CreateMessage): Promise<HydratedMessage> {
-    const response = await fetch(`${AGENTCOIN_FUN_API_URL}/api/chat/send`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: this.cookie },
-      body: JSON.stringify(toJsonTree(message))
-    })
-    if (response.status !== 200) {
-      throw new Error('Failed to send message')
-    }
-
-    const responseData = await response.json()
-    const hydratedMessage = HydratedMessageSchema.parse(responseData)
-
-    return hydratedMessage
-  }
-
-  async fetchDefaultWallet(kind: AgentWalletKind): Promise<AgentWallet> {
-    const response = await fetch(`${AGENTCOIN_FUN_API_URL}/api/wallets/get-default`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Cookie: this.cookie },
-      body: JSON.stringify({
-        agentId: this.agentId,
-        kind
-      })
-    })
-    if (response.status !== 200) {
-      throw new Error('Failed to fetch default wallet')
-    }
-
-    const responseData = await response.json()
-    const wallet = AgentWalletSchema.parse(responseData)
-
-    return wallet
-  }
-
   private async processMessage(data: unknown): Promise<void> {
     elizaLogger.log('AgentcoinClient received message', { data })
 
-    const { message } = HydratedMessageSchema.array().parse(data)[0]
+    const { message } = HydratedMessageSchema.parse(data)
+    const agentcoinService = this.runtime.agentcoin.agent
+    const sender = await agentcoinService.getIdentity()
 
-    if (AgentIdentitySchema.safeParse(message.sender).success) {
-      if (AgentIdentitySchema.parse(message.sender).id === this.agentId) {
-        return
-      }
+    if (message.sender === sender) {
+      return
     }
 
     const roomId = stringToUuid(AGENTCOIN_CHANNEL)
@@ -165,10 +118,10 @@ export class AgentcoinClient {
 
     const messageResponses: Memory[] = []
     if (response.action !== 'IGNORE') {
-      const agentcoinResponse = await this.sendMessage({
+      const agentcoinResponse = await agentcoinService.sendMessage({
         text: response.text,
+        sender,
         channel: message.channel,
-        sender: { id: this.agentId },
         clientUuid: crypto.randomUUID()
       })
 
@@ -199,10 +152,10 @@ export class AgentcoinClient {
 
     await this.runtime.processActions(memory, messageResponses, state, async (newMessage) => {
       try {
-        await this.sendMessage({
+        await agentcoinService.sendMessage({
           text: newMessage.text,
+          sender,
           channel: message.channel,
-          sender: { id: this.agentId },
           clientUuid: crypto.randomUUID()
         })
       } catch (e) {
@@ -218,14 +171,8 @@ export class AgentcoinClient {
 }
 
 export const AgentcoinClientInterface: Client = {
-  start: async (_runtime: IAgentRuntime) => {
-    elizaLogger.log('AgentcoinClientInterface start')
-    const agentId = await identityService.getAgentId()
-
-    const userAPI = new UserAPI(agentId)
-    const cookie = await userAPI.login()
-
-    const client = new AgentcoinClient(_runtime, agentId, cookie)
+  start: async (_runtime: AgentcoinRuntime) => {
+    const client = new AgentcoinClient(_runtime)
     client.start()
     return client
   },

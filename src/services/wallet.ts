@@ -1,49 +1,68 @@
-import { WalletAddress } from '@/common/types'
-import { AxiosInstance } from 'axios'
-import { z } from 'zod'
+import { BASE_RPC_URL } from '@/common/env'
+import { isNull } from '@/common/functions'
+import { AgentWallet, HexString, Transaction } from '@/common/types'
+import { IWalletService } from '@/services/interfaces'
+import { TurnkeyClient } from '@turnkey/http'
+import { ApiKeyStamper } from '@turnkey/sdk-server'
+import { createAccountWithAddress } from '@turnkey/viem'
+import { Account, createWalletClient, getAddress, http, WalletClient } from 'viem'
+import { base } from 'viem/chains'
 
-interface Transaction {
-  to: string
-  value?: bigint
-  data?: string
-}
+export class WalletService implements IWalletService {
+  private readonly turnkey: TurnkeyClient
 
-const SignatureSchema = z.object({
-  signature: z.string()
-})
-
-const SignedTransactionSchema = z.object({
-  txHash: z.string()
-})
-
-export class WalletService {
-  constructor(private readonly client: AxiosInstance) {}
-
-  async signPersonalMessage(
-    walletAddress: WalletAddress,
-    subOrganizationId: string,
-    message: string
-  ): Promise<string> {
-    const response = await this.client.post('/sign-with-wallet', {
-      walletAddress,
-      subOrganizationId,
-      message
-    })
-    return SignatureSchema.parse(response.data).signature
+  constructor(apiKeyStamper: ApiKeyStamper) {
+    this.turnkey = new TurnkeyClient(
+      {
+        baseUrl: 'https://api.turnkey.com'
+      },
+      apiKeyStamper
+    )
   }
 
-  async signTransaction(
-    walletAddress: WalletAddress,
-    subOrganizationId: string,
-    transaction: Transaction,
-    chainId: number
-  ): Promise<string> {
-    const response = await this.client.post('/sign-txn-with-wallet', {
-      walletAddress,
-      subOrganizationId,
-      transaction,
-      chainId
+  async signPersonalMessage(wallet: AgentWallet, message: string): Promise<string> {
+    const account = this.getAccount(wallet)
+    if (isNull(account.signMessage)) {
+      throw new Error('Failed to sign message. missing signMessage function')
+    }
+    return account.signMessage({ message })
+  }
+
+  async signAndSubmitTransaction(
+    wallet: AgentWallet,
+    transaction: Transaction
+  ): Promise<HexString> {
+    if (!isNull(transaction.chainId) && transaction.chainId !== base.id) {
+      throw new Error(`Unsupported chainId: ${transaction.chainId}`)
+    }
+
+    const client: WalletClient = createWalletClient({
+      account: this.getAccount(wallet),
+      chain: base,
+      transport: http(BASE_RPC_URL)
     })
-    return SignedTransactionSchema.parse(response.data).txHash
+
+    const txHash = await client.sendTransaction({
+      to: transaction.to,
+      value: transaction.value,
+      data: transaction.data,
+      account: client.account,
+      chain: base,
+      // FIXME: hish - tackle kzg
+      kzg: undefined
+    })
+
+    return txHash
+  }
+
+  private getAccount(wallet: AgentWallet): Account {
+    const address = getAddress(wallet.address)
+    const account = createAccountWithAddress({
+      client: this.turnkey,
+      organizationId: wallet.subOrganizationId,
+      signWith: address,
+      ethereumAddress: address
+    })
+    return account
   }
 }

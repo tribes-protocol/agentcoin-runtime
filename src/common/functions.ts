@@ -1,4 +1,4 @@
-import { AgentIdentitySchema, Identity } from '@/common/types'
+import { AgentIdentitySchema, GitState, Identity } from '@/common/types'
 import { EthAddressSchema } from '@memecoin/sdk'
 
 export function prepend0x(value: string): `0x${string}` {
@@ -96,4 +96,47 @@ export function sortIdentities(first: Identity, second: Identity): [Identity, Id
   const firstStr = serializeIdentity(first).toLowerCase()
   const secondStr = serializeIdentity(second).toLowerCase()
   return firstStr <= secondStr ? [first, second] : [second, first]
+}
+
+export function isEqualGitState(state1: GitState, state2: GitState): boolean {
+  return (
+    state1.repositoryUrl === state2.repositoryUrl &&
+    state1.branch === state2.branch &&
+    state1.commit === state2.commit
+  )
+}
+
+export function retry<T>(
+  fn: () => Promise<T>,
+  options: {
+    maxRetries: number
+    logError: boolean
+    ms: number
+  } = {
+    maxRetries: 3,
+    logError: true,
+    ms: 1000
+  }
+): Promise<T> {
+  const { maxRetries, logError, ms } = options
+  return new Promise((resolve, reject) => {
+    let retries = 0
+    const attempt = (): void => {
+      fn()
+        .then(resolve)
+        .catch((error) => {
+          if (logError) {
+            console.error(`Error: ${error}`)
+          }
+          if (retries < maxRetries) {
+            retries++
+            setTimeout(attempt, ms)
+          } else {
+            reject(error)
+          }
+        })
+    }
+
+    attempt()
+  })
 }
