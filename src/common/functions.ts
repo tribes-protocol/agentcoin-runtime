@@ -1,5 +1,4 @@
-import { AgentIdentitySchema, GitState, Identity } from '@/common/types'
-import { EthAddressSchema } from '@memecoin/sdk'
+import { GitState, Identity, IdentitySchema } from '@/common/types'
 
 export function prepend0x(value: string): `0x${string}` {
   if (value.startsWith('0x')) {
@@ -75,21 +74,11 @@ export function ensureString(value: any, message: string | undefined = undefined
 }
 
 export function serializeIdentity(identity: Identity): string {
-  const parsedAddress = EthAddressSchema.safeParse(identity)
-  if (parsedAddress.success) return parsedAddress.data
-
-  const parsedAgent = AgentIdentitySchema.safeParse(identity)
-  if (parsedAgent.success) return `agent-${parsedAgent.data.id.toString()}`
-  throw new Error('Invalid identity')
+  return identity.toString()
 }
 
 export function deserializeIdentity(identityString: string): Identity {
-  if (identityString.startsWith('agent-')) {
-    return AgentIdentitySchema.parse({ id: parseInt(identityString.slice(6)) })
-  }
-  const parsedAddress = EthAddressSchema.safeParse(identityString)
-  if (parsedAddress.success) return parsedAddress.data
-  throw new Error('Invalid identity')
+  return IdentitySchema.parse(identityString)
 }
 
 export function sortIdentities(first: Identity, second: Identity): [Identity, Identity] {

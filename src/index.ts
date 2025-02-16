@@ -1,6 +1,7 @@
 import { AgentcoinAPI } from '@/apis/agentcoinfun'
 import { initializeClients } from '@/clients'
 import { getTokenForProvider } from '@/common/config'
+import { CHARACTER_FILE } from '@/common/constants'
 import { initializeDatabase } from '@/common/db'
 import { AgentcoinRuntime } from '@/common/runtime'
 import tippingPlugin from '@/plugins/tipping'
@@ -69,12 +70,11 @@ async function main(): Promise<void> {
   const walletService = new WalletService(keychainService.turnkeyApiKeyStamper)
   const codeService = new CodeService()
   await agentcoinService.provisionIfNeeded()
-  await codeService.start()
+  void codeService.start()
 
   // step 2: load character
   elizaLogger.log('Loading character...')
-  const characterFile = process.env.CHARACTER_FILE
-  const character: Character = JSON.parse(fs.readFileSync(characterFile, 'utf8'))
+  const character: Character = JSON.parse(fs.readFileSync(CHARACTER_FILE, 'utf8'))
 
   // step 3: initialize eliza runtime
   let runtime: AgentcoinRuntime | undefined

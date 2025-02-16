@@ -23,3 +23,5 @@ export const CODE_DIR = path.join(AGENTCOIN_FUN_DIR, 'code')
 if (!fs.existsSync(AGENTCOIN_FUN_DIR)) {
   fs.mkdirSync(AGENTCOIN_FUN_DIR, { recursive: true })
 }
+
+export const SQLITE_FILE = path.join(AGENTCOIN_FUN_DIR, 'agentcoin.sqlite')

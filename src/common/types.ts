@@ -191,7 +191,6 @@ export const AgentRegistrationSchema = z.object({
 export type AgentRegistration = z.infer<typeof AgentRegistrationSchema>
 
 export const AgentProvisionResponseSchema = z.object({
-  success: z.boolean(),
   agentId: IdentitySchema
 })
 

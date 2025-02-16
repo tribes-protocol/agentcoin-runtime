@@ -1,5 +1,5 @@
 import { AGENTCOIN_CHANNEL, AGENTCOIN_FUN_API_URL } from '@/common/env'
-import { serializeIdentity } from '@/common/functions'
+import { isNull, serializeIdentity } from '@/common/functions'
 import { AgentcoinRuntime } from '@/common/runtime'
 import { HydratedMessageSchema } from '@/common/types'
 import { GetUserStore } from '@/plugins/agentcoin/stores/users'
@@ -48,6 +48,7 @@ export class AgentcoinClient {
       console.log('Disconnected from Agentcoin API')
     })
 
+    console.log('Listening to', AGENTCOIN_CHANNEL)
     this.socket.on(AGENTCOIN_CHANNEL, async (data) => {
       try {
         await this.processMessage(data)
@@ -65,7 +66,15 @@ export class AgentcoinClient {
   private async processMessage(data: unknown): Promise<void> {
     elizaLogger.log('AgentcoinClient received message', { data })
 
-    const { message } = HydratedMessageSchema.parse(data)
+    const messages = HydratedMessageSchema.array().parse(data)
+
+    const { message } = messages[0]
+
+    if (isNull(message)) {
+      elizaLogger.log('AgentcoinClient received empty message')
+      return
+    }
+
     const agentcoinService = this.runtime.agentcoin.agent
     const sender = await agentcoinService.getIdentity()
 
