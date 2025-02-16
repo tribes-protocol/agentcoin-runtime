@@ -5,7 +5,6 @@ import { CHARACTER_FILE } from '@/common/constants'
 import { initializeDatabase } from '@/common/db'
 import { AgentcoinRuntime } from '@/common/runtime'
 import agentcoinPlugin from '@/plugins/agentcoin'
-import tippingPlugin from '@/plugins/tipping'
 import { AgentcoinService } from '@/services/agentcoinfun'
 import { CodeService } from '@/services/code'
 import { IAgentcoinService, IWalletService } from '@/services/interfaces'
@@ -52,7 +51,7 @@ export function createAgent(
       modelProvider: character.modelProvider,
       evaluators: [],
       character,
-      plugins: [bootstrapPlugin, nodePlugin, tippingPlugin, agentcoinPlugin],
+      plugins: [bootstrapPlugin, nodePlugin, agentcoinPlugin],
       providers: [],
       actions: [],
       services: [],
