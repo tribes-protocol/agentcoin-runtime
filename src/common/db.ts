@@ -1,4 +1,4 @@
-import { SQLITE_FILE } from '@/common/env'
+import { SQLITE_FILE } from '@/common/constants'
 import { PostgresDatabaseAdapter } from '@elizaos/adapter-postgres'
 import { SqliteDatabaseAdapter } from '@elizaos/adapter-sqlite'
 import { IDatabaseAdapter, IDatabaseCacheAdapter } from '@elizaos/core'

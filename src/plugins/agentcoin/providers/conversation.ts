@@ -1,10 +1,10 @@
 import { isNull } from '@/common/functions'
-import { agentcoinAPI } from '@/plugins/agentcoin/api'
+import { AgentcoinRuntime } from '@/common/runtime'
 import { GetUserStore } from '@/plugins/agentcoin/stores/users'
-import { IAgentRuntime, Memory, Provider, State } from '@elizaos/core'
+import { elizaLogger, Memory, Provider, State } from '@elizaos/core'
 
 const conversationProvider: Provider = {
-  get: async (runtime: IAgentRuntime, memory: Memory, _state?: State): Promise<string> => {
+  get: async (runtime: AgentcoinRuntime, memory: Memory, _state?: State): Promise<string> => {
     const isSelf = memory.userId === runtime.agentId
 
     if (isSelf) {
@@ -27,7 +27,13 @@ const conversationProvider: Provider = {
         return ''
       }
 
-      user = await agentcoinAPI.getUser(identity)
+      user = await runtime.agentcoin.agent.getUser(identity)
+
+      if (isNull(user)) {
+        elizaLogger.warn('User not found', { identity })
+        return ''
+      }
+
       await userStore.saveUser(user)
     }
 

@@ -11,10 +11,6 @@ export const AGENTCOIN_CHANNEL = ensureString(
   'AGENTCOIN_CHANNEL is not set'
 )
 
-export const CHARACTER_FILE = ensureString(process.env.CHARACTER_FILE, 'CHARACTER_FILE is not set')
-
-export const SQLITE_FILE = ensureString(process.env.SQLITE_FILE, 'SQLITE_FILE is not set')
-
 export const TOKEN_ADDRESS = EthAddressSchema.parse(
   ensureString(process.env.TOKEN_ADDRESS, 'TOKEN_ADDRESS is not set')
 )

@@ -7,10 +7,14 @@
     "build": "tsup src/index.ts --format esm --dts",
     "lint": "eslint src/**/*.ts",
     "dev": "tsx src/index.ts",
+    
     "start": "NODE_ENV=production tsx dist/index.js",
-    "agent": "dotenv --e $HOME/.agentcoin-fun/shared/env.production -- tsx dist/index.js"
+    "agent": "dotenv --e $HOME/.agentcoin-fun/env.production -- tsx dist/index.js"
   },
   "dependencies": {
+    "@turnkey/http": "2.18.0",
+    "@turnkey/sdk-server": "1.7.3",
+    "@turnkey/viem": "0.6.10",
     "@elizaos/adapter-postgres": "0.1.7",
     "@elizaos/adapter-sqlite": "0.1.7",
     "@elizaos/client-auto": "0.1.7",
@@ -28,7 +32,6 @@
     "@memecoin/sdk": "0.0.44",
     "@tavily/core": "0.0.2",
     "amqplib": "0.10.5",
-    "axios": "1.7.9",
     "better-sqlite3": "11.5.0",
     "fs": "0.0.1-security",
     "net": "1.0.2",
@@ -41,7 +44,8 @@
     "viem": "2.21.49",
     "ws": "8.18.0",
     "yargs": "17.7.2",
-    "zod": "3.24.2"
+    "zod": "3.24.2",
+    "elliptic": "6.6.1"
   },
   "engines": {
     "node": ">=22"
@@ -50,10 +54,7 @@
     "onnxruntime-node": "1.20.0"
   },
   "devDependencies": {
-    "ts-node": "10.9.2",
-    "tsx": "4.7.1",
-    "tsup": "8.3.5",
-    "typescript": "5.6.3",
+    "@types/elliptic": "6.4.18",
     "dotenv-cli": "7.4.1",
     "eslint": "8.57.1",
     "eslint-config-next": "15.1.4",
@@ -64,6 +65,10 @@
     "eslint-plugin-n": "17.14.0",
     "eslint-plugin-prettier": "5.2.1",
     "eslint-plugin-promise": "7.1.0",
-    "prettier": "3.3.3"
+    "prettier": "3.3.3",
+    "ts-node": "10.9.2",
+    "tsup": "8.3.5",
+    "tsx": "4.7.1",
+    "typescript": "5.6.3"
   }
 }

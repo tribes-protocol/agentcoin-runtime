@@ -28,6 +28,10 @@ class UserStore {
       return undefined
     }
 
+    if (memory.content.text.trim() === '') {
+      return undefined
+    }
+
     return UserSchema.parse(JSON.parse(memory.content.text))
   }
 

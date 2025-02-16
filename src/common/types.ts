@@ -35,10 +35,14 @@ export const WalletAddressSchema = z.union([EthAddressSchema, SolAddressSchema])
 
 export type WalletAddress = z.infer<typeof WalletAddressSchema>
 
-export const AgentIdentitySchema = z.object({
-  id: z.number()
-})
+const AGENT_ID_REGEX =
+  /^AGENT-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/
 
+export const AgentIdentitySchema =
+  z.custom<`AGENT-${string}-${string}-${string}-${string}-${string}`>(
+    (val): val is `AGENT-${string}-${string}-${string}-${string}-${string}` =>
+      typeof val === 'string' && AGENT_ID_REGEX.test(val)
+  )
 export type AgentIdentity = z.infer<typeof AgentIdentitySchema>
 
 export const IdentitySchema = z.union([EthAddressSchema, AgentIdentitySchema])
@@ -154,11 +158,48 @@ export const AgentWalletSchema = z.object({
   kind: AgentWalletKindSchema,
   label: z.string(),
   subOrganizationId: z.string(),
-  agentId: z.number().nullable(),
-  isDefault: z.boolean().default(false),
-  isRevoked: z.boolean().default(false),
-  agentUserId: z.string(),
   createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
 })
 
 export type AgentWallet = z.infer<typeof AgentWalletSchema>
+
+export const KeyPairSchema = z.object({
+  publicKey: z.string(),
+  privateKey: z.string()
+})
+
+export type KeyPair = z.infer<typeof KeyPairSchema>
+
+// Transactions
+
+export const TransactionSchema = z.object({
+  to: EthAddressSchema,
+  value: z
+    .union([z.string(), z.bigint()])
+    .transform((val) => (typeof val === 'string' ? BigInt(val) : val))
+    .optional(),
+  data: HexStringSchema.optional(),
+  chainId: z.number().optional()
+})
+
+export type Transaction = z.infer<typeof TransactionSchema>
+
+export const AgentRegistrationSchema = z.object({
+  registrationToken: z.string()
+})
+
+export type AgentRegistration = z.infer<typeof AgentRegistrationSchema>
+
+export const AgentProvisionResponseSchema = z.object({
+  agentId: IdentitySchema
+})
+
+export type AgentProvisionResponse = z.infer<typeof AgentProvisionResponseSchema>
+
+export const GitStateSchema = z.object({
+  repositoryUrl: z.string(),
+  branch: z.string(),
+  commit: z.string().optional().nullable()
+})
+
+export type GitState = z.infer<typeof GitStateSchema>

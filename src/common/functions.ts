@@ -1,5 +1,4 @@
-import { AgentIdentitySchema, Identity } from '@/common/types'
-import { EthAddressSchema } from '@memecoin/sdk'
+import { GitState, Identity, IdentitySchema } from '@/common/types'
 
 export function prepend0x(value: string): `0x${string}` {
   if (value.startsWith('0x')) {
@@ -75,25 +74,58 @@ export function ensureString(value: any, message: string | undefined = undefined
 }
 
 export function serializeIdentity(identity: Identity): string {
-  const parsedAddress = EthAddressSchema.safeParse(identity)
-  if (parsedAddress.success) return parsedAddress.data
-
-  const parsedAgent = AgentIdentitySchema.safeParse(identity)
-  if (parsedAgent.success) return `agent-${parsedAgent.data.id.toString()}`
-  throw new Error('Invalid identity')
+  return identity.toString()
 }
 
 export function deserializeIdentity(identityString: string): Identity {
-  if (identityString.startsWith('agent-')) {
-    return AgentIdentitySchema.parse({ id: parseInt(identityString.slice(6)) })
-  }
-  const parsedAddress = EthAddressSchema.safeParse(identityString)
-  if (parsedAddress.success) return parsedAddress.data
-  throw new Error('Invalid identity')
+  return IdentitySchema.parse(identityString)
 }
 
 export function sortIdentities(first: Identity, second: Identity): [Identity, Identity] {
   const firstStr = serializeIdentity(first).toLowerCase()
   const secondStr = serializeIdentity(second).toLowerCase()
   return firstStr <= secondStr ? [first, second] : [second, first]
+}
+
+export function isEqualGitState(state1: GitState, state2: GitState): boolean {
+  return (
+    state1.repositoryUrl === state2.repositoryUrl &&
+    state1.branch === state2.branch &&
+    state1.commit === state2.commit
+  )
+}
+
+export function retry<T>(
+  fn: () => Promise<T>,
+  options: {
+    maxRetries: number
+    logError: boolean
+    ms: number
+  } = {
+    maxRetries: 3,
+    logError: true,
+    ms: 1000
+  }
+): Promise<T> {
+  const { maxRetries, logError, ms } = options
+  return new Promise((resolve, reject) => {
+    let retries = 0
+    const attempt = (): void => {
+      fn()
+        .then(resolve)
+        .catch((error) => {
+          if (logError) {
+            console.error(`Error: ${error}`)
+          }
+          if (retries < maxRetries) {
+            retries++
+            setTimeout(attempt, ms)
+          } else {
+            reject(error)
+          }
+        })
+    }
+
+    attempt()
+  })
 }
