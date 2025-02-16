@@ -65,12 +65,16 @@ export class AgentcoinAPI {
     return setCookie
   }
 
-  async getUser(identity: Identity): Promise<User> {
-    const response = await fetch(`${AGENTCOIN_FUN_API_URL}/api/user/get`, {
+  async getUser(identity: Identity): Promise<User | undefined> {
+    const response = await fetch(`${AGENTCOIN_FUN_API_URL}/api/users/get`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ identity: serializeIdentity(identity) })
     })
+
+    if (response.status === 404) {
+      return undefined
+    }
 
     if (response.status !== 200) {
       const error = await response.json()

@@ -5,7 +5,8 @@ import {
   HexString,
   HydratedMessage,
   Identity,
-  Transaction
+  Transaction,
+  User
 } from '@/common/types'
 
 export interface IWalletService {
@@ -17,4 +18,5 @@ export interface IAgentcoinService {
   getDefaultWallet(kind: AgentWalletKind): Promise<AgentWallet>
   sendMessage(message: CreateMessage): Promise<HydratedMessage>
   getIdentity(): Promise<Identity>
+  getUser(identity: Identity): Promise<User | undefined>
 }

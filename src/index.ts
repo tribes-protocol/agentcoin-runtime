@@ -4,6 +4,7 @@ import { getTokenForProvider } from '@/common/config'
 import { CHARACTER_FILE } from '@/common/constants'
 import { initializeDatabase } from '@/common/db'
 import { AgentcoinRuntime } from '@/common/runtime'
+import agentcoinPlugin from '@/plugins/agentcoin'
 import tippingPlugin from '@/plugins/tipping'
 import { AgentcoinService } from '@/services/agentcoinfun'
 import { CodeService } from '@/services/code'
@@ -51,7 +52,7 @@ export function createAgent(
       modelProvider: character.modelProvider,
       evaluators: [],
       character,
-      plugins: [bootstrapPlugin, nodePlugin, tippingPlugin],
+      plugins: [bootstrapPlugin, nodePlugin, tippingPlugin, agentcoinPlugin],
       providers: [],
       actions: [],
       services: [],

@@ -9,7 +9,8 @@ import {
   AgentWalletKind,
   CreateMessage,
   HydratedMessage,
-  Identity
+  Identity,
+  User
 } from '@/common/types'
 import { IAgentcoinService } from '@/services/interfaces'
 import { KeychainService } from '@/services/keychain'
@@ -23,6 +24,10 @@ export class AgentcoinService implements IAgentcoinService {
     private readonly keychain: KeychainService,
     private readonly api: AgentcoinAPI
   ) {}
+
+  async getUser(identity: Identity): Promise<User | undefined> {
+    return this.api.getUser(identity)
+  }
 
   async getDefaultWallet(kind: AgentWalletKind): Promise<AgentWallet> {
     const cookie = await this.getCookie()
