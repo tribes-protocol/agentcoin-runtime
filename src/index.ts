@@ -70,6 +70,7 @@ async function main(): Promise<void> {
   const codeService = new CodeService()
   await agentcoinService.provisionIfNeeded()
   await codeService.start()
+
   // step 2: load character
   elizaLogger.log('Loading character...')
   const characterFile = process.env.CHARACTER_FILE

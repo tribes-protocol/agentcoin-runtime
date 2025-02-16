@@ -2,7 +2,8 @@ import * as fs from 'fs'
 import * as os from 'os'
 import * as path from 'path'
 
-export const AGENTCOIN_FUN_DIR = path.join(os.homedir(), '.agentcoin-fun')
+export const AGENTCOIN_FUN_DIR =
+  process.env.AGENTCOIN_FUN_DIR ?? path.join(os.homedir(), '.agentcoin-fun')
 
 export const AGENT_PROVISION_FILE = path.join(AGENTCOIN_FUN_DIR, 'agent-provision.json')
 

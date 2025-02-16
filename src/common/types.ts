@@ -35,10 +35,14 @@ export const WalletAddressSchema = z.union([EthAddressSchema, SolAddressSchema])
 
 export type WalletAddress = z.infer<typeof WalletAddressSchema>
 
-export const AgentIdentitySchema = z.object({
-  id: z.number()
-})
+const AGENT_ID_REGEX =
+  /^AGENT-[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$/
 
+export const AgentIdentitySchema =
+  z.custom<`AGENT-${string}-${string}-${string}-${string}-${string}`>(
+    (val): val is `AGENT-${string}-${string}-${string}-${string}-${string}` =>
+      typeof val === 'string' && AGENT_ID_REGEX.test(val)
+  )
 export type AgentIdentity = z.infer<typeof AgentIdentitySchema>
 
 export const IdentitySchema = z.union([EthAddressSchema, AgentIdentitySchema])
