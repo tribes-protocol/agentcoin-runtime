@@ -1,4 +1,4 @@
-import { FileMetadata, FileMetadataSchema } from '@/common/types'
+import { Knowledge, KnowledgeSchema } from '@/common/types'
 import { embed, IAgentRuntime, splitChunks, stringToUuid, UUID } from '@elizaos/core'
 import axios from 'axios'
 import fs from 'fs/promises'
@@ -46,9 +46,9 @@ export class KnowledgeService {
         const filePath = path.join(jsonDirectory, jsonFile)
         const metadata = await fs.readFile(filePath, 'utf-8')
 
-        let data: FileMetadata
+        let data: Knowledge
         try {
-          data = FileMetadataSchema.parse(JSON.parse(metadata))
+          data = KnowledgeSchema.parse(JSON.parse(metadata))
         } catch (error) {
           console.error(`Invalid JSON format in ${jsonFile}:`, error)
           continue
@@ -79,7 +79,7 @@ export class KnowledgeService {
     }
   }
 
-  private async processFileMetadata(data: FileMetadata, itemId: UUID): Promise<void> {
+  private async processFileMetadata(data: Knowledge, itemId: UUID): Promise<void> {
     try {
       const content = await this.downloadFile(data)
       const preprocessedContent = this.preprocess(content)
@@ -125,7 +125,7 @@ export class KnowledgeService {
     }
   }
 
-  private async downloadFile(file: FileMetadata): Promise<string> {
+  private async downloadFile(file: Knowledge): Promise<string> {
     await fs.mkdir(this.outputDirectory, { recursive: true })
     const outputPath = path.join(this.outputDirectory, file.filename)
 
