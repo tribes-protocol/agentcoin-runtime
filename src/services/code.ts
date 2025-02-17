@@ -31,7 +31,9 @@ export class CodeService {
           this.commitHash = commitHash
         } else {
           // kill the process and docker container should restart it
-          elizaLogger.log(`New code detected ${commitHash}. Restarting agent...`)
+          elizaLogger.log(
+            `New code detected current=${this.commitHash} new=${commitHash}. Restarting agent...`
+          )
           if (process.env.NODE_ENV === 'production') {
             process.exit(0)
           }
