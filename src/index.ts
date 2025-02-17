@@ -36,6 +36,7 @@ export function createAgent(
   walletService: IWalletService
 ): AgentcoinRuntime {
   elizaLogger.success(elizaLogger.successesTitle, 'Creating runtime for character', character.name)
+  elizaLogger.log('Home directory:', process.env.HOME)
 
   const nodePlugin = createNodePlugin()
 
