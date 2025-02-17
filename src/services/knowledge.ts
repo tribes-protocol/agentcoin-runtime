@@ -9,8 +9,8 @@ import pdfParse from 'pdf-parse'
 export class KnowledgeService {
   private stopSignal = false
   constructor(
-    private readonly outputDirectory: string,
-    private readonly runtime: IAgentRuntime
+    private readonly runtime: IAgentRuntime,
+    private readonly outputDirectory: string
   ) {}
 
   async startIndexing(jsonDirectory: string): Promise<void> {
@@ -92,7 +92,7 @@ export class KnowledgeService {
         agentId: this.runtime.agentId,
         content: {
           text: preprocessedContent,
-          metadata: { source: 'file', isMain: true }
+          metadata: { source: data.filename, isMain: true }
         },
         embedding: mainEmbedding,
         createdAt: Date.now()
@@ -113,7 +113,12 @@ export class KnowledgeService {
             agentId: this.runtime.agentId,
             content: {
               text: chunk,
-              metadata: { isChunk: true, source: 'file', originalId: itemId, chunkIndex: index }
+              metadata: {
+                isChunk: true,
+                source: data.filename,
+                originalId: itemId,
+                chunkIndex: index
+              }
             },
             embedding: chunkEmbedding,
             createdAt: Date.now()
@@ -177,10 +182,6 @@ export class KnowledgeService {
     } catch (error) {
       console.error(`Error processing file from ${file.url}:`, error)
       throw error
-    } finally {
-      await fs.unlink(outputPath).catch(() => {
-        console.warn(`Failed to delete file: ${outputPath}`)
-      })
     }
   }
 

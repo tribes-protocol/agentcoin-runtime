@@ -120,7 +120,10 @@ async function main(): Promise<void> {
 
   const knowledgeDir = path.join(os.homedir(), '.sentinel', 'knowledge')
 
-  const knowledgeService = new KnowledgeService(knowledgeDir, runtime)
+  // Eliza knowledge root
+  const outputDir = path.join(process.cwd(), '..', 'characters', 'knowledge')
+
+  const knowledgeService = new KnowledgeService(runtime, outputDir)
   await knowledgeService.startIndexing(knowledgeDir)
 }
 
