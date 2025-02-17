@@ -98,7 +98,7 @@ export class KnowledgeService {
         createdAt: Date.now()
       })
 
-      const chunks = await splitChunks(preprocessedContent, 7000, 500)
+      const chunks = await splitChunks(preprocessedContent, 750, 75)
 
       await Promise.all(
         chunks.map(async (chunk, index) => {
