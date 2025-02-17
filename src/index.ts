@@ -9,6 +9,7 @@ import { AgentcoinService } from '@/services/agentcoinfun'
 import { CodeService } from '@/services/code'
 import { IAgentcoinService, IWalletService } from '@/services/interfaces'
 import { KeychainService } from '@/services/keychain'
+import { KnowledgeService } from '@/services/knowledge'
 import { WalletService } from '@/services/wallet'
 import {
   CacheManager,
@@ -116,6 +117,9 @@ async function main(): Promise<void> {
   }
 
   console.log('agent runtime started', runtime.agentId, runtime.character.name)
+
+  const knowledgeService = new KnowledgeService(path.join(__dirname, 'knowledge'), runtime)
+  await knowledgeService.startIndexing(path.join(__dirname, 'knowledge'))
 }
 
 main().catch(console.error)

@@ -203,3 +203,12 @@ export const GitStateSchema = z.object({
 })
 
 export type GitState = z.infer<typeof GitStateSchema>
+
+export const FileMetadataSchema = z.object({
+  url: z.string(),
+  filename: z.string(),
+  action: z.enum(['create', 'delete']),
+  updatedAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
+})
+
+export type FileMetadata = z.infer<typeof FileMetadataSchema>
