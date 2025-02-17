@@ -40,6 +40,14 @@ export class KnowledgeService {
 
   async processJsonFiles(jsonDirectory: string): Promise<void> {
     try {
+      const dirExists = await fs
+        .access(jsonDirectory)
+        .then(() => true)
+        .catch(() => false)
+      if (!dirExists) {
+        return
+      }
+
       const files = (await fs.readdir(jsonDirectory)).filter((file) => file.endsWith('.json'))
 
       for (const jsonFile of files) {
@@ -62,6 +70,7 @@ export class KnowledgeService {
 
         if (data.action === 'delete') {
           if (existingKnowledge.length > 0) {
+            console.log(`Deleting knowledge item ${itemId}`)
             await this.runtime.databaseAdapter.removeKnowledge(itemId)
           }
           continue

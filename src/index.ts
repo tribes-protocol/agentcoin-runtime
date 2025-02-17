@@ -1,7 +1,7 @@
 import { AgentcoinAPI } from '@/apis/agentcoinfun'
 import { initializeClients } from '@/clients'
 import { getTokenForProvider } from '@/common/config'
-import { CHARACTER_FILE } from '@/common/constants'
+import { AGENTCOIN_FUN_DIR, CHARACTER_FILE } from '@/common/constants'
 import { initializeDatabase } from '@/common/db'
 import { AgentcoinRuntime } from '@/common/runtime'
 import agentcoinPlugin from '@/plugins/agentcoin'
@@ -22,7 +22,6 @@ import {
 import { bootstrapPlugin } from '@elizaos/plugin-bootstrap'
 import { createNodePlugin } from '@elizaos/plugin-node'
 import fs from 'fs'
-import os from 'os'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -118,7 +117,7 @@ async function main(): Promise<void> {
 
   console.log('agent runtime started', runtime.agentId, runtime.character.name)
 
-  const knowledgeDir = path.join(os.homedir(), '.sentinel', 'knowledge')
+  const knowledgeDir = path.join(AGENTCOIN_FUN_DIR, 'knowledge')
 
   // Eliza knowledge root
   const outputDir = path.join(process.cwd(), '..', 'characters', 'knowledge')
