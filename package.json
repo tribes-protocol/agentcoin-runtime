@@ -7,9 +7,8 @@
     "build": "tsup src/index.ts --format esm --dts",
     "lint": "eslint src/**/*.ts",
     "dev": "tsx src/index.ts",
-    
     "start": "NODE_ENV=production tsx dist/index.js",
-    "agent": "dotenv --e $HOME/.agentcoin-fun/env.production -- tsx dist/index.js"
+    "agent": "dotenv --e /root/.agentcoin-fun/env.production -- tsx dist/index.js"
   },
   "dependencies": {
     "@turnkey/http": "2.18.0",
