@@ -27,7 +27,7 @@ export class CodeService {
         const git = simpleGit(CODE_DIR)
         const commitHash = await git.revparse(['HEAD'])
 
-        if (isNull(commitHash) || this.commitHash === commitHash) {
+        if (isNull(this.commitHash) || this.commitHash === commitHash) {
           this.commitHash = commitHash
         } else {
           // kill the process and docker container should restart it
