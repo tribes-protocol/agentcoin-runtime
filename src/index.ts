@@ -22,11 +22,11 @@ import {
 import { bootstrapPlugin } from '@elizaos/plugin-bootstrap'
 import { createNodePlugin } from '@elizaos/plugin-node'
 import fs from 'fs'
+import os from 'os'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 export function createAgent(
   character: Character,
@@ -118,8 +118,10 @@ async function main(): Promise<void> {
 
   console.log('agent runtime started', runtime.agentId, runtime.character.name)
 
-  const knowledgeService = new KnowledgeService(path.join(__dirname, 'knowledge'), runtime)
-  await knowledgeService.startIndexing(path.join(__dirname, 'knowledge'))
+  const knowledgeDir = path.join(os.homedir(), '.sentinel', 'knowledge')
+
+  const knowledgeService = new KnowledgeService(knowledgeDir, runtime)
+  await knowledgeService.startIndexing(knowledgeDir)
 }
 
 main().catch(console.error)
