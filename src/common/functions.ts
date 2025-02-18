@@ -1,4 +1,14 @@
-import { GitState, Identity, IdentitySchema } from '@/common/types'
+import {
+  ChatChannel,
+  ChatChannelKind,
+  ChatChannelKindSchema,
+  ChatChannelSchema,
+  CoinChannelSchema,
+  DMChannelSchema,
+  GitState,
+  Identity,
+  IdentitySchema
+} from '@/common/types'
 
 export function prepend0x(value: string): `0x${string}` {
   if (value.startsWith('0x')) {
@@ -128,4 +138,44 @@ export function retry<T>(
 
     attempt()
   })
+}
+
+export function serializeChannel(data: ChatChannel): string {
+  const parsed = ChatChannelSchema.parse(data)
+  switch (parsed.kind) {
+    case ChatChannelKind.COIN:
+      return `coin:${parsed.chainId}:${parsed.address}`
+    case ChatChannelKind.DM: {
+      const [first, second] = sortIdentities(parsed.firstIdentity, parsed.secondIdentity)
+      return `dm:${serializeIdentity(first)}:${serializeIdentity(second)}`
+    }
+  }
+}
+
+export function deserializeChannel(channelString: string): ChatChannel {
+  const parts = channelString.split(':')
+  if (parts.length !== 3) throw new Error('Invalid chat channel data')
+
+  const [prefix] = parts
+  const kind = ChatChannelKindSchema.parse(prefix)
+  switch (kind) {
+    case ChatChannelKind.COIN: {
+      const [_, chainId, address] = parts
+      return CoinChannelSchema.parse({ kind, chainId, address })
+    }
+    case ChatChannelKind.DM: {
+      const [_, firstIdentity, secondIdentity] = parts
+      if (isNull(firstIdentity) || isNull(secondIdentity)) {
+        throw new Error('Invalid chat channel data')
+      }
+
+      const [first, second] = sortIdentities(
+        deserializeIdentity(firstIdentity),
+        deserializeIdentity(secondIdentity)
+      )
+
+      const res = DMChannelSchema.parse({ kind, firstIdentity: first, secondIdentity: second })
+      return res
+    }
+  }
 }

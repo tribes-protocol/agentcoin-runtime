@@ -86,15 +86,24 @@ export class AgentcoinService implements IAgentcoinService {
     console.log('Agent coin provisioned successfully', agentId)
   }
 
-  // helper private functions
-
-  private async getCookie(): Promise<string> {
+  async getCookie(): Promise<string> {
     if (isNull(this.cachedCookie)) {
       const identity = await this.getIdentity()
       this.cachedCookie = await this.login(identity)
     }
     return this.cachedCookie
   }
+
+  async getJwtAuthToken(): Promise<string> {
+    const cookie = await this.getCookie()
+    const match = cookie.match(/agent_auth_token=([^;]+)/)
+    if (!match) {
+      throw new Error('Could not extract JWT token from cookie')
+    }
+    return match[1]
+  }
+
+  // helper private functions
 
   private async isProvisioned(): Promise<boolean> {
     try {
