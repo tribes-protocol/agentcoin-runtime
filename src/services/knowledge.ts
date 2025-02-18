@@ -1,3 +1,4 @@
+import { KNOWLEDGE_DIR } from '@/common/constants'
 import { Knowledge, KnowledgeSchema } from '@/common/types'
 import { embed, IAgentRuntime, splitChunks, stringToUuid, UUID } from '@elizaos/core'
 import axios from 'axios'
@@ -7,26 +8,20 @@ import path from 'path'
 import pdfParse from 'pdf-parse'
 
 export class KnowledgeService {
-  private stopSignal = false
+  private isRunning = false
+
   constructor(
     private readonly runtime: IAgentRuntime,
     private readonly outputDirectory: string
   ) {}
 
-  async startIndexing(jsonDirectory: string): Promise<void> {
+  async start(): Promise<void> {
     console.log('📌 Knowledge indexing job started...')
+    this.isRunning = true
 
-    const gracefulShutdown = (): void => {
-      console.log('🔴 Graceful shutdown initiated...')
-      this.stopSignal = true
-    }
-
-    process.on('SIGINT', gracefulShutdown)
-    process.on('SIGTERM', gracefulShutdown)
-
-    while (!this.stopSignal) {
+    while (this.isRunning) {
       try {
-        await this.processJsonFiles(jsonDirectory)
+        await this.processJsonFiles(KNOWLEDGE_DIR)
       } catch (error) {
         console.error('⚠️ Error in indexing job:', error)
       }
@@ -36,6 +31,10 @@ export class KnowledgeService {
     }
 
     console.log('✅ Indexing job stopped gracefully.')
+  }
+
+  async stop(): Promise<void> {
+    this.isRunning = false
   }
 
   async processJsonFiles(jsonDirectory: string): Promise<void> {

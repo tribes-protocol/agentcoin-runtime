@@ -1,7 +1,7 @@
 import { AgentcoinAPI } from '@/apis/agentcoinfun'
 import { initializeClients } from '@/clients'
 import { getTokenForProvider } from '@/common/config'
-import { AGENTCOIN_FUN_DIR, CHARACTER_FILE } from '@/common/constants'
+import { CHARACTER_FILE } from '@/common/constants'
 import { initializeDatabase } from '@/common/db'
 import { AgentcoinRuntime } from '@/common/runtime'
 import agentcoinPlugin from '@/plugins/agentcoin'
@@ -69,6 +69,7 @@ async function main(): Promise<void> {
   const agentcoinService = new AgentcoinService(keychainService, agentcoinAPI)
   const walletService = new WalletService(keychainService.turnkeyApiKeyStamper)
   const codeService = new CodeService()
+
   await agentcoinService.provisionIfNeeded()
   void codeService.start()
 
@@ -89,9 +90,15 @@ async function main(): Promise<void> {
 
     runtime = createAgent(character, db, cache, token, agentcoinService, walletService)
 
+    // Eliza knowledge root
+    const outputDir = path.join(process.cwd(), '..', 'characters', 'knowledge')
+
+    const knowledgeService = new KnowledgeService(runtime, outputDir)
+
     const shutdown = async (signal: string): Promise<void> => {
       elizaLogger.log(`\nReceived ${signal} signal. Stopping agent...`)
       await codeService.stop()
+      await knowledgeService.stop()
       if (runtime) {
         try {
           await runtime.stop()
@@ -109,6 +116,8 @@ async function main(): Promise<void> {
     await runtime.initialize()
     runtime.clients = await initializeClients(character, runtime)
     elizaLogger.debug(`Started ${character.name} as ${runtime.agentId}`)
+
+    await knowledgeService.start()
   } catch (error) {
     elizaLogger.error(`Error starting agent for character ${character.name}:`, error)
     console.error(error)
@@ -116,14 +125,6 @@ async function main(): Promise<void> {
   }
 
   console.log('agent runtime started', runtime.agentId, runtime.character.name)
-
-  const knowledgeDir = path.join(AGENTCOIN_FUN_DIR, 'knowledge')
-
-  // Eliza knowledge root
-  const outputDir = path.join(process.cwd(), '..', 'characters', 'knowledge')
-
-  const knowledgeService = new KnowledgeService(runtime, outputDir)
-  await knowledgeService.startIndexing(knowledgeDir)
 }
 
 main().catch(console.error)

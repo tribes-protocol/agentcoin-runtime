@@ -31,7 +31,7 @@
     "@turnkey/sdk-server": "1.7.3",
     "@turnkey/viem": "0.6.10",
     "amqplib": "0.10.5",
-    "axios": "^1.7.9",
+    "axios": "1.7.9",
     "better-sqlite3": "11.5.0",
     "elliptic": "6.6.1",
     "fs": "0.0.1-security",

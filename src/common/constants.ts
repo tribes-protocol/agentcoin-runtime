@@ -25,3 +25,5 @@ if (!fs.existsSync(AGENTCOIN_FUN_DIR)) {
 }
 
 export const SQLITE_FILE = path.join(AGENTCOIN_FUN_DIR, 'agentcoin.sqlite')
+
+export const KNOWLEDGE_DIR = path.join(AGENTCOIN_FUN_DIR, 'knowledge')
