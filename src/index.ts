@@ -9,6 +9,7 @@ import { AgentcoinService } from '@/services/agentcoinfun'
 import { CodeService } from '@/services/code'
 import { IAgentcoinService, IWalletService } from '@/services/interfaces'
 import { KeychainService } from '@/services/keychain'
+import { KnowledgeService } from '@/services/knowledge'
 import { WalletService } from '@/services/wallet'
 import {
   CacheManager,
@@ -21,11 +22,9 @@ import {
 import { bootstrapPlugin } from '@elizaos/plugin-bootstrap'
 import { createNodePlugin } from '@elizaos/plugin-node'
 import fs from 'fs'
-import path from 'path'
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 export function createAgent(
   character: Character,
@@ -70,6 +69,7 @@ async function main(): Promise<void> {
   const agentcoinService = new AgentcoinService(keychainService, agentcoinAPI)
   const walletService = new WalletService(keychainService.turnkeyApiKeyStamper)
   const codeService = new CodeService()
+
   await agentcoinService.provisionIfNeeded()
   void codeService.start()
 
@@ -90,9 +90,12 @@ async function main(): Promise<void> {
 
     runtime = createAgent(character, db, cache, token, agentcoinService, walletService)
 
+    const knowledgeService = new KnowledgeService(runtime)
+
     const shutdown = async (signal: string): Promise<void> => {
       elizaLogger.log(`\nReceived ${signal} signal. Stopping agent...`)
       await codeService.stop()
+      await knowledgeService.stop()
       if (runtime) {
         try {
           await runtime.stop()
@@ -110,6 +113,8 @@ async function main(): Promise<void> {
     await runtime.initialize()
     runtime.clients = await initializeClients(character, runtime)
     elizaLogger.debug(`Started ${character.name} as ${runtime.agentId}`)
+
+    await knowledgeService.start()
   } catch (error) {
     elizaLogger.error(`Error starting agent for character ${character.name}:`, error)
     console.error(error)

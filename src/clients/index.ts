@@ -1,5 +1,5 @@
 import { AgentcoinClientInterface } from '@/clients/agentcoinfun'
-import { FarcasterAgentClient } from '@elizaos/client-farcaster'
+import { FarcasterClientInterface } from '@elizaos/client-farcaster'
 import { TelegramClientInterface } from '@elizaos/client-telegram'
 import { TwitterClientInterface } from '@elizaos/client-twitter'
 import { AgentRuntime, Character, Client, Clients } from '@elizaos/core'
@@ -22,7 +22,7 @@ export async function initializeClients(
   }
 
   if (clientTypes.includes(Clients.FARCASTER)) {
-    const farcasterClient = new FarcasterAgentClient(runtime)
+    const farcasterClient = await FarcasterClientInterface.start(runtime)
     if (farcasterClient) clients.push(farcasterClient)
   }
 
