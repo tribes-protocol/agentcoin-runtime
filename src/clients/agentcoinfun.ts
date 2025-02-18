@@ -6,7 +6,7 @@ import {
   ChatChannelKind,
   CoinChannelSchema,
   HydratedMessageSchema,
-  UserEventSchema
+  UserDmEventSchema
 } from '@/common/types'
 import { GetUserStore } from '@/plugins/agentcoin/stores/users'
 import { messageHandlerTemplate } from '@elizaos/client-direct'
@@ -52,8 +52,13 @@ export class AgentcoinClient {
       autoConnect: true,
       transports: ['websocket', 'polling'],
       auth: async (cb: (data: unknown) => void) => {
-        const jwtToken = await this.runtime.agentcoin.agent.getJwtAuthToken()
-        cb({ jwtToken })
+        try {
+          const jwtToken = await this.runtime.agentcoin.agent.getJwtAuthToken()
+          cb({ jwtToken })
+        } catch (error) {
+          elizaLogger.error('Error getting JWT token', error)
+          cb({})
+        }
       }
     })
 
@@ -76,10 +81,12 @@ export class AgentcoinClient {
     })
 
     const identity = await this.runtime.agentcoin.agent.getIdentity()
-    this.socket.on(`user:${serializeIdentity(identity)}`, async (data: unknown) => {
+    const eventName = `user:${serializeIdentity(identity)}`
+    elizaLogger.log('Agentcoin client listening for event', eventName)
+    this.socket.on(eventName, async (data: unknown) => {
       elizaLogger.log('Agentcoin client received event', data)
       try {
-        const event = UserEventSchema.parse(data)
+        const event = UserDmEventSchema.parse(data)
         const channel = event.channel
 
         // validate channel
