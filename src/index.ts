@@ -22,7 +22,6 @@ import {
 import { bootstrapPlugin } from '@elizaos/plugin-bootstrap'
 import { createNodePlugin } from '@elizaos/plugin-node'
 import fs from 'fs'
-import path from 'path'
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
@@ -90,10 +89,7 @@ async function main(): Promise<void> {
 
     runtime = createAgent(character, db, cache, token, agentcoinService, walletService)
 
-    // Eliza knowledge root
-    const outputDir = path.join(process.cwd(), '..', 'characters', 'knowledge')
-
-    const knowledgeService = new KnowledgeService(runtime, outputDir)
+    const knowledgeService = new KnowledgeService(runtime)
 
     const shutdown = async (signal: string): Promise<void> => {
       elizaLogger.log(`\nReceived ${signal} signal. Stopping agent...`)
