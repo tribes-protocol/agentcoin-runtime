@@ -86,15 +86,15 @@ export class AgentcoinService implements IAgentcoinService {
     console.log('Agent coin provisioned successfully', agentId)
   }
 
-  // helper private functions
-
-  private async getCookie(): Promise<string> {
+  async getCookie(): Promise<string> {
     if (isNull(this.cachedCookie)) {
       const identity = await this.getIdentity()
       this.cachedCookie = await this.login(identity)
     }
     return this.cachedCookie
   }
+
+  // helper private functions
 
   private async isProvisioned(): Promise<boolean> {
     try {

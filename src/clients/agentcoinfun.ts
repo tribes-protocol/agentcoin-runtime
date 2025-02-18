@@ -1,7 +1,13 @@
-import { AGENTCOIN_CHANNEL, AGENTCOIN_FUN_API_URL } from '@/common/env'
-import { isNull, serializeIdentity } from '@/common/functions'
+import { AGENTCOIN_FUN_API_URL, TOKEN_ADDRESS } from '@/common/env'
+import { isNull, serializeChannel, serializeIdentity } from '@/common/functions'
 import { AgentcoinRuntime } from '@/common/runtime'
-import { HydratedMessageSchema } from '@/common/types'
+import {
+  ChatChannel,
+  ChatChannelKind,
+  CoinChannelSchema,
+  HydratedMessageSchema,
+  UserEventSchema
+} from '@/common/types'
 import { GetUserStore } from '@/plugins/agentcoin/stores/users'
 import { messageHandlerTemplate } from '@elizaos/client-direct'
 
@@ -23,35 +29,67 @@ function messageIdToUuid(messageId: number): UUID {
 }
 
 export class AgentcoinClient {
-  private socket: Socket
+  private socket?: Socket
 
   constructor(private readonly runtime: AgentcoinRuntime) {
     elizaLogger.log('Connecting to Agentcoin API', AGENTCOIN_FUN_API_URL)
+  }
+
+  public async start(): Promise<void> {
+    if (!isNull(this.socket)) {
+      console.log('Agentcoin client already started')
+      return
+    }
+
     this.socket = io(AGENTCOIN_FUN_API_URL, {
       reconnection: true,
       rejectUnauthorized: false,
       reconnectionDelay: 1000,
       reconnectionDelayMax: 5000,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: Infinity,
       withCredentials: true,
       timeout: 20000,
       autoConnect: true,
-      transports: ['websocket', 'polling']
+      transports: ['websocket', 'polling'],
+      auth: async (cb: (data: unknown) => void) => {
+        const cookie = await this.runtime.agentcoin.agent.getCookie()
+        cb({ cookie })
+      }
     })
-  }
 
-  public start(): void {
     this.socket.on('connect', () => {
-      console.log('Connected to Agentcoin API')
+      elizaLogger.log('Connected to Agentcoin API')
     })
     this.socket.on('disconnect', () => {
-      console.log('Disconnected from Agentcoin API')
+      elizaLogger.log('Disconnected from Agentcoin API')
     })
 
-    console.log('Listening to', AGENTCOIN_CHANNEL)
-    this.socket.on(AGENTCOIN_CHANNEL, async (data) => {
+    const coinChannel = CoinChannelSchema.parse({
+      kind: ChatChannelKind.COIN,
+      chainId: 8453,
+      address: TOKEN_ADDRESS
+    })
+
+    this.socket.on(serializeChannel(coinChannel), async (data: unknown) => {
+      elizaLogger.log('Agentcoin client received coin message', data)
+      await this.processMessage(coinChannel, data)
+    })
+
+    const identity = await this.runtime.agentcoin.agent.getIdentity()
+    this.socket.on(`user:${serializeIdentity(identity)}`, async (data: unknown) => {
+      elizaLogger.log('Agentcoin client received event', event, data)
       try {
-        await this.processMessage(data)
+        const event = UserEventSchema.parse(data)
+        const channel = event.channel
+
+        // validate channel
+        if (channel.firstIdentity !== identity && channel.secondIdentity !== identity) {
+          elizaLogger.log('Agentcoin client received msg for unknown channel', channel)
+          return
+        }
+
+        // process message if allowed
+        await this.processMessage(channel, [event.message])
       } catch (error) {
         elizaLogger.error('Error processing message from agentcoin client', error)
         console.log(`error processing message`, error, `${error}`)
@@ -60,12 +98,10 @@ export class AgentcoinClient {
   }
 
   public stop(): void {
-    this.socket.disconnect()
+    this.socket?.disconnect()
   }
 
-  private async processMessage(data: unknown): Promise<void> {
-    elizaLogger.log('AgentcoinClient received message', { data })
-
+  private async processMessage(channel: ChatChannel, data: unknown): Promise<void> {
     const messages = HydratedMessageSchema.array().parse(data)
 
     const { message } = messages[0]
@@ -82,7 +118,7 @@ export class AgentcoinClient {
       return
     }
 
-    const roomId = stringToUuid(AGENTCOIN_CHANNEL)
+    const roomId = stringToUuid(serializeChannel(channel))
     const userId = stringToUuid(serializeIdentity(message.sender))
     const messageId = messageIdToUuid(message.id)
 
@@ -182,7 +218,7 @@ export class AgentcoinClient {
 export const AgentcoinClientInterface: Client = {
   start: async (_runtime: AgentcoinRuntime) => {
     const client = new AgentcoinClient(_runtime)
-    client.start()
+    await client.start()
     return client
   },
   stop: async (_runtime: IAgentRuntime, client?: Client) => {
