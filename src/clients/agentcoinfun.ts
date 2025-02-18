@@ -99,6 +99,7 @@ export class AgentcoinClient {
 
   public stop(): void {
     this.socket?.disconnect()
+    this.socket = undefined
   }
 
   private async processMessage(channel: ChatChannel, data: unknown): Promise<void> {
