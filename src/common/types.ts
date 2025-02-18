@@ -203,3 +203,10 @@ export const GitStateSchema = z.object({
 })
 
 export type GitState = z.infer<typeof GitStateSchema>
+
+export const UserDmEventSchema = z.object({
+  channel: DMChannelSchema,
+  message: HydratedMessageSchema
+})
+
+export type UserEvent = z.infer<typeof UserDmEventSchema>

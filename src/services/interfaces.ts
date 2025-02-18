@@ -19,4 +19,6 @@ export interface IAgentcoinService {
   sendMessage(message: CreateMessage): Promise<HydratedMessage>
   getIdentity(): Promise<Identity>
   getUser(identity: Identity): Promise<User | undefined>
+  getCookie(): Promise<string>
+  getJwtAuthToken(): Promise<string>
 }
