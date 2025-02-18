@@ -20,4 +20,5 @@ export interface IAgentcoinService {
   getIdentity(): Promise<Identity>
   getUser(identity: Identity): Promise<User | undefined>
   getCookie(): Promise<string>
+  getJwtAuthToken(): Promise<string>
 }

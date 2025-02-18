@@ -52,8 +52,8 @@ export class AgentcoinClient {
       autoConnect: true,
       transports: ['websocket', 'polling'],
       auth: async (cb: (data: unknown) => void) => {
-        const cookie = await this.runtime.agentcoin.agent.getCookie()
-        cb({ cookie })
+        const jwtToken = await this.runtime.agentcoin.agent.getJwtAuthToken()
+        cb({ jwtToken })
       }
     })
 
@@ -77,7 +77,7 @@ export class AgentcoinClient {
 
     const identity = await this.runtime.agentcoin.agent.getIdentity()
     this.socket.on(`user:${serializeIdentity(identity)}`, async (data: unknown) => {
-      elizaLogger.log('Agentcoin client received event', event, data)
+      elizaLogger.log('Agentcoin client received event', data)
       try {
         const event = UserEventSchema.parse(data)
         const channel = event.channel
