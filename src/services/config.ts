@@ -31,7 +31,7 @@ export class ConfigService {
         this.checkEnvUpdate(),
         this.checkCharacterUpdate()
       ])
-      await new Promise((resolve) => setTimeout(resolve, 30000))
+      await new Promise((resolve) => setTimeout(resolve, 10000))
     }
   }
 
