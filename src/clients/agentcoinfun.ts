@@ -82,7 +82,10 @@ export class AgentcoinClient {
 
     const identity = await this.runtime.agentcoin.agent.getIdentity()
     const eventName = `user:${serializeIdentity(identity)}`
-    elizaLogger.log('Agentcoin client listening for event', eventName)
+    elizaLogger.log(
+      `agentcoin.fun (${process.env.npm_package_version}) client listening for event`,
+      eventName
+    )
     this.socket.on(eventName, async (data: unknown) => {
       elizaLogger.log('Agentcoin client received event', data)
       try {
