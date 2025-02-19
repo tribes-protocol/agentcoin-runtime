@@ -14,7 +14,7 @@
     "@turnkey/http": "2.18.0",
     "@turnkey/sdk-server": "1.7.3",
     "@turnkey/viem": "0.6.10",
-    "@elizaos/adapter-postgres": "0.1.7",
+    "@elizaos/adapter-postgres": "0.1.9",
     "@elizaos/client-auto": "0.1.7",
     "@elizaos/client-direct": "0.1.7",
     "@elizaos/client-farcaster": "0.1.7",
