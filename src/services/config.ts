@@ -41,6 +41,7 @@ export class ConfigService {
     const checksum = crypto.createHash('md5').update(envvars).digest('hex')
     if (isNull(this.envvarsChecksum) || this.envvarsChecksum === checksum) {
       this.envvarsChecksum = checksum
+      return
     }
 
     // kill the process and docker container should restart it
