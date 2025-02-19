@@ -212,3 +212,10 @@ export const KnowledgeSchema = z.object({
 })
 
 export type Knowledge = z.infer<typeof KnowledgeSchema>
+
+export const UserDmEventSchema = z.object({
+  channel: DMChannelSchema,
+  message: HydratedMessageSchema
+})
+
+export type UserEvent = z.infer<typeof UserDmEventSchema>
