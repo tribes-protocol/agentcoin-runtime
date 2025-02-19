@@ -11,12 +11,11 @@ export class ConfigService {
   private envvarsChecksum: string | undefined
   private characterChecksum: string | undefined
 
-  // constructor() {}
-
   async start(): Promise<void> {
+    elizaLogger.log('Starting config service...')
     // disable in dev mode
     if (process.env.NODE_ENV !== 'production') {
-      elizaLogger.log('Code service disabled in dev mode')
+      elizaLogger.log('Config service disabled in dev mode')
       return
     }
 
@@ -97,5 +96,6 @@ export class ConfigService {
 
   async stop(): Promise<void> {
     this.isRunning = false
+    elizaLogger.log('Stopping config service...')
   }
 }
