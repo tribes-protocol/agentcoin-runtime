@@ -22,7 +22,8 @@ export class EventService {
       this.agentcoinId,
       {
         kind: 'health',
-        status: 'booting'
+        status: 'booting',
+        sentAt: new Date()
       },
       { cookie: this.agentcoinCookie }
     )
@@ -45,7 +46,8 @@ export class EventService {
       this.agentcoinId,
       {
         kind: 'health',
-        status: 'stopped'
+        status: 'stopped',
+        sentAt: new Date()
       },
       { cookie: this.agentcoinCookie }
     )
@@ -68,7 +70,8 @@ export class EventService {
       this.agentcoinId,
       {
         kind: 'env_var_change',
-        envVars: envvarsRecord
+        envVars: envvarsRecord,
+        sentAt: new Date()
       },
       {
         cookie: this.agentcoinCookie
@@ -81,7 +84,8 @@ export class EventService {
       this.agentcoinId,
       {
         kind: 'character_change',
-        character
+        character,
+        sentAt: new Date()
       },
       { cookie: this.agentcoinCookie }
     )
@@ -92,7 +96,8 @@ export class EventService {
       this.agentcoinId,
       {
         kind: 'health',
-        status: 'running'
+        status: 'running',
+        sentAt: new Date()
       },
       { cookie: this.agentcoinCookie }
     )
@@ -103,7 +108,8 @@ export class EventService {
       this.agentcoinId,
       {
         kind: 'code_change',
-        git: { commit: commitHash, remoteUrl }
+        git: { commit: commitHash, remoteUrl },
+        sentAt: new Date()
       },
       { cookie: this.agentcoinCookie }
     )

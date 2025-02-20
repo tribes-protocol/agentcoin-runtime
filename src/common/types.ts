@@ -261,7 +261,7 @@ export type Character = z.infer<typeof CharacterSchema>
 // agent events
 
 const BaseAgentEventSchema = z.object({
-  sentAt: z.date()
+  sentAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
 })
 
 export const HealthAgentEventSchema = BaseAgentEventSchema.extend({
