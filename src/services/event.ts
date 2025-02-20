@@ -1,10 +1,9 @@
 import { AgentcoinAPI } from '@/apis/agentcoinfun'
-import { Character, Identity } from '@/common/types'
+import { Character } from '@/common/types'
 import { elizaLogger } from '@elizaos/core'
 
 export class EventService {
   constructor(
-    private readonly agentcoinId: Identity,
     private readonly agentcoinCookie: string,
     private readonly agentcoinAPI: AgentcoinAPI
   ) {}
@@ -19,7 +18,6 @@ export class EventService {
     }
 
     await this.agentcoinAPI.publishEvent(
-      this.agentcoinId,
       {
         kind: 'health',
         status: 'booting',
@@ -43,7 +41,6 @@ export class EventService {
     }
 
     await this.agentcoinAPI.publishEvent(
-      this.agentcoinId,
       {
         kind: 'health',
         status: 'stopped',
@@ -67,7 +64,6 @@ export class EventService {
       }, {})
 
     await this.agentcoinAPI.publishEvent(
-      this.agentcoinId,
       {
         kind: 'env_var_change',
         envVars: envvarsRecord,
@@ -81,7 +77,6 @@ export class EventService {
 
   async publishCharacterChangeEvent(character: Character): Promise<void> {
     await this.agentcoinAPI.publishEvent(
-      this.agentcoinId,
       {
         kind: 'character_change',
         character,
@@ -93,7 +88,6 @@ export class EventService {
 
   async publishHeartbeatEvent(): Promise<void> {
     await this.agentcoinAPI.publishEvent(
-      this.agentcoinId,
       {
         kind: 'health',
         status: 'running',
@@ -105,7 +99,6 @@ export class EventService {
 
   async publishCodeChangeEvent(commitHash: string, remoteUrl: string): Promise<void> {
     await this.agentcoinAPI.publishEvent(
-      this.agentcoinId,
       {
         kind: 'code_change',
         git: { commit: commitHash, remoteUrl },

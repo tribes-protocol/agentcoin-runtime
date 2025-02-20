@@ -23,16 +23,13 @@ const MessageResponseSchema = z.object({
 })
 
 export class AgentcoinAPI {
-  async publishEvent(
-    agentId: Identity,
-    event: AgentEventData,
-    options: { cookie: string }
-  ): Promise<void> {
+  async publishEvent(event: AgentEventData, options: { cookie: string }): Promise<void> {
+    const body = JSON.stringify(toJsonTree(event))
     try {
       const response = await fetch(`${AGENTCOIN_FUN_API_URL}/api/agents/event`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Cookie: options.cookie },
-        body: toJsonTree(event)
+        body
       })
 
       if (response.status !== 200) {
@@ -40,11 +37,7 @@ export class AgentcoinAPI {
         throw new Error(ErrorResponseSchema.parse(error).error)
       }
     } catch (error) {
-      elizaLogger.error(
-        'Failed to publish event',
-        JSON.stringify(toJsonTree(event), null, 2),
-        error
-      )
+      elizaLogger.error('Failed to publish event', body, error)
     }
   }
 

@@ -70,8 +70,7 @@ async function main(): Promise<void> {
   await agentcoinService.provisionIfNeeded()
 
   const agentcoinCookie = await agentcoinService.getCookie()
-  const agentcoinId = await agentcoinService.getIdentity()
-  const eventService = new EventService(agentcoinId, agentcoinCookie, agentcoinAPI)
+  const eventService = new EventService(agentcoinCookie, agentcoinAPI)
   const walletService = new WalletService(keychainService.turnkeyApiKeyStamper)
   const configService = new ConfigService(eventService)
 
