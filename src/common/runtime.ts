@@ -47,4 +47,38 @@ export class AgentcoinRuntime extends AgentRuntime {
     super(opts.eliza)
     this.agentcoin = opts.agentcoin
   }
+
+  async ensureConnectionContext(options: {
+    roomId: UUID
+    userId: UUID
+    username?: string
+    name?: string
+    email?: string
+    source?: string
+  }): Promise<void> {
+    const { roomId, userId, username, name, email, source } = options
+
+    await Promise.all([
+      this.ensureUserExists(
+        this.agentId,
+        this.character.username ?? 'Agent',
+        this.character.name ?? 'Agent',
+        'Agent',
+        source
+      ),
+      this.ensureUserExists(
+        userId,
+        username ?? 'User' + userId,
+        name ?? 'User' + userId,
+        email,
+        source
+      ),
+      this.ensureRoomExists(roomId)
+    ])
+
+    await Promise.all([
+      this.ensureParticipantInRoom(userId, roomId),
+      this.ensureParticipantInRoom(this.agentId, roomId)
+    ])
+  }
 }

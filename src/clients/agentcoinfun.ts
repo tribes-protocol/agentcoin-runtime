@@ -133,14 +133,14 @@ export class AgentcoinClient {
     const userId = stringToUuid(serializeIdentity(message.sender))
     const messageId = messageIdToUuid(message.id)
 
-    await this.runtime.ensureConnection(roomId, userId)
-    await this.runtime.ensureUserExists(
+    await this.runtime.ensureConnectionContext({
+      roomId,
       userId,
-      user.username,
-      user.username,
-      user.identity,
-      'agentcoin'
-    )
+      username: user.username,
+      name: user.username,
+      email: user.identity,
+      source: 'agentcoin'
+    })
 
     const memory: Memory = {
       id: messageId,
