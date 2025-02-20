@@ -32,10 +32,7 @@ export class AgentcoinAPI {
       const response = await fetch(`${AGENTCOIN_FUN_API_URL}/api/agents/event`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Cookie: options.cookie },
-        body: JSON.stringify({
-          agentId,
-          event: toJsonTree(event)
-        })
+        body: toJsonTree(event)
       })
 
       if (response.status !== 200) {
@@ -43,7 +40,11 @@ export class AgentcoinAPI {
         throw new Error(ErrorResponseSchema.parse(error).error)
       }
     } catch (error) {
-      elizaLogger.error('Failed to publish event', JSON.stringify(event, null, 2), error)
+      elizaLogger.error(
+        'Failed to publish event',
+        JSON.stringify(toJsonTree(event), null, 2),
+        error
+      )
     }
   }
 
