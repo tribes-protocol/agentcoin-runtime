@@ -35,8 +35,7 @@ export function createAgent(
   agentcoinService: IAgentcoinService,
   walletService: IWalletService
 ): AgentcoinRuntime {
-  elizaLogger.success(elizaLogger.successesTitle, 'Creating runtime for character', character.name)
-  elizaLogger.log('Home directory:', process.env.HOME)
+  elizaLogger.info(elizaLogger.successesTitle, 'Creating runtime for character', character.name)
 
   const nodePlugin = createNodePlugin()
 
@@ -64,7 +63,6 @@ export function createAgent(
 
 async function main(): Promise<void> {
   // step 1: provision the hardware if needed.
-  elizaLogger.log('Provisioning hardware...')
   const keychainService = new KeychainService()
   const agentcoinAPI = new AgentcoinAPI()
   const agentcoinService = new AgentcoinService(keychainService, agentcoinAPI)
@@ -74,7 +72,7 @@ async function main(): Promise<void> {
   void configService.start()
 
   // step 2: load character
-  elizaLogger.log('Loading character...')
+  elizaLogger.info('Loading character...')
   const character: Character = JSON.parse(fs.readFileSync(CHARACTER_FILE, 'utf8'))
 
   // step 3: initialize eliza runtime
@@ -91,7 +89,7 @@ async function main(): Promise<void> {
     runtime = createAgent(character, db, cache, token, agentcoinService, walletService)
 
     const shutdown = async (signal: string): Promise<void> => {
-      elizaLogger.log(`\nReceived ${signal} signal. Stopping agent...`)
+      elizaLogger.warn(`\nReceived ${signal} signal. Stopping agent...`)
       await configService.stop()
       if (runtime) {
         try {
@@ -109,14 +107,12 @@ async function main(): Promise<void> {
 
     await runtime.initialize()
     runtime.clients = await initializeClients(character, runtime)
-    elizaLogger.debug(`Started ${character.name} as ${runtime.agentId}`)
   } catch (error) {
     elizaLogger.error(`Error starting agent for character ${character.name}:`, error)
-    console.error(error)
     throw error
   }
 
-  console.log('agent runtime started', runtime.agentId, runtime.character.name)
+  elizaLogger.success('agent runtime started id:', runtime.agentId, 'name', runtime.character.name)
 }
 
-main().catch(console.error)
+main().catch(elizaLogger.error)

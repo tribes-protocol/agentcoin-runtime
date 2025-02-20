@@ -9,6 +9,7 @@ import {
   Identity,
   IdentitySchema
 } from '@/common/types'
+import { elizaLogger } from '@elizaos/core'
 
 export function prepend0x(value: string): `0x${string}` {
   if (value.startsWith('0x')) {
@@ -125,7 +126,7 @@ export function retry<T>(
         .then(resolve)
         .catch((error) => {
           if (logError) {
-            console.error(`Error: ${error}`)
+            elizaLogger.error(`Error: ${error}`)
           }
           if (retries < maxRetries) {
             retries++

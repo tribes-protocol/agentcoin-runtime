@@ -38,7 +38,7 @@ export class AgentcoinClient {
 
   public async start(): Promise<void> {
     if (!isNull(this.socket)) {
-      console.log('Agentcoin client already started')
+      elizaLogger.log('Agentcoin client already started')
       return
     }
 
@@ -52,6 +52,9 @@ export class AgentcoinClient {
       timeout: 20000,
       autoConnect: true,
       transports: ['websocket', 'polling'],
+      extraHeaders: {
+        Cookie: await this.runtime.agentcoin.agent.getCookie()
+      },
       auth: async (cb: (data: unknown) => void) => {
         try {
           const jwtToken = await this.runtime.agentcoin.agent.getJwtAuthToken()
@@ -103,7 +106,6 @@ export class AgentcoinClient {
         await this.processMessage(channel, [event.message])
       } catch (error) {
         elizaLogger.error('Error processing message from agentcoin client', error)
-        console.log(`error processing message`, error, `${error}`)
       }
     })
   }
