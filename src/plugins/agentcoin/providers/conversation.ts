@@ -1,53 +1,50 @@
-// import { isNull } from '@/common/functions'
-// import { AgentcoinRuntime } from '@/common/runtime'
-// import { GetUserStore } from '@/plugins/agentcoin/stores/users'
-// import { elizaLogger, Memory, Provider, State } from '@elizaos/core'
+import { isNull } from '@/common/functions'
+import { AgentcoinRuntime } from '@/common/runtime'
+import { Memory, Provider, State } from '@elizaos/core'
 
-// const conversationProvider: Provider = {
-//   get: async (runtime: AgentcoinRuntime, memory: Memory, _state?: State): Promise<string> => {
-//     const isSelf = memory.userId === runtime.agentId
+const conversationProvider: Provider = {
+  get: async (runtime: AgentcoinRuntime, memory: Memory, _state?: State): Promise<string> => {
+    const isSelf = memory.userId === runtime.agentId
 
-//     if (isSelf) {
-//       // for now if the sender is the agent, we don't need to add context. this might
-//       // change in the future.
-//       return ''
-//     }
+    if (isSelf) {
+      // for now if the sender is the agent, we don't need to add context. this might
+      // change in the future.
+      return ''
+    }
 
-//     // source != 'agentcoin', bail out
-//     if (memory.content.source !== 'agentcoin') {
-//       return ''
-//     }
+    // source != 'agentcoin', bail out
+    if (memory.content.source !== 'agentcoin') {
+      return ''
+    }
 
-//     const userStore = GetUserStore(runtime)
-//     let user = await userStore.getUser(memory.userId)
+    const account = await runtime.databaseAdapter.getAccountById(memory.userId)
 
-//     if (isNull(user)) {
-//       const identity = await userStore.getUserIdentity(memory.userId)
-//       if (isNull(identity)) {
-//         return ''
-//       }
+    if (isNull(account)) {
+      return ''
+    }
 
-//       user = await runtime.agentcoin.agent.getUser(identity)
+    const username = account.username
+    const name = account.name
+    const email = account.email
+    const avatarUrl = account.avatarUrl
+    const bio = account.details?.bio
+    const source = account.details?.source
+    const ethAddress = account.details?.ethAddress
 
-//       if (isNull(user)) {
-//         elizaLogger.warn('User not found', { identity })
-//         return ''
-//       }
+    const details = [
+      username && `Username: ${username}`,
+      name && `Name: ${name}`,
+      email && `Email: ${email}`,
+      bio && `Bio: ${bio}`,
+      avatarUrl && `Profile Image: ${avatarUrl}`,
+      ethAddress && `Ethereum Address: ${ethAddress}`
+    ].filter(Boolean)
 
-//       await userStore.saveUser(user)
-//     }
+    return `
+    **You are talking to the following user ${isNull(source) ? '' : `from ${source}`}**
+    ${details.map((detail) => `- ${detail}`).join('\n')}
+    `.trim()
+  }
+}
 
-//     if (!isNull(user)) {
-//       return `
-//       **You are talking to the following user from https://agentcoin.fun**
-//       - Username: ${user.username}
-//       - Bio: ${user.bio}
-//       - Profile Image: ${user.image}
-//       `.trim()
-//     }
-
-//     return ''
-//   }
-// }
-
-// export { conversationProvider }
+export { conversationProvider }

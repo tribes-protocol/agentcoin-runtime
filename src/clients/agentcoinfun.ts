@@ -5,6 +5,7 @@ import {
   ChatChannel,
   ChatChannelKind,
   CoinChannelSchema,
+  EthAddressSchema,
   HydratedMessageSchema,
   UserDmEventSchema
 } from '@/common/types'
@@ -133,12 +134,14 @@ export class AgentcoinClient {
     const userId = stringToUuid(serializeIdentity(message.sender))
     const messageId = messageIdToUuid(message.id)
 
-    await this.runtime.ensureConnectionContext({
+    await this.runtime.ensureUserRoomConnection({
       roomId,
       userId,
       username: user.username,
       name: user.username,
       email: user.identity,
+      bio: user.bio,
+      ethAddress: EthAddressSchema.safeParse(user.identity).success ? user.identity : undefined,
       source: 'agentcoin'
     })
 
