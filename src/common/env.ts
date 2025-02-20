@@ -11,3 +11,5 @@ export const TOKEN_ADDRESS = EthAddressSchema.parse(
 )
 
 export const BASE_RPC_URL = ensureString(process.env.BASE_RPC_URL, 'BASE_RPC_URL is not set')
+
+export const POSTGRES_URL = ensureString(process.env.POSTGRES_URL, 'POSTGRES_URL is not set')

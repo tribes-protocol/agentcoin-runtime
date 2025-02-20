@@ -6,7 +6,7 @@ import { initializeDatabase } from '@/common/db'
 import { AgentcoinRuntime } from '@/common/runtime'
 import agentcoinPlugin from '@/plugins/agentcoin'
 import { AgentcoinService } from '@/services/agentcoinfun'
-import { CodeService } from '@/services/code'
+import { ConfigService } from '@/services/config'
 import { IAgentcoinService, IWalletService } from '@/services/interfaces'
 import { KeychainService } from '@/services/keychain'
 import { KnowledgeService } from '@/services/knowledge'
@@ -68,10 +68,9 @@ async function main(): Promise<void> {
   const agentcoinAPI = new AgentcoinAPI()
   const agentcoinService = new AgentcoinService(keychainService, agentcoinAPI)
   const walletService = new WalletService(keychainService.turnkeyApiKeyStamper)
-  const codeService = new CodeService()
-
+  const configService = new ConfigService()
   await agentcoinService.provisionIfNeeded()
-  void codeService.start()
+  void configService.start()
 
   // step 2: load character
   elizaLogger.log('Loading character...')
@@ -94,8 +93,8 @@ async function main(): Promise<void> {
 
     const shutdown = async (signal: string): Promise<void> => {
       elizaLogger.log(`\nReceived ${signal} signal. Stopping agent...`)
-      await codeService.stop()
       await knowledgeService.stop()
+      await configService.stop()
       if (runtime) {
         try {
           await runtime.stop()

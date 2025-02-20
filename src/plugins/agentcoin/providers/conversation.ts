@@ -1,7 +1,6 @@
 import { isNull } from '@/common/functions'
 import { AgentcoinRuntime } from '@/common/runtime'
-import { GetUserStore } from '@/plugins/agentcoin/stores/users'
-import { elizaLogger, Memory, Provider, State } from '@elizaos/core'
+import { Memory, Provider, State } from '@elizaos/core'
 
 const conversationProvider: Provider = {
   get: async (runtime: AgentcoinRuntime, memory: Memory, _state?: State): Promise<string> => {
@@ -18,35 +17,33 @@ const conversationProvider: Provider = {
       return ''
     }
 
-    const userStore = GetUserStore(runtime)
-    let user = await userStore.getUser(memory.userId)
+    const account = await runtime.databaseAdapter.getAccountById(memory.userId)
 
-    if (isNull(user)) {
-      const identity = await userStore.getUserIdentity(memory.userId)
-      if (isNull(identity)) {
-        return ''
-      }
-
-      user = await runtime.agentcoin.agent.getUser(identity)
-
-      if (isNull(user)) {
-        elizaLogger.warn('User not found', { identity })
-        return ''
-      }
-
-      await userStore.saveUser(user)
+    if (isNull(account)) {
+      return ''
     }
 
-    if (!isNull(user)) {
-      return `
-      **You are talking to the following user from https://agentcoin.fun**
-      - Username: ${user.username}
-      - Bio: ${user.bio}
-      - Profile Image: ${user.image}
-      `.trim()
-    }
+    const username = account.username
+    const name = account.name
+    const email = account.email
+    const avatarUrl = account.avatarUrl
+    const bio = account.details?.bio
+    const source = account.details?.source
+    const ethAddress = account.details?.ethAddress
 
-    return ''
+    const details = [
+      username && `Username: ${username}`,
+      name && `Name: ${name}`,
+      email && `Email: ${email}`,
+      bio && `Bio: ${bio}`,
+      avatarUrl && `Profile Image: ${avatarUrl}`,
+      ethAddress && `Ethereum Address: ${ethAddress}`
+    ].filter(Boolean)
+
+    return `
+    **You are talking to the following user ${isNull(source) ? '' : `from ${source}`}**
+    ${details.map((detail) => `- ${detail}`).join('\n')}
+    `.trim()
   }
 }
 

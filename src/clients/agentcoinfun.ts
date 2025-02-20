@@ -5,10 +5,11 @@ import {
   ChatChannel,
   ChatChannelKind,
   CoinChannelSchema,
+  EthAddressSchema,
   HydratedMessageSchema,
   UserDmEventSchema
 } from '@/common/types'
-import { GetUserStore } from '@/plugins/agentcoin/stores/users'
+
 import { messageHandlerTemplate } from '@elizaos/client-direct'
 
 import {
@@ -82,7 +83,10 @@ export class AgentcoinClient {
 
     const identity = await this.runtime.agentcoin.agent.getIdentity()
     const eventName = `user:${serializeIdentity(identity)}`
-    elizaLogger.log('Agentcoin client listening for event', eventName)
+    elizaLogger.log(
+      `agentcoin.fun (${process.env.npm_package_version}) client listening for event`,
+      eventName
+    )
     this.socket.on(eventName, async (data: unknown) => {
       elizaLogger.log('Agentcoin client received event', data)
       try {
@@ -112,7 +116,7 @@ export class AgentcoinClient {
   private async processMessage(channel: ChatChannel, data: unknown): Promise<void> {
     const messages = HydratedMessageSchema.array().parse(data)
 
-    const { message } = messages[0]
+    const { message, user } = messages[0]
 
     if (isNull(message)) {
       elizaLogger.log('AgentcoinClient received empty message')
@@ -130,10 +134,16 @@ export class AgentcoinClient {
     const userId = stringToUuid(serializeIdentity(message.sender))
     const messageId = messageIdToUuid(message.id)
 
-    await this.runtime.ensureConnection(roomId, userId)
-
-    const userStore = GetUserStore(this.runtime)
-    await userStore.linkUserIdentity(message.sender)
+    await this.runtime.ensureUserRoomConnection({
+      roomId,
+      userId,
+      username: user.username,
+      name: user.username,
+      email: user.identity,
+      bio: user.bio,
+      ethAddress: EthAddressSchema.safeParse(user.identity).success ? user.identity : undefined,
+      source: 'agentcoin'
+    })
 
     const memory: Memory = {
       id: messageId,

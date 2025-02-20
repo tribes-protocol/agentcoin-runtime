@@ -142,7 +142,7 @@ export const OpenGraphSchema = z.object({
 
 export const HydratedMessageSchema = z.object({
   message: MessageSchema,
-  // user: UserSchema, // FIXME: enable once fixed
+  user: UserSchema,
   openGraph: OpenGraphSchema.optional().nullable()
 })
 
