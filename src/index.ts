@@ -86,10 +86,7 @@ async function main(): Promise<void> {
 
   try {
     const token = getTokenForProvider(character.modelProvider, character)
-    const db = initializeDatabase()
-
-    await db.init()
-
+    const db = await initializeDatabase()
     const cache = new CacheManager(new DbCacheAdapter(db, character.id))
 
     runtime = createAgent(character, db, cache, token, agentcoinService, walletService)
@@ -108,8 +105,8 @@ async function main(): Promise<void> {
       process.exit(0)
     }
 
-    process.on('SIGINT', () => shutdown('SIGINT'))
-    process.on('SIGTERM', () => shutdown('SIGTERM'))
+    process.on('SIGINT', async () => await shutdown('SIGINT'))
+    process.on('SIGTERM', async () => await shutdown('SIGTERM'))
 
     await runtime.initialize()
     runtime.clients = await initializeClients(character, runtime)
