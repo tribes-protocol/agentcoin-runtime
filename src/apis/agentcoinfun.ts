@@ -1,6 +1,7 @@
 import { AGENTCOIN_FUN_API_URL } from '@/common/env'
 import { serializeIdentity, toJsonTree } from '@/common/functions'
 import {
+  AgentEventData,
   AgentProvisionResponse,
   AgentProvisionResponseSchema,
   AgentWallet,
@@ -14,6 +15,7 @@ import {
   User,
   UserSchema
 } from '@/common/types'
+import { elizaLogger } from '@elizaos/core'
 import { z } from 'zod'
 
 const MessageResponseSchema = z.object({
@@ -21,6 +23,30 @@ const MessageResponseSchema = z.object({
 })
 
 export class AgentcoinAPI {
+  async publishEvent(
+    agentId: Identity,
+    event: AgentEventData,
+    options: { cookie: string }
+  ): Promise<void> {
+    try {
+      const response = await fetch(`${AGENTCOIN_FUN_API_URL}/api/agents/event`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: options.cookie },
+        body: JSON.stringify({
+          agentId,
+          event: toJsonTree(event)
+        })
+      })
+
+      if (response.status !== 200) {
+        const error = await response.json()
+        throw new Error(ErrorResponseSchema.parse(error).error)
+      }
+    } catch (error) {
+      elizaLogger.error('Failed to publish event', error)
+    }
+  }
+
   async loginMessageToSign(identity: Identity): Promise<string> {
     const response = await fetch(`${AGENTCOIN_FUN_API_URL}/api/users/login-message`, {
       method: 'POST',

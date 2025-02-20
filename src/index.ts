@@ -7,6 +7,7 @@ import { AgentcoinRuntime } from '@/common/runtime'
 import agentcoinPlugin from '@/plugins/agentcoin'
 import { AgentcoinService } from '@/services/agentcoinfun'
 import { ConfigService } from '@/services/config'
+import { EventService } from '@/services/event'
 import { IAgentcoinService, IWalletService } from '@/services/interfaces'
 import { KeychainService } from '@/services/keychain'
 import { WalletService } from '@/services/wallet'
@@ -66,10 +67,15 @@ async function main(): Promise<void> {
   const keychainService = new KeychainService()
   const agentcoinAPI = new AgentcoinAPI()
   const agentcoinService = new AgentcoinService(keychainService, agentcoinAPI)
-  const walletService = new WalletService(keychainService.turnkeyApiKeyStamper)
-  const configService = new ConfigService()
   await agentcoinService.provisionIfNeeded()
-  void configService.start()
+
+  const agentcoinCookie = await agentcoinService.getCookie()
+  const agentcoinId = await agentcoinService.getIdentity()
+  const eventService = new EventService(agentcoinId, agentcoinCookie, agentcoinAPI)
+  const walletService = new WalletService(keychainService.turnkeyApiKeyStamper)
+  const configService = new ConfigService(eventService)
+
+  void Promise.all([eventService.start(), configService.start()])
 
   // step 2: load character
   elizaLogger.info('Loading character...')
@@ -90,7 +96,7 @@ async function main(): Promise<void> {
 
     const shutdown = async (signal: string): Promise<void> => {
       elizaLogger.warn(`\nReceived ${signal} signal. Stopping agent...`)
-      await configService.stop()
+      await Promise.all([configService.stop(), eventService.stop()])
       if (runtime) {
         try {
           await runtime.stop()

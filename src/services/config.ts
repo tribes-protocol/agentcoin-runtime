@@ -1,5 +1,7 @@
 import { CHARACTER_FILE, CODE_DIR, ENV_FILE } from '@/common/constants'
-import { isNull } from '@/common/functions'
+import { isNull, isRequiredString } from '@/common/functions'
+import { CharacterSchema } from '@/common/types'
+import { EventService } from '@/services/event'
 import { elizaLogger } from '@elizaos/core'
 import crypto from 'crypto'
 import fs from 'fs'
@@ -10,6 +12,8 @@ export class ConfigService {
   private gitCommitHash: string | undefined
   private envvarsChecksum: string | undefined
   private characterChecksum: string | undefined
+
+  constructor(private readonly eventService: EventService) {}
 
   async start(): Promise<void> {
     elizaLogger.log('Starting config service...')
@@ -46,6 +50,8 @@ export class ConfigService {
 
     // kill the process and docker container should restart it
     elizaLogger.log(`New envvars file detected. Restarting agent...`)
+    await this.eventService.publishEnvChangeEvent(envvars)
+
     if (process.env.NODE_ENV === 'production') {
       process.exit(0)
     }
@@ -62,6 +68,10 @@ export class ConfigService {
 
     // kill the process and docker container should restart it
     elizaLogger.log(`New character file detected. Restarting agent...`)
+    const characterObject = CharacterSchema.parse(
+      JSON.parse(fs.readFileSync(CHARACTER_FILE, 'utf8'))
+    )
+    await this.eventService.publishCharacterChangeEvent(characterObject)
     if (process.env.NODE_ENV === 'production') {
       process.exit(0)
     }
@@ -71,6 +81,12 @@ export class ConfigService {
     try {
       const git = simpleGit(CODE_DIR)
       const commitHash = await git.revparse(['HEAD'])
+      const remoteUrl = await git.remote(['get-url', 'origin'])
+
+      if (!isRequiredString(remoteUrl)) {
+        elizaLogger.error('No remote url found')
+        return
+      }
 
       if (isNull(this.gitCommitHash) || this.gitCommitHash === commitHash) {
         this.gitCommitHash = commitHash
@@ -79,6 +95,7 @@ export class ConfigService {
         elizaLogger.log(
           `New code detected current=${this.gitCommitHash} new=${commitHash}. Restarting agent...`
         )
+        await this.eventService.publishCodeChangeEvent(commitHash, remoteUrl)
         if (process.env.NODE_ENV === 'production') {
           process.exit(0)
         }
