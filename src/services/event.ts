@@ -29,7 +29,7 @@ export class EventService {
     // Start heartbeat interval
     this.heartbeatInterval = setInterval(() => {
       void this.publishHeartbeatEvent()
-    }, 30000) // Send heartbeat every 30 seconds
+    }, 300000) // Send heartbeat every 5 minutes
 
     await this.publishHeartbeatEvent()
   }
