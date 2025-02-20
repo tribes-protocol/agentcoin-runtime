@@ -8,7 +8,7 @@ import {
   HydratedMessageSchema,
   UserDmEventSchema
 } from '@/common/types'
-import { GetUserStore } from '@/plugins/agentcoin/stores/users'
+
 import { messageHandlerTemplate } from '@elizaos/client-direct'
 
 import {
@@ -115,7 +115,7 @@ export class AgentcoinClient {
   private async processMessage(channel: ChatChannel, data: unknown): Promise<void> {
     const messages = HydratedMessageSchema.array().parse(data)
 
-    const { message } = messages[0]
+    const { message, user } = messages[0]
 
     if (isNull(message)) {
       elizaLogger.log('AgentcoinClient received empty message')
@@ -134,9 +134,13 @@ export class AgentcoinClient {
     const messageId = messageIdToUuid(message.id)
 
     await this.runtime.ensureConnection(roomId, userId)
-
-    const userStore = GetUserStore(this.runtime)
-    await userStore.linkUserIdentity(message.sender)
+    await this.runtime.ensureUserExists(
+      userId,
+      user.username,
+      user.username,
+      user.identity,
+      'agentcoin'
+    )
 
     const memory: Memory = {
       id: messageId,
