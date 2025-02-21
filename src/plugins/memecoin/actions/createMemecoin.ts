@@ -90,7 +90,7 @@
 //     _options: { [key: string]: unknown },
 //     callback?: HandlerCallback
 //   ): Promise<boolean> => {
-//     elizaLogger.log('Starting memecoin CREATE_MEMECOIN handler...')
+//     elizaLogger.info('Starting memecoin CREATE_MEMECOIN handler...')
 
 //     if (!state) {
 //       state = await runtime.composeState(message)

@@ -14,6 +14,7 @@ import {
 } from '@/common/types'
 import { IAgentcoinService } from '@/services/interfaces'
 import { KeychainService } from '@/services/keychain'
+import { elizaLogger } from '@elizaos/core'
 import * as fs from 'fs'
 
 export class AgentcoinService implements IAgentcoinService {
@@ -59,13 +60,18 @@ export class AgentcoinService implements IAgentcoinService {
       throw new Error('Failed to sign message')
     }
 
-    return this.api.login({ identity, message, signature })
+    const token = await this.api.login({ identity, message, signature })
+
+    elizaLogger.success('Agent coin logged in successfully', identity)
+    return token
   }
 
   async provisionIfNeeded(): Promise<void> {
     if (await this.isProvisioned()) {
       return
     }
+
+    elizaLogger.info('Provisioning hardware...')
 
     const regPath = REGISTRATION_FILE
 
@@ -83,7 +89,7 @@ export class AgentcoinService implements IAgentcoinService {
     const { agentId } = await this.api.provisionAgent(token, signature, publicKey)
 
     await this.saveProvisionState({ agentId })
-    console.log('Agent coin provisioned successfully', agentId)
+    elizaLogger.success('Agent coin provisioned successfully', agentId)
   }
 
   async getCookie(): Promise<string> {

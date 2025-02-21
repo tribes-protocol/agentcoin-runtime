@@ -33,12 +33,12 @@ export class AgentcoinClient {
   private socket?: Socket
 
   constructor(private readonly runtime: AgentcoinRuntime) {
-    elizaLogger.log('Connecting to Agentcoin API', AGENTCOIN_FUN_API_URL)
+    elizaLogger.info('Connecting to Agentcoin API', AGENTCOIN_FUN_API_URL)
   }
 
   public async start(): Promise<void> {
     if (!isNull(this.socket)) {
-      console.log('Agentcoin client already started')
+      elizaLogger.info('Agentcoin client already started')
       return
     }
 
@@ -52,6 +52,9 @@ export class AgentcoinClient {
       timeout: 20000,
       autoConnect: true,
       transports: ['websocket', 'polling'],
+      extraHeaders: {
+        Cookie: await this.runtime.agentcoin.agent.getCookie()
+      },
       auth: async (cb: (data: unknown) => void) => {
         try {
           const jwtToken = await this.runtime.agentcoin.agent.getJwtAuthToken()
@@ -64,10 +67,10 @@ export class AgentcoinClient {
     })
 
     this.socket.on('connect', () => {
-      elizaLogger.log('Connected to Agentcoin API')
+      elizaLogger.info('Connected to Agentcoin API')
     })
     this.socket.on('disconnect', () => {
-      elizaLogger.log('Disconnected from Agentcoin API')
+      elizaLogger.info('Disconnected from Agentcoin API')
     })
 
     const coinChannel = CoinChannelSchema.parse({
@@ -77,25 +80,25 @@ export class AgentcoinClient {
     })
 
     this.socket.on(serializeChannel(coinChannel), async (data: unknown) => {
-      elizaLogger.log('Agentcoin client received coin message', data)
+      elizaLogger.info('Agentcoin client received coin message', data)
       await this.processMessage(coinChannel, data)
     })
 
     const identity = await this.runtime.agentcoin.agent.getIdentity()
     const eventName = `user:${serializeIdentity(identity)}`
-    elizaLogger.log(
+    elizaLogger.info(
       `agentcoin.fun (${process.env.npm_package_version}) client listening for event`,
       eventName
     )
     this.socket.on(eventName, async (data: unknown) => {
-      elizaLogger.log('Agentcoin client received event', data)
+      elizaLogger.info('Agentcoin client received event', data)
       try {
         const event = UserDmEventSchema.parse(data)
         const channel = event.channel
 
         // validate channel
         if (channel.firstIdentity !== identity && channel.secondIdentity !== identity) {
-          elizaLogger.log('Agentcoin client received msg for unknown channel', channel)
+          elizaLogger.info('Agentcoin client received msg for unknown channel', channel)
           return
         }
 
@@ -103,7 +106,6 @@ export class AgentcoinClient {
         await this.processMessage(channel, [event.message])
       } catch (error) {
         elizaLogger.error('Error processing message from agentcoin client', error)
-        console.log(`error processing message`, error, `${error}`)
       }
     })
   }
@@ -119,7 +121,7 @@ export class AgentcoinClient {
     const { message, user } = messages[0]
 
     if (isNull(message)) {
-      elizaLogger.log('AgentcoinClient received empty message')
+      elizaLogger.info('AgentcoinClient received empty message')
       return
     }
 
@@ -210,7 +212,7 @@ export class AgentcoinClient {
 
       state = await this.runtime.updateRecentMessageState(state)
     } else {
-      elizaLogger.log('Agentcoin response is IGNORE', response)
+      elizaLogger.info('Agentcoin response is IGNORE', response)
     }
 
     await this.runtime.processActions(memory, messageResponses, state, async (newMessage) => {

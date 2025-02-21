@@ -219,3 +219,88 @@ export const UserDmEventSchema = z.object({
 })
 
 export type UserEvent = z.infer<typeof UserDmEventSchema>
+
+// Character schema
+
+export const CharacterMessageSchema = z.object({
+  user: z.string(),
+  content: z.object({
+    text: z.string()
+  })
+})
+
+export type CharacterMessage = z.infer<typeof CharacterMessageSchema>
+
+export const BaseCharacterSchema = z.object({
+  system: z.string().optional().nullable(),
+  bio: z.array(z.string()),
+  lore: z.array(z.string()),
+  knowledge: z.array(z.string()),
+  messageExamples: z.array(z.array(CharacterMessageSchema)),
+  postExamples: z.array(z.string()),
+  topics: z.array(z.string()),
+  style: z.object({
+    all: z.array(z.string()),
+    chat: z.array(z.string()),
+    post: z.array(z.string())
+  }),
+  adjectives: z.array(z.string())
+})
+
+export type BaseCharacter = z.infer<typeof BaseCharacterSchema>
+
+export const CharacterSchema = BaseCharacterSchema.extend({
+  name: z.string(),
+  clients: z.array(z.string()),
+  modelProvider: z.string(),
+  settings: z.object({
+    secrets: z.record(z.string()).optional().nullable(),
+    voice: z
+      .object({
+        model: z.string()
+      })
+      .optional()
+      .nullable()
+  }),
+  plugins: z.array(z.string())
+})
+
+export type Character = z.infer<typeof CharacterSchema>
+
+// agent events
+
+const BaseAgentEventSchema = z.object({
+  sentAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
+})
+
+export const HealthAgentEventSchema = BaseAgentEventSchema.extend({
+  kind: z.literal('health'),
+  status: z.enum(['booting', 'running', 'stopped'])
+})
+
+export const CodeChangeAgentEventSchema = BaseAgentEventSchema.extend({
+  kind: z.literal('code_change'),
+  git: z.object({
+    remoteUrl: z.string(),
+    commit: z.string()
+  })
+})
+
+export const CharacterChangeAgentEventSchema = BaseAgentEventSchema.extend({
+  kind: z.literal('character_change'),
+  character: CharacterSchema
+})
+
+export const EnvVarChangeAgentEventSchema = BaseAgentEventSchema.extend({
+  kind: z.literal('env_var_change'),
+  envVars: z.record(z.string(), z.string())
+})
+
+export const AgentEventDataSchema = z.discriminatedUnion('kind', [
+  HealthAgentEventSchema,
+  CodeChangeAgentEventSchema,
+  CharacterChangeAgentEventSchema,
+  EnvVarChangeAgentEventSchema
+])
+
+export type AgentEventData = z.infer<typeof AgentEventDataSchema>
