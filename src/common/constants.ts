@@ -19,9 +19,9 @@ export const GIT_STATE_FILE = path.join(AGENTCOIN_FUN_DIR, 'agent-git.json')
 
 export const CODE_DIR = path.join(AGENTCOIN_FUN_DIR, 'code')
 
+export const RUNTIME_SERVER_SOCKET_FILE = path.join(AGENTCOIN_FUN_DIR, 'runtime-server.sock')
+
 // make sure the `.agentcoin-fun` directory exists
 if (!fs.existsSync(AGENTCOIN_FUN_DIR)) {
   fs.mkdirSync(AGENTCOIN_FUN_DIR, { recursive: true })
 }
-
-export const SQLITE_FILE = path.join(AGENTCOIN_FUN_DIR, 'agentcoin.sqlite')

@@ -100,8 +100,9 @@ async function main(): Promise<void> {
       await Promise.all([configService.stop(), eventService.stop()])
       if (runtime) {
         try {
+          const agentId = runtime.agentId
           await runtime.stop()
-          elizaLogger.success('Agent stopped successfully')
+          elizaLogger.success('Agent stopped successfully!', agentId)
         } catch (error) {
           elizaLogger.error('Error stopping agent:', error)
         }
