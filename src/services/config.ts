@@ -74,7 +74,7 @@ export class ConfigService implements IConfigService {
         this.checkEnvUpdate(),
         this.checkCharacterUpdate()
       ])
-      await new Promise((resolve) => setTimeout(resolve, 10000))
+      await new Promise((resolve) => setTimeout(resolve, 30000))
     }
   }
 
