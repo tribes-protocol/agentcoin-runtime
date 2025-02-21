@@ -45,16 +45,16 @@ export class ConfigService implements IConfigService {
     app.get('/command/new', async (req, res) => {
       const { kind } = req.query
       elizaLogger.info(`Received command request: ${kind}`)
+
       try {
         switch (kind) {
           case 'git':
+            res.json({ success: true })
             await this.checkCodeUpdate()
             break
           default:
             res.status(400).json({ error: `Invalid kind parameter: ${kind}` })
-            return
         }
-        res.json({ success: true })
       } catch (error) {
         elizaLogger.error('Error processing command:', error)
         res.status(500).json({ error: 'Internal server error' })
