@@ -90,7 +90,12 @@ async function main(): Promise<void> {
 
     runtime = createAgent(character, db, cache, token, agentcoinService, walletService)
 
+    let isShuttingDown = false
     const shutdown = async (signal: string): Promise<void> => {
+      if (isShuttingDown) {
+        return
+      }
+      isShuttingDown = true
       elizaLogger.warn(`\nReceived ${signal} signal. Stopping agent...`)
       await Promise.all([configService.stop(), eventService.stop()])
       if (runtime) {
@@ -104,8 +109,12 @@ async function main(): Promise<void> {
       process.exit(0)
     }
 
-    process.on('SIGINT', async () => await shutdown('SIGINT'))
-    process.on('SIGTERM', async () => await shutdown('SIGTERM'))
+    process.once('SIGINT', () => {
+      void shutdown('SIGINT')
+    })
+    process.once('SIGTERM', () => {
+      void shutdown('SIGTERM')
+    })
 
     await runtime.initialize()
     runtime.clients = await initializeClients(character, runtime)
