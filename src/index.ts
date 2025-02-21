@@ -96,8 +96,9 @@ async function main(): Promise<void> {
         return
       }
       isShuttingDown = true
-      elizaLogger.warn(`\nReceived ${signal} signal. Stopping agent...`)
+      elizaLogger.warn(`Received ${signal} signal. Stopping agent...`)
       await Promise.all([configService.stop(), eventService.stop()])
+      elizaLogger.success('Agent stopped servicessuccessfully!')
       if (runtime) {
         try {
           const agentId = runtime.agentId
@@ -107,6 +108,9 @@ async function main(): Promise<void> {
           elizaLogger.error('Error stopping agent:', error)
         }
       }
+
+      console.log('The End.')
+      elizaLogger.success('The End.')
       process.exit(0)
     }
 
