@@ -80,7 +80,7 @@ export class ConfigService {
   private async checkCodeUpdate(): Promise<void> {
     try {
       const git = simpleGit(CODE_DIR)
-      const commitHash = await git.revparse(['HEAD'])
+      const commitHash = (await git.revparse(['HEAD'])).trim()
       const remoteUrl = await git.remote(['get-url', 'origin'])
 
       if (!isRequiredString(remoteUrl)) {
@@ -95,7 +95,7 @@ export class ConfigService {
         elizaLogger.log(
           `New code detected current=${this.gitCommitHash} new=${commitHash}. Restarting agent...`
         )
-        await this.eventService.publishCodeChangeEvent(commitHash, remoteUrl)
+        await this.eventService.publishCodeChangeEvent(commitHash.trim(), remoteUrl.trim())
         if (process.env.NODE_ENV === 'production') {
           process.exit(0)
         }
