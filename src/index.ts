@@ -10,6 +10,7 @@ import { ConfigService } from '@/services/config'
 import { EventService } from '@/services/event'
 import { IAgentcoinService, IWalletService } from '@/services/interfaces'
 import { KeychainService } from '@/services/keychain'
+import { KnowledgeService } from '@/services/knowledge'
 import { WalletService } from '@/services/wallet'
 import {
   CacheManager,
@@ -22,11 +23,9 @@ import {
 import { bootstrapPlugin } from '@elizaos/plugin-bootstrap'
 import { createNodePlugin } from '@elizaos/plugin-node'
 import fs from 'fs'
-import path from 'path'
 import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
-const __dirname = path.dirname(__filename)
 
 export function createAgent(
   character: Character,
@@ -90,6 +89,8 @@ async function main(): Promise<void> {
 
     runtime = createAgent(character, db, cache, token, agentcoinService, walletService)
 
+    const knowledgeService = new KnowledgeService(runtime)
+
     let isShuttingDown = false
     const shutdown = async (signal: string): Promise<void> => {
       if (isShuttingDown) {
@@ -97,7 +98,7 @@ async function main(): Promise<void> {
       }
       isShuttingDown = true
       elizaLogger.warn(`Received ${signal} signal. Stopping agent...`)
-      await Promise.all([configService.stop(), eventService.stop()])
+      await Promise.all([configService.stop(), eventService.stop(), knowledgeService.stop()])
       elizaLogger.success('Agent stopped servicessuccessfully!')
       if (runtime) {
         try {
@@ -123,6 +124,9 @@ async function main(): Promise<void> {
 
     await runtime.initialize()
     runtime.clients = await initializeClients(character, runtime)
+    elizaLogger.debug(`Started ${character.name} as ${runtime.agentId}`)
+
+    await knowledgeService.start()
   } catch (error) {
     elizaLogger.error(`Error starting agent for character ${character.name}:`, error)
     throw error

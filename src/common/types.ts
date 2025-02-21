@@ -204,6 +204,15 @@ export const GitStateSchema = z.object({
 
 export type GitState = z.infer<typeof GitStateSchema>
 
+export const KnowledgeSchema = z.object({
+  source: z.string(),
+  filename: z.string(),
+  action: z.enum(['create', 'delete']),
+  updatedAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
+})
+
+export type Knowledge = z.infer<typeof KnowledgeSchema>
+
 export const UserDmEventSchema = z.object({
   channel: DMChannelSchema,
   message: HydratedMessageSchema
