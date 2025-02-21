@@ -45,11 +45,8 @@ export class ConfigService {
           case 'git':
             await this.checkCodeUpdate()
             break
-          case 'envvar':
-            await this.checkEnvUpdate()
-            break
-          case 'character':
-            await this.checkCharacterUpdate()
+          case 'character_n_envvars':
+            await Promise.all([this.checkEnvUpdate(), this.checkCharacterUpdate()])
             break
           default:
             res.status(400).json({ error: `Invalid kind parameter: ${kind}` })
