@@ -51,9 +51,10 @@ export class ConfigService {
     // kill the process and docker container should restart it
     elizaLogger.log(`New envvars file detected. Restarting agent...`)
     await this.eventService.publishEnvChangeEvent(envvars)
+    this.envvarsChecksum = checksum
 
     if (process.env.NODE_ENV === 'production') {
-      process.exit(0)
+      process.kill(process.pid, 'SIGTERM')
     }
   }
 
@@ -71,9 +72,10 @@ export class ConfigService {
     const characterObject = CharacterSchema.parse(
       JSON.parse(fs.readFileSync(CHARACTER_FILE, 'utf8'))
     )
+    this.characterChecksum = checksum
     await this.eventService.publishCharacterChangeEvent(characterObject)
     if (process.env.NODE_ENV === 'production') {
-      process.exit(0)
+      process.kill(process.pid, 'SIGTERM')
     }
   }
 
@@ -95,9 +97,10 @@ export class ConfigService {
         elizaLogger.log(
           `New code detected current=${this.gitCommitHash} new=${commitHash}. Restarting agent...`
         )
+        this.gitCommitHash = commitHash
         await this.eventService.publishCodeChangeEvent(commitHash.trim(), remoteUrl.trim())
         if (process.env.NODE_ENV === 'production') {
-          process.exit(0)
+          process.kill(process.pid, 'SIGTERM')
         }
       }
     } catch (e) {
