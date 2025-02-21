@@ -304,3 +304,37 @@ export const AgentEventDataSchema = z.discriminatedUnion('kind', [
 ])
 
 export type AgentEventData = z.infer<typeof AgentEventDataSchema>
+
+// agentcoin admin commands
+
+export const SentinelSetGitCommandSchema = z.object({
+  kind: z.literal('set_git'),
+  state: GitStateSchema
+})
+
+export const SentinelSetCharAndEnvVarsCommandSchema = z.object({
+  kind: z.literal('set_character_n_envvars'),
+  character: CharacterSchema,
+  envVars: z.record(z.string(), z.string())
+})
+
+export const SentinelSetKnowledgeCommandSchema = z.object({
+  kind: z.literal('set_knowledge'),
+  url: z.string(),
+  filename: z.string()
+})
+
+export const SentinelDeleteKnowledgeCommandSchema = z.object({
+  kind: z.literal('delete_knowledge'),
+  url: z.string(),
+  filename: z.string()
+})
+
+export const SentinelCommandSchema = z.discriminatedUnion('kind', [
+  SentinelSetGitCommandSchema,
+  SentinelSetKnowledgeCommandSchema,
+  SentinelDeleteKnowledgeCommandSchema,
+  SentinelSetCharAndEnvVarsCommandSchema
+])
+
+export type SentinelCommand = z.infer<typeof SentinelCommandSchema>

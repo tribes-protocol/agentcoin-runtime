@@ -1,14 +1,25 @@
-import { AGENTCOIN_FUN_API_URL, TOKEN_ADDRESS } from '@/common/env'
-import { isNull, serializeChannel, serializeIdentity } from '@/common/functions'
+import { CHARACTER_FILE, ENV_FILE } from '@/common/constants'
+import { AGENT_ADMIN_PUBLIC_KEY, AGENTCOIN_FUN_API_URL, TOKEN_ADDRESS } from '@/common/env'
+import {
+  isNull,
+  isRequiredString,
+  isValidSignature,
+  serializeChannel,
+  serializeIdentity
+} from '@/common/functions'
 import { AgentcoinRuntime } from '@/common/runtime'
 import {
+  Character,
   ChatChannel,
   ChatChannelKind,
   CoinChannelSchema,
   EthAddressSchema,
   HydratedMessageSchema,
+  SentinelCommand,
+  SentinelCommandSchema,
   UserDmEventSchema
 } from '@/common/types'
+import * as fs from 'fs'
 
 import { messageHandlerTemplate } from '@elizaos/client-direct'
 
@@ -90,6 +101,8 @@ export class AgentcoinClient {
       `agentcoin.fun (${process.env.npm_package_version}) client listening for event`,
       eventName
     )
+
+    // listen on DMs
     this.socket.on(eventName, async (data: unknown) => {
       elizaLogger.info('Agentcoin client received event', data)
       try {
@@ -108,6 +121,63 @@ export class AgentcoinClient {
         elizaLogger.error('Error processing message from agentcoin client', error)
       }
     })
+
+    // listen on admin commands
+    this.socket.on(`admin:${identity}`, async (payload: string) => {
+      try {
+        const jsonObj = JSON.parse(payload)
+        const { content, signature } = jsonObj
+        if (!isRequiredString(content) || !isRequiredString(signature)) {
+          throw new Error('Invalid payload')
+        }
+
+        if (!isValidSignature(content, AGENT_ADMIN_PUBLIC_KEY, signature)) {
+          throw new Error('Invalid signature')
+        }
+
+        const command = SentinelCommandSchema.parse(JSON.parse(content))
+        await this.handleAdminCommand(command)
+      } catch (e) {
+        console.error('Error handling admin command:', e, payload)
+      }
+    })
+  }
+
+  private async handleAdminCommand(command: SentinelCommand): Promise<void> {
+    switch (command.kind) {
+      case 'set_git':
+        console.log('ignoring set_git. sentinel service is handling this', command)
+        break
+      case 'set_character_n_envvars':
+        await this.handleSetCharacterAndEnvvars(command.character, command.envVars)
+        break
+      case 'set_knowledge':
+        console.log('ignoring set_knowledge', command)
+        break
+      case 'delete_knowledge':
+        console.log('ignoring delete_knowledge', command)
+        break
+      default:
+        throw new Error('Invalid command')
+    }
+  }
+
+  private async handleSetCharacterAndEnvvars(
+    character: Character,
+    envVars: Record<string, string>
+  ): Promise<void> {
+    // write the character to the character file
+    await fs.promises.writeFile(CHARACTER_FILE, JSON.stringify(character, null, 2))
+
+    // write the env vars to the env file
+    const envContent = Object.entries(envVars)
+      .map(([key, value]) => `${key}=${value}`)
+      .join('\n')
+
+    await fs.promises.writeFile(ENV_FILE, envContent)
+
+    // notify config service
+    await this.runtime.agentcoin.config.checkEnvAndCharacterUpdate()
   }
 
   public stop(): void {

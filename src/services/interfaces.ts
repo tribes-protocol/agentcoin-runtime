@@ -22,3 +22,7 @@ export interface IAgentcoinService {
   getCookie(): Promise<string>
   getJwtAuthToken(): Promise<string>
 }
+
+export interface IConfigService {
+  checkEnvAndCharacterUpdate(): Promise<void>
+}

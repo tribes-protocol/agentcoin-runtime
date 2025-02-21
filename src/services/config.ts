@@ -3,6 +3,7 @@ import { isNull, isRequiredString } from '@/common/functions'
 import { OperationQueue } from '@/common/lang/operation_queue'
 import { CharacterSchema } from '@/common/types'
 import { EventService } from '@/services/event'
+import { IConfigService } from '@/services/interfaces'
 import { elizaLogger } from '@elizaos/core'
 import crypto from 'crypto'
 import express from 'express'
@@ -10,7 +11,7 @@ import fs from 'fs'
 import net from 'net'
 import simpleGit from 'simple-git'
 
-export class ConfigService {
+export class ConfigService implements IConfigService {
   private readonly operationQueue = new OperationQueue(1)
   private isRunning = false
   private gitCommitHash: string | undefined
@@ -46,7 +47,7 @@ export class ConfigService {
             await this.checkCodeUpdate()
             break
           case 'character_n_envvars':
-            await Promise.all([this.checkEnvUpdate(), this.checkCharacterUpdate()])
+            await this.checkEnvAndCharacterUpdate()
             break
           default:
             res.status(400).json({ error: `Invalid kind parameter: ${kind}` })
@@ -74,6 +75,10 @@ export class ConfigService {
       ])
       await new Promise((resolve) => setTimeout(resolve, 10000))
     }
+  }
+
+  public async checkEnvAndCharacterUpdate(): Promise<void> {
+    await Promise.all([this.checkEnvUpdate(), this.checkCharacterUpdate()])
   }
 
   private async checkEnvUpdate(): Promise<void> {

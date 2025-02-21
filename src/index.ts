@@ -8,7 +8,7 @@ import agentcoinPlugin from '@/plugins/agentcoin'
 import { AgentcoinService } from '@/services/agentcoinfun'
 import { ConfigService } from '@/services/config'
 import { EventService } from '@/services/event'
-import { IAgentcoinService, IWalletService } from '@/services/interfaces'
+import { IAgentcoinService, IConfigService, IWalletService } from '@/services/interfaces'
 import { KeychainService } from '@/services/keychain'
 import { KnowledgeService } from '@/services/knowledge'
 import { WalletService } from '@/services/wallet'
@@ -33,7 +33,8 @@ export function createAgent(
   cache: ICacheManager,
   token: string,
   agentcoinService: IAgentcoinService,
-  walletService: IWalletService
+  walletService: IWalletService,
+  configService: IConfigService
 ): AgentcoinRuntime {
   elizaLogger.info(elizaLogger.successesTitle, 'Creating runtime for character', character.name)
 
@@ -42,7 +43,8 @@ export function createAgent(
   return new AgentcoinRuntime({
     agentcoin: {
       agent: agentcoinService,
-      wallet: walletService
+      wallet: walletService,
+      config: configService
     },
 
     eliza: {
@@ -87,7 +89,15 @@ async function main(): Promise<void> {
     const db = await initializeDatabase()
     const cache = new CacheManager(new DbCacheAdapter(db, character.id))
 
-    runtime = createAgent(character, db, cache, token, agentcoinService, walletService)
+    runtime = createAgent(
+      character,
+      db,
+      cache,
+      token,
+      agentcoinService,
+      walletService,
+      configService
+    )
 
     const knowledgeService = new KnowledgeService(runtime)
 

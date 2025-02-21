@@ -1,5 +1,5 @@
 import { isNull } from '@/common/functions'
-import { IAgentcoinService, IWalletService } from '@/services/interfaces'
+import { IAgentcoinService, IConfigService, IWalletService } from '@/services/interfaces'
 import {
   Action,
   AgentRuntime,
@@ -19,6 +19,7 @@ import {
 interface AgentcoinDependencies {
   agent: IAgentcoinService
   wallet: IWalletService
+  config: IConfigService
 }
 
 export class AgentcoinRuntime extends AgentRuntime {

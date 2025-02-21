@@ -10,6 +10,11 @@ import {
   IdentitySchema
 } from '@/common/types'
 import { elizaLogger } from '@elizaos/core'
+import EC from 'elliptic'
+import { createHash } from 'crypto'
+
+// eslint-disable-next-line new-cap
+export const ec = new EC.ec('p256')
 
 export function prepend0x(value: string): `0x${string}` {
   if (value.startsWith('0x')) {
@@ -178,5 +183,18 @@ export function deserializeChannel(channelString: string): ChatChannel {
       const res = DMChannelSchema.parse({ kind, firstIdentity: first, secondIdentity: second })
       return res
     }
+  }
+}
+
+export function isValidSignature(message: string, publicKey: string, signature: string): boolean {
+  try {
+    const keyPair = ec.keyFromPublic(publicKey, 'hex')
+
+    const msgHash = createHash('sha256').update(message).digest()
+
+    return keyPair.verify(msgHash, signature)
+  } catch (error) {
+    console.error('Signature verification error:', error)
+    return false
   }
 }
