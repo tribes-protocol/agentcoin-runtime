@@ -164,7 +164,7 @@ export class KnowledgeService {
     try {
       const response = await axios({
         method: 'GET',
-        url: file.url,
+        url: file.source,
         responseType: 'arraybuffer'
       })
 
@@ -201,7 +201,7 @@ export class KnowledgeService {
         return ''
       }
     } catch (error) {
-      console.error(`Error processing file from ${file.url}:`, error)
+      console.error(`Error processing file from ${file.source}:`, error)
       throw error
     }
   }
