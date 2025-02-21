@@ -1,6 +1,7 @@
 import { KNOWLEDGE_DIR } from '@/common/constants'
 import { Knowledge, KnowledgeSchema } from '@/common/types'
 import {
+  elizaLogger,
   embed,
   getEmbeddingZeroVector,
   IAgentRuntime,
@@ -55,6 +56,7 @@ export class KnowledgeService {
 
   async stop(): Promise<void> {
     this.isRunning = false
+    elizaLogger.info('Knowledge service stopped')
   }
 
   private async processJsonFiles(jsonDirectory: string): Promise<void> {

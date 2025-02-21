@@ -48,6 +48,8 @@ export class EventService {
       },
       { cookie: this.agentcoinCookie }
     )
+
+    elizaLogger.info('Event service stopped')
   }
 
   async publishEnvChangeEvent(envContents: string): Promise<void> {

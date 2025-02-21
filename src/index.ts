@@ -119,20 +119,22 @@ async function main(): Promise<void> {
         if (runtime) {
           try {
             const agentId = runtime.agentId
+            elizaLogger.warn('Stopping agent runtime...', agentId)
             await runtime.stop()
-            elizaLogger.success('Agent stopped successfully!', agentId)
+            elizaLogger.success('Agent runtime stopped successfully!', agentId)
           } catch (error) {
             elizaLogger.error('Error stopping agent:', error)
           }
         }
 
+        console.log('The End.')
+        elizaLogger.success('The End.')
         process.exit(0)
       } catch (error) {
         elizaLogger.error('Error shutting down:', error)
-        process.exit(1)
-      } finally {
         console.log('The End.')
         elizaLogger.success('The End.')
+        process.exit(1)
       }
     }
 
