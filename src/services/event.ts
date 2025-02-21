@@ -11,9 +11,9 @@ export class EventService {
   private heartbeatInterval?: NodeJS.Timeout
 
   async start(): Promise<void> {
-    elizaLogger.log('Starting event service...')
+    elizaLogger.info('Starting event service...')
     if (this.heartbeatInterval) {
-      elizaLogger.log('Event service already started')
+      elizaLogger.info('Event service already started')
       return
     }
 

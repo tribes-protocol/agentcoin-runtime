@@ -24,7 +24,7 @@ export class OperationQueue {
           const startTime: number | undefined = this.logTime ? performance.now() : undefined
           resolve(await work())
           if (startTime) {
-            elizaLogger.log(`Operation [${this.name}] took ${performance.now() - startTime} ms`)
+            elizaLogger.info(`Operation [${this.name}] took ${performance.now() - startTime} ms`)
           }
         } catch (err) {
           reject(err)

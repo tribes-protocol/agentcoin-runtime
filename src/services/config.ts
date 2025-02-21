@@ -21,10 +21,10 @@ export class ConfigService {
   constructor(private readonly eventService: EventService) {}
 
   async start(): Promise<void> {
-    elizaLogger.log('Starting config service...')
+    elizaLogger.info('Starting config service...')
     // disable in dev mode
     if (process.env.NODE_ENV !== 'production') {
-      elizaLogger.log('Config service disabled in dev mode')
+      elizaLogger.info('Config service disabled in dev mode')
       return
     }
 
@@ -87,7 +87,7 @@ export class ConfigService {
       }
 
       // kill the process and docker container should restart it
-      elizaLogger.log(`New envvars file detected. Restarting agent...`)
+      elizaLogger.info(`New envvars file detected. Restarting agent...`)
       await this.eventService.publishEnvChangeEvent(envvars)
       this.envvarsChecksum = checksum
 
@@ -108,7 +108,7 @@ export class ConfigService {
       }
 
       // kill the process and docker container should restart it
-      elizaLogger.log(`New character file detected. Restarting agent...`)
+      elizaLogger.info(`New character file detected. Restarting agent...`)
       const characterObject = CharacterSchema.parse(
         JSON.parse(fs.readFileSync(CHARACTER_FILE, 'utf8'))
       )
@@ -136,7 +136,7 @@ export class ConfigService {
           this.gitCommitHash = commitHash
         } else {
           // kill the process and docker container should restart it
-          elizaLogger.log(
+          elizaLogger.info(
             `New code detected current=${this.gitCommitHash} new=${commitHash}. Restarting agent...`
           )
           this.gitCommitHash = commitHash
@@ -150,7 +150,7 @@ export class ConfigService {
           e instanceof Error &&
           e.message.includes('Cannot use simple-git on a directory that does not exist')
         ) {
-          elizaLogger.log('Git directory not initiated yet')
+          elizaLogger.info('Git directory not initiated yet')
         } else {
           elizaLogger.error('Error checking git status:', e)
         }
@@ -167,6 +167,6 @@ export class ConfigService {
       }
       this.server = undefined
     }
-    elizaLogger.log('Stopping config service...')
+    elizaLogger.info('Stopping config service...')
   }
 }

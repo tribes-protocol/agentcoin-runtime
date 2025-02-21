@@ -62,7 +62,7 @@ export const tipForJokeAction: Action = {
     _options: { [key: string]: unknown },
     callback?: HandlerCallback
   ): Promise<boolean> => {
-    elizaLogger.log('Starting TIP_FOR_JOKE handler...')
+    elizaLogger.info('Starting TIP_FOR_JOKE handler...')
 
     if (!state) {
       state = await runtime.composeState(message)
