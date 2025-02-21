@@ -50,9 +50,6 @@ export class ConfigService implements IConfigService {
           case 'git':
             await this.checkCodeUpdate()
             break
-          case 'character_n_envvars':
-            await this.checkEnvAndCharacterUpdate()
-            break
           default:
             res.status(400).json({ error: `Invalid kind parameter: ${kind}` })
             return
