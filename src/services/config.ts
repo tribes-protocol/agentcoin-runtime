@@ -168,7 +168,9 @@ export class ConfigService implements IConfigService {
     this.isRunning = false
     if (this.server) {
       this.server.close()
+      console.log('Closing server')
       if (fs.existsSync(RUNTIME_SERVER_SOCKET_FILE)) {
+        console.log('Removing socket file')
         fs.unlinkSync(RUNTIME_SERVER_SOCKET_FILE)
       }
       this.server = undefined
