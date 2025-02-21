@@ -1,4 +1,5 @@
 import { isNull } from '@/common/functions'
+import { elizaLogger } from '@elizaos/core'
 
 export class ProcessService {
   private shutdownFunc?: (signal?: string) => Promise<void>
@@ -10,6 +11,7 @@ export class ProcessService {
   async kill(): Promise<void> {
     if (isNull(this.shutdownFunc)) {
       console.log('No shutdown function set. killing process...')
+      elizaLogger.warn('No shutdown function set. killing process...')
       process.kill(process.pid, 'SIGTERM')
     }
     await this.shutdownFunc()

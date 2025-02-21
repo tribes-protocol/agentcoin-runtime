@@ -37,7 +37,7 @@ export class AgentcoinAPI {
         throw new Error(ErrorResponseSchema.parse(error).error)
       }
     } catch (error) {
-      elizaLogger.error('Failed to publish event', body, error)
+      elizaLogger.error('Failed to publish event', { body, error })
     }
   }
 
