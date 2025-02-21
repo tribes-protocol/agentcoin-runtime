@@ -65,30 +65,21 @@ export function createAgent(
 }
 
 async function main(): Promise<void> {
-  console.log('Starting agent...')
+  elizaLogger.info('Starting agent...')
+
   // step 1: provision the hardware if needed.
   const keychainService = new KeychainService()
-  console.log('Created keychain service')
   const agentcoinAPI = new AgentcoinAPI()
-  console.log('Created agentcoin API')
   const agentcoinService = new AgentcoinService(keychainService, agentcoinAPI)
-  console.log('Created agentcoin service')
   await agentcoinService.provisionIfNeeded()
-  console.log('Provisioned if needed')
 
   const agentcoinCookie = await agentcoinService.getCookie()
-  console.log('Got agentcoin cookie')
   const eventService = new EventService(agentcoinCookie, agentcoinAPI)
-  console.log('Created event service')
   const walletService = new WalletService(keychainService.turnkeyApiKeyStamper)
-  console.log('Created wallet service')
   const processService = new ProcessService()
-  console.log('Created process service')
   const configService = new ConfigService(eventService, processService)
-  console.log('Created config service')
 
   void Promise.all([eventService.start(), configService.start()])
-  console.log('Started event and config services')
 
   // step 2: load character
   elizaLogger.info('Loading character...')
