@@ -65,6 +65,7 @@ export function createAgent(
 }
 
 async function main(): Promise<void> {
+  elizaLogger.info('Starting agent...')
   // step 1: provision the hardware if needed.
   const keychainService = new KeychainService()
   const agentcoinAPI = new AgentcoinAPI()
@@ -160,4 +161,5 @@ async function main(): Promise<void> {
   elizaLogger.success('agent runtime started id:', runtime.agentId, 'name', runtime.character.name)
 }
 
+console.log('hello, agent!')
 main().catch(elizaLogger.error)
