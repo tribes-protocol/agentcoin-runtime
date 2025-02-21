@@ -11,6 +11,7 @@ import { EventService } from '@/services/event'
 import { IAgentcoinService, IConfigService, IWalletService } from '@/services/interfaces'
 import { KeychainService } from '@/services/keychain'
 import { KnowledgeService } from '@/services/knowledge'
+import { ProcessService } from '@/services/process'
 import { WalletService } from '@/services/wallet'
 import {
   CacheManager,
@@ -73,7 +74,8 @@ async function main(): Promise<void> {
   const agentcoinCookie = await agentcoinService.getCookie()
   const eventService = new EventService(agentcoinCookie, agentcoinAPI)
   const walletService = new WalletService(keychainService.turnkeyApiKeyStamper)
-  const configService = new ConfigService(eventService)
+  const processService = new ProcessService()
+  const configService = new ConfigService(eventService, processService)
 
   void Promise.all([eventService.start(), configService.start()])
 
@@ -101,29 +103,40 @@ async function main(): Promise<void> {
 
     const knowledgeService = new KnowledgeService(runtime)
 
+    // shutdown handler
     let isShuttingDown = false
-    const shutdown = async (signal: string): Promise<void> => {
-      if (isShuttingDown) {
-        return
-      }
-      isShuttingDown = true
-      elizaLogger.warn(`Received ${signal} signal. Stopping agent...`)
-      await Promise.all([configService.stop(), eventService.stop(), knowledgeService.stop()])
-      elizaLogger.success('Agent stopped servicessuccessfully!')
-      if (runtime) {
-        try {
-          const agentId = runtime.agentId
-          await runtime.stop()
-          elizaLogger.success('Agent stopped successfully!', agentId)
-        } catch (error) {
-          elizaLogger.error('Error stopping agent:', error)
+    const shutdown = async (signal?: string): Promise<void> => {
+      try {
+        if (isShuttingDown) {
+          return
         }
-      }
+        isShuttingDown = true
 
-      console.log('The End.')
-      elizaLogger.success('The End.')
-      process.exit(0)
+        elizaLogger.warn(`Received ${signal} signal. Stopping agent...`)
+        await Promise.all([configService.stop(), eventService.stop(), knowledgeService.stop()])
+        elizaLogger.success('Agent stopped services successfully!')
+
+        if (runtime) {
+          try {
+            const agentId = runtime.agentId
+            await runtime.stop()
+            elizaLogger.success('Agent stopped successfully!', agentId)
+          } catch (error) {
+            elizaLogger.error('Error stopping agent:', error)
+          }
+        }
+
+        process.exit(0)
+      } catch (error) {
+        elizaLogger.error('Error shutting down:', error)
+        process.exit(1)
+      } finally {
+        console.log('The End.')
+        elizaLogger.success('The End.')
+      }
     }
+
+    processService.setShutdownFunc(shutdown)
 
     process.once('SIGINT', () => {
       void shutdown('SIGINT')

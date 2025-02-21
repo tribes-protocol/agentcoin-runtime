@@ -4,6 +4,7 @@ import { OperationQueue } from '@/common/lang/operation_queue'
 import { CharacterSchema } from '@/common/types'
 import { EventService } from '@/services/event'
 import { IConfigService } from '@/services/interfaces'
+import { ProcessService } from '@/services/process'
 import { elizaLogger } from '@elizaos/core'
 import crypto from 'crypto'
 import express from 'express'
@@ -19,7 +20,10 @@ export class ConfigService implements IConfigService {
   private characterChecksum: string | undefined
   private server: net.Server | undefined
 
-  constructor(private readonly eventService: EventService) {}
+  constructor(
+    private readonly eventService: EventService,
+    private readonly processService: ProcessService
+  ) {}
 
   async start(): Promise<void> {
     elizaLogger.info('Starting config service...')
@@ -97,7 +101,7 @@ export class ConfigService implements IConfigService {
       this.envvarsChecksum = checksum
 
       if (process.env.NODE_ENV === 'production') {
-        process.kill(process.pid, 'SIGTERM')
+        await this.processService.kill()
       }
     })
   }
@@ -120,7 +124,7 @@ export class ConfigService implements IConfigService {
       this.characterChecksum = checksum
       await this.eventService.publishCharacterChangeEvent(characterObject)
       if (process.env.NODE_ENV === 'production') {
-        process.kill(process.pid, 'SIGTERM')
+        await this.processService.kill()
       }
     })
   }
@@ -147,7 +151,7 @@ export class ConfigService implements IConfigService {
           this.gitCommitHash = commitHash
           await this.eventService.publishCodeChangeEvent(commitHash.trim(), remoteUrl.trim())
           if (process.env.NODE_ENV === 'production') {
-            process.kill(process.pid, 'SIGTERM')
+            await this.processService.kill()
           }
         }
       } catch (e) {
