@@ -67,5 +67,32 @@ export function getTokenForProvider(
       return undefined
     case ModelProviderName.LIVEPEER:
       return undefined
+    case ModelProviderName.LMSTUDIO: {
+      throw new Error('Not implemented yet: ModelProviderName.LMSTUDIO case')
+    }
+    case ModelProviderName.MISTRAL: {
+      throw new Error('Not implemented yet: ModelProviderName.MISTRAL case')
+    }
+    case ModelProviderName.NVIDIA: {
+      throw new Error('Not implemented yet: ModelProviderName.NVIDIA case')
+    }
+    case ModelProviderName.NINETEEN_AI: {
+      throw new Error('Not implemented yet: ModelProviderName.NINETEEN_AI case')
+    }
+    case ModelProviderName.LETZAI: {
+      throw new Error('Not implemented yet: ModelProviderName.LETZAI case')
+    }
+    case ModelProviderName.DEEPSEEK: {
+      throw new Error('Not implemented yet: ModelProviderName.DEEPSEEK case')
+    }
+    case ModelProviderName.INFERA: {
+      throw new Error('Not implemented yet: ModelProviderName.INFERA case')
+    }
+    case ModelProviderName.BEDROCK: {
+      throw new Error('Not implemented yet: ModelProviderName.BEDROCK case')
+    }
+    case ModelProviderName.ATOMA: {
+      throw new Error('Not implemented yet: ModelProviderName.ATOMA case')
+    }
   }
 }
