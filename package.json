@@ -21,7 +21,6 @@
     "@elizaos/plugin-node": "0.1.9",
     "@langchain/community": "0.3.31",
     "@langchain/core": "0.3.40",
-    "@memecoin/sdk": "0.0.44",
     "@turnkey/http": "2.18.0",
     "@turnkey/sdk-server": "1.7.3",
     "@turnkey/viem": "0.6.10",
