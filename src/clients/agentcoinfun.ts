@@ -15,6 +15,8 @@ import {
   CoinChannelSchema,
   EthAddressSchema,
   HydratedMessageSchema,
+  Identity,
+  Message,
   SentinelCommand,
   SentinelCommandSchema,
   UserDmEventSchema
@@ -185,6 +187,59 @@ export class AgentcoinClient {
     this.socket = undefined
   }
 
+  private async sendMessageAsAgent({
+    identity,
+    text,
+    channel,
+    inReplyTo
+  }: {
+    identity: Identity
+    text: string
+    channel: ChatChannel
+    inReplyTo?: UUID
+  }): Promise<Memory> {
+    const agentcoinResponse = await this.runtime.agentcoin.agent.sendMessage({
+      text,
+      sender: identity,
+      channel,
+      clientUuid: crypto.randomUUID()
+    })
+
+    return this.saveMessage({ message: agentcoinResponse.message, inReplyTo })
+  }
+
+  private async saveMessage({
+    message,
+    inReplyTo
+  }: {
+    message: Message
+    inReplyTo?: UUID
+  }): Promise<Memory> {
+    const roomId = stringToUuid(serializeChannel(message.channel))
+    const userId = stringToUuid(serializeIdentity(message.sender))
+    const messageId = messageIdToUuid(message.id)
+
+    const responseMessage: Memory = {
+      id: messageId,
+      agentId: this.runtime.agentId,
+      userId,
+      roomId,
+      content: {
+        text: message.text,
+        source: 'agentcoin',
+        inReplyTo,
+        agentCoinMessageId: message.id
+      },
+      createdAt: Date.now(),
+      unique: true
+    }
+
+    await this.runtime.messageManager.addEmbeddingToMemory(responseMessage)
+    await this.runtime.messageManager.createMemory(responseMessage)
+
+    return responseMessage
+  }
+
   private async processMessage(channel: ChatChannel, data: unknown): Promise<void> {
     const messages = HydratedMessageSchema.array().parse(data)
 
@@ -196,15 +251,14 @@ export class AgentcoinClient {
     }
 
     const agentcoinService = this.runtime.agentcoin.agent
-    const sender = await agentcoinService.getIdentity()
+    const identity = await agentcoinService.getIdentity()
 
-    if (message.sender === sender) {
+    if (message.sender === identity) {
       return
     }
 
     const roomId = stringToUuid(serializeChannel(channel))
     const userId = stringToUuid(serializeIdentity(message.sender))
-    const messageId = messageIdToUuid(message.id)
 
     await this.runtime.ensureUserRoomConnection({
       roomId,
@@ -217,24 +271,7 @@ export class AgentcoinClient {
       source: 'agentcoin'
     })
 
-    const memory: Memory = {
-      id: messageId,
-      agentId: this.runtime.agentId,
-      userId,
-      roomId,
-      content: {
-        text: message.text,
-        attachments: [],
-        source: 'agentcoin',
-        inReplyTo: undefined,
-        agentCoinMessageId: message.id
-      },
-      createdAt: Date.now(),
-      unique: true
-    }
-
-    await this.runtime.messageManager.addEmbeddingToMemory(memory)
-    await this.runtime.messageManager.createMemory(memory)
+    const memory: Memory = await this.saveMessage({ message })
 
     let state = await this.runtime.composeState(memory, {
       agentName: this.runtime.character.name
@@ -251,47 +288,32 @@ export class AgentcoinClient {
       modelClass: ModelClass.LARGE
     })
 
+    if (!response.text) return
+
+    const action = this.runtime.actions.find((a) => a.name === response.action)
+    const shouldSuppressInitialMessage = action?.suppressInitialMessage
+
     const messageResponses: Memory[] = []
-    if (response.action !== 'IGNORE') {
-      const agentcoinResponse = await agentcoinService.sendMessage({
-        text: response.text,
-        sender,
-        channel: message.channel,
-        clientUuid: crypto.randomUUID()
-      })
-
-      const responseMessage: Memory = {
-        id: stringToUuid(messageId + '-' + this.runtime.agentId),
-        agentId: this.runtime.agentId,
-        userId: this.runtime.agentId,
-        roomId,
-        content: {
-          ...response,
-          source: 'agentcoin',
-          inReplyTo: messageId,
-          agentCoinMessageId: agentcoinResponse.message.id
-        },
-        createdAt: Date.now(),
-        unique: true
-      }
-
-      await this.runtime.messageManager.addEmbeddingToMemory(responseMessage)
-      await this.runtime.messageManager.createMemory(responseMessage)
-
-      messageResponses.push(responseMessage)
-
-      state = await this.runtime.updateRecentMessageState(state)
-    } else {
+    if (shouldSuppressInitialMessage) {
       elizaLogger.info('Agentcoin response is IGNORE', response)
+    } else {
+      const responseMessage = await this.sendMessageAsAgent({
+        identity,
+        text: response.text,
+        channel: message.channel,
+        inReplyTo: memory.id
+      })
+      messageResponses.push(responseMessage)
+      state = await this.runtime.updateRecentMessageState(state)
     }
 
     await this.runtime.processActions(memory, messageResponses, state, async (newMessage) => {
       try {
-        await agentcoinService.sendMessage({
+        await this.sendMessageAsAgent({
+          identity,
           text: newMessage.text,
-          sender,
           channel: message.channel,
-          clientUuid: crypto.randomUUID()
+          inReplyTo: memory.id
         })
       } catch (e) {
         elizaLogger.error(`error sending`, e)

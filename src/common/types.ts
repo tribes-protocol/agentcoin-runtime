@@ -122,6 +122,8 @@ export const MessageSchema = z.object({
   createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
 })
 
+export type Message = z.infer<typeof MessageSchema>
+
 export const CreateMessageSchema = MessageSchema.omit({
   id: true,
   createdAt: true,
