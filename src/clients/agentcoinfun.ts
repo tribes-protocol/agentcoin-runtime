@@ -9,6 +9,7 @@ import {
 } from '@/common/functions'
 import { AgentcoinRuntime } from '@/common/runtime'
 import {
+  AgentIdentitySchema,
   Character,
   ChatChannel,
   ChatChannelKind,
@@ -216,8 +217,10 @@ export class AgentcoinClient {
     inReplyTo?: UUID
   }): Promise<Memory> {
     const roomId = stringToUuid(serializeChannel(message.channel))
-    const userId = stringToUuid(serializeIdentity(message.sender))
     const messageId = messageIdToUuid(message.id)
+    const userId = AgentIdentitySchema.safeParse(message.sender).success
+      ? this.runtime.agentId
+      : stringToUuid(serializeIdentity(message.sender))
 
     const responseMessage: Memory = {
       id: messageId,
