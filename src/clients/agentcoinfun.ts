@@ -121,6 +121,7 @@ export class AgentcoinClient {
         // process message if allowed
         await this.processMessage(channel, [event.message])
       } catch (error) {
+        console.error('Error processing message from agentcoin client', error)
         elizaLogger.error('Error processing message from agentcoin client', error)
       }
     })
