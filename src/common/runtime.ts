@@ -1,5 +1,5 @@
 import { isNull } from '@/common/functions'
-import { Context, NewMessageEvent } from '@/common/types'
+import { Context, NewMessageEvent, SdkEventKind } from '@/common/types'
 import { IAgentcoinService, IConfigService, IWalletService } from '@/services/interfaces'
 import {
   Action,
@@ -24,7 +24,7 @@ interface AgentcoinDependencies {
 }
 
 interface AgentcoinInternals {
-  eventHandler: (event: string, params: Context | NewMessageEvent) => Promise<boolean>
+  eventHandler: (event: SdkEventKind, params: Context | NewMessageEvent) => Promise<boolean>
 }
 
 export class AgentcoinRuntime extends AgentRuntime {
@@ -66,7 +66,7 @@ export class AgentcoinRuntime extends AgentRuntime {
     this.internals = internals
   }
 
-  async handle(event: string, params: Context | NewMessageEvent): Promise<boolean> {
+  async handle(event: SdkEventKind, params: Context | NewMessageEvent): Promise<boolean> {
     if (isNull(this.internals)) {
       throw new Error('AgentcoinRuntime not initialized')
     }

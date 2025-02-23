@@ -4,7 +4,13 @@ import { getTokenForProvider } from '@/common/config'
 import { CHARACTER_FILE } from '@/common/constants'
 import { initializeDatabase } from '@/common/db'
 import { AgentcoinRuntime } from '@/common/runtime'
-import { Context, ContextHandler, NewMessageEvent, NewMessageHandler } from '@/common/types'
+import {
+  Context,
+  ContextHandler,
+  NewMessageEvent,
+  NewMessageHandler,
+  SdkEventKind
+} from '@/common/types'
 import agentcoinPlugin from '@/plugins/agentcoin'
 import { AgentcoinService } from '@/services/agentcoinfun'
 import { ConfigService } from '@/services/config'
@@ -162,7 +168,7 @@ export class AgentcoinSDK implements IAgentcoinSDK {
 
     const sdk = new AgentcoinSDK(runtime)
     await runtime.configure({
-      eventHandler: sdk.handle
+      eventHandler: (event, params) => sdk.handle(event, params)
     })
     return sdk
   }
@@ -223,12 +229,7 @@ export class AgentcoinSDK implements IAgentcoinSDK {
     }
   }
 
-  protected async handle(event: 'message', params: NewMessageEvent): Promise<boolean>
-  protected async handle(event: 'prellm', params: Context): Promise<boolean>
-  protected async handle(event: 'postllm', params: Context): Promise<boolean>
-  protected async handle(event: 'preaction', params: Context): Promise<boolean>
-  protected async handle(event: 'postaction', params: Context): Promise<boolean>
-  protected async handle(event: string, params: Context | NewMessageEvent): Promise<boolean> {
+  protected async handle(event: SdkEventKind, params: Context | NewMessageEvent): Promise<boolean> {
     switch (event) {
       case 'message': {
         for (const handler of this.messageHandlers) {
