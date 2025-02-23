@@ -16,11 +16,11 @@ async function main(): Promise<void> {
   })
 
   sdk.register('provider', {
-    get: async (runtime: AgentcoinRuntime, memory) => {
-      const account = await runtime.databaseAdapter.getAccountById(memory.userId)
-      if (account?.username === 'hish') {
-        return 'the user hishboy loves it when you refer to him as Mr Bombastic'
-      }
+    get: async (_runtime: AgentcoinRuntime, _memory, _state) => {
+      // const account = await runtime.databaseAdapter.getAccountById(memory.userId)
+      // if (account?.username === 'hish') {
+      //   return 'the user hishboy loves it when you refer to him as Mr Bombastic'
+      // }
       return ''
     }
   })
