@@ -19,7 +19,16 @@ import { KeychainService } from '@/services/keychain'
 import { KnowledgeService } from '@/services/knowledge'
 import { ProcessService } from '@/services/process'
 import { WalletService } from '@/services/wallet'
-import { CacheManager, DbCacheAdapter, elizaLogger, UUID, type Character } from '@elizaos/core'
+import {
+  Action,
+  CacheManager,
+  DbCacheAdapter,
+  elizaLogger,
+  Provider,
+  Service,
+  UUID,
+  type Character
+} from '@elizaos/core'
 import { bootstrapPlugin } from '@elizaos/plugin-bootstrap'
 import { createNodePlugin } from '@elizaos/plugin-node'
 import fs from 'fs'
@@ -34,6 +43,10 @@ export interface IAgentcoinSDK {
   on(event: 'postllm', handler: ContextHandler): void
   on(event: 'preaction', handler: ContextHandler): void
   on(event: 'postaction', handler: ContextHandler): void
+
+  register(kind: 'service', handler: Service): void
+  register(kind: 'provider', handler: Provider): void
+  register(kind: 'action', handler: Action): void
 }
 
 export class AgentcoinSDK implements IAgentcoinSDK {
@@ -67,7 +80,8 @@ export class AgentcoinSDK implements IAgentcoinSDK {
     const processService = new ProcessService()
     const configService = new ConfigService(eventService, processService)
 
-    void Promise.all([eventService.start(), configService.start()])
+    // start event service
+    void eventService.start()
 
     // step 2: load character
     elizaLogger.info('Loading character...')
@@ -153,7 +167,8 @@ export class AgentcoinSDK implements IAgentcoinSDK {
       runtime.clients = await initializeClients(character, runtime)
       elizaLogger.debug(`Started ${character.name} as ${runtime.agentId}`)
 
-      void knowledgeService.start()
+      // step 4: start services (move to runtime.services)
+      void Promise.all([knowledgeService.start(), configService.start()])
     } catch (error) {
       elizaLogger.error(`Error starting agent for character ${character.name}:`, error)
       throw error
@@ -171,6 +186,26 @@ export class AgentcoinSDK implements IAgentcoinSDK {
       eventHandler: (event, params) => sdk.handle(event, params)
     })
     return sdk
+  }
+
+  register(kind: 'service', handler: Service): void
+  register(kind: 'provider', handler: Provider): void
+  register(kind: 'action', handler: Action): void
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  register(kind: string, handler: any): void {
+    switch (kind) {
+      case 'service':
+        void this.runtime.registerService(handler)
+        break
+      case 'action':
+        this.runtime.registerAction(handler)
+        break
+      case 'provider':
+        this.runtime.providers.push(handler)
+        break
+      default:
+        throw new Error(`Unknown registration kind: ${kind}`)
+    }
   }
 
   on(event: 'message', handler: NewMessageHandler): void
