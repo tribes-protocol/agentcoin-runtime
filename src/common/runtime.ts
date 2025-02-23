@@ -1,4 +1,5 @@
 import { isNull } from '@/common/functions'
+import { Context, NewMessageEvent } from '@/common/types'
 import { IAgentcoinService, IConfigService, IWalletService } from '@/services/interfaces'
 import {
   Action,
@@ -22,10 +23,16 @@ interface AgentcoinDependencies {
   config: IConfigService
 }
 
+interface AgentcoinInternals {
+  eventHandler: (event: string, params: Context | NewMessageEvent) => Promise<boolean>
+}
+
 export class AgentcoinRuntime extends AgentRuntime {
   public readonly agentcoin: AgentcoinDependencies
+  private internals: AgentcoinInternals | undefined
 
   public constructor(opts: {
+    // FIXME: hish - Register these services in the runtime `services`
     agentcoin: AgentcoinDependencies
     eliza: {
       conversationLength?: number
@@ -49,6 +56,22 @@ export class AgentcoinRuntime extends AgentRuntime {
   }) {
     super(opts.eliza)
     this.agentcoin = opts.agentcoin
+  }
+
+  async configure(internals: AgentcoinInternals): Promise<void> {
+    if (!isNull(this.internals)) {
+      throw new Error('AgentcoinRuntime already configured')
+    }
+
+    this.internals = internals
+  }
+
+  async handle(event: string, params: Context | NewMessageEvent): Promise<boolean> {
+    if (isNull(this.internals)) {
+      throw new Error('AgentcoinRuntime not initialized')
+    }
+
+    return this.internals.eventHandler(event, params)
   }
 
   async ensureUserRoomConnection(options: {

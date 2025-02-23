@@ -253,6 +253,19 @@ export class AgentcoinClient {
       return
     }
 
+    // `message` event
+    let shouldContinue = await this.runtime.handle('message', {
+      text: message.text,
+      sender: message.sender,
+      source: 'agentcoin',
+      timestamp: message.createdAt ?? new Date()
+    })
+
+    if (!shouldContinue) {
+      elizaLogger.info('AgentcoinClient received message event but it was suppressed')
+      return
+    }
+
     const agentcoinService = this.runtime.agentcoin.agent
     const identity = await agentcoinService.getIdentity()
 
@@ -280,10 +293,24 @@ export class AgentcoinClient {
       agentName: this.runtime.character.name
     })
 
+    await this.runtime.evaluate(memory, state)
+
     const context = composeContext({
       state,
       template: messageHandlerTemplate
     })
+
+    // `prellm` event
+    shouldContinue = await this.runtime.handle('prellm', {
+      state,
+      responses: [],
+      memory
+    })
+
+    if (!shouldContinue) {
+      elizaLogger.info('AgentcoinClient received prellm event but it was suppressed')
+      return
+    }
 
     const response = await generateMessageResponse({
       runtime: this.runtime,
@@ -291,7 +318,22 @@ export class AgentcoinClient {
       modelClass: ModelClass.LARGE
     })
 
-    if (!response.text) return
+    // `postllm` event
+    shouldContinue = await this.runtime.handle('postllm', {
+      state,
+      responses: [],
+      memory,
+      content: response
+    })
+
+    if (!shouldContinue) {
+      elizaLogger.info('AgentcoinClient received postllm event but it was suppressed')
+      return
+    }
+
+    if (isNull(response.text) || response.text.trim().length === 0) {
+      return
+    }
 
     const action = this.runtime.actions.find((a) => a.name === response.action)
     const shouldSuppressInitialMessage = action?.suppressInitialMessage
@@ -306,27 +348,67 @@ export class AgentcoinClient {
         channel: message.channel,
         inReplyTo: memory.id
       })
+      await this.runtime.evaluate(responseMessage, state, true)
       messageResponses.push(responseMessage)
       state = await this.runtime.updateRecentMessageState(state)
     }
 
+    // loop through messageResponses and see whether we have any actions to process
+    let hasActions = false
+    for (const messageResponse of messageResponses) {
+      if (messageResponse.content.action) {
+        hasActions = true
+        break
+      }
+    }
+
+    if (!hasActions) {
+      elizaLogger.info('no actions to process, done!')
+      return
+    }
+
+    // `preaction` event
+    shouldContinue = await this.runtime.handle('preaction', {
+      state,
+      responses: messageResponses,
+      memory
+    })
+
+    if (!shouldContinue) {
+      elizaLogger.info('AgentcoinClient received preaction event but it was suppressed')
+      return
+    }
+
     await this.runtime.processActions(memory, messageResponses, state, async (newMessage) => {
       try {
-        await this.sendMessageAsAgent({
+        // `postaction` event
+        shouldContinue = await this.runtime.handle('postaction', {
+          state,
+          responses: messageResponses,
+          memory,
+          content: newMessage
+        })
+
+        if (!shouldContinue) {
+          elizaLogger.info('AgentcoinClient received postaction event but it was suppressed')
+          return
+        }
+
+        const newMemory = await this.sendMessageAsAgent({
           identity,
           text: newMessage.text,
           channel: message.channel,
           inReplyTo: memory.id
         })
+
+        await this.runtime.evaluate(newMemory, state, true)
+
+        return [newMemory]
       } catch (e) {
         elizaLogger.error(`error sending`, e)
         throw e
       }
-
-      return [memory]
     })
-
-    await this.runtime.evaluate(memory, state)
   }
 }
 
