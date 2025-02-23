@@ -147,7 +147,7 @@ export class AgentcoinSDK implements IAgentcoinSDK {
       runtime.clients = await initializeClients(character, runtime)
       elizaLogger.debug(`Started ${character.name} as ${runtime.agentId}`)
 
-      await knowledgeService.start()
+      void knowledgeService.start()
     } catch (error) {
       elizaLogger.error(`Error starting agent for character ${character.name}:`, error)
       throw error
