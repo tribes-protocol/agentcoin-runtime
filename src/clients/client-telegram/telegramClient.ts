@@ -45,8 +45,8 @@ export class TelegramClient {
   }
 
   private async initializeBot(): Promise<void> {
-    await this.bot.launch({ dropPendingUpdates: true })
-    elizaLogger.log('✨ Telegram bot successfully launched and is running!')
+    void this.bot.launch({ dropPendingUpdates: true })
+    elizaLogger.info('✨ Telegram bot successfully launched and is running!')
 
     const botInfo = await this.bot.telegram.getMe()
     this.bot.botInfo = botInfo
