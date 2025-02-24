@@ -9,9 +9,9 @@ import {
   Identity,
   IdentitySchema
 } from '@/common/types'
-import { elizaLogger } from '@elizaos/core'
-import EC from 'elliptic'
+import { elizaLogger, Memory } from '@elizaos/core'
 import { createHash } from 'crypto'
+import EC from 'elliptic'
 
 // eslint-disable-next-line new-cap
 export const ec = new EC.ec('p256')
@@ -197,4 +197,20 @@ export function isValidSignature(message: string, publicKey: string, signature: 
     console.error('Signature verification error:', error)
     return false
   }
+}
+
+export function hasActions(responses: Memory[]): boolean {
+  let hasActions = false
+  for (const messageResponse of responses) {
+    if (messageResponse.content.action) {
+      hasActions = true
+      break
+    }
+  }
+
+  if (!hasActions) {
+    elizaLogger.info('no actions to process, done!')
+    return
+  }
+  return hasActions
 }

@@ -1,6 +1,7 @@
 import { CHARACTER_FILE, ENV_FILE } from '@/common/constants'
 import { AGENT_ADMIN_PUBLIC_KEY, AGENTCOIN_FUN_API_URL, TOKEN_ADDRESS } from '@/common/env'
 import {
+  hasActions,
   isNull,
   isRequiredString,
   isValidSignature,
@@ -371,17 +372,7 @@ export class AgentcoinClient {
       state = await this.runtime.updateRecentMessageState(state)
     }
 
-    // loop through messageResponses and see whether we have any actions to process
-    let hasActions = false
-    for (const messageResponse of messageResponses) {
-      if (messageResponse.content.action) {
-        hasActions = true
-        break
-      }
-    }
-
-    if (!hasActions) {
-      elizaLogger.info('no actions to process, done!')
+    if (!hasActions(messageResponses)) {
       return
     }
 
