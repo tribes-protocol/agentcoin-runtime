@@ -9,6 +9,7 @@ import {
 } from '@/common/functions'
 import { AgentcoinRuntime } from '@/common/runtime'
 import {
+  AgentcoinServiceType,
   AgentIdentitySchema,
   Character,
   ChatChannel,
@@ -26,6 +27,8 @@ import * as fs from 'fs'
 
 import { messageHandlerTemplate } from '@elizaos/client-direct'
 
+import { AgentcoinService } from '@/services/agentcoinfun'
+import { ConfigService } from '@/services/config'
 import {
   Client,
   composeContext,
@@ -34,6 +37,7 @@ import {
   IAgentRuntime,
   Memory,
   ModelClass,
+  ServiceType,
   stringToUuid,
   UUID
 } from '@elizaos/core'
@@ -45,9 +49,19 @@ function messageIdToUuid(messageId: number): UUID {
 
 export class AgentcoinClient {
   private socket?: Socket
+  private agentcoinService: AgentcoinService
+  private configService: ConfigService
 
   constructor(private readonly runtime: AgentcoinRuntime) {
     elizaLogger.info('Connecting to Agentcoin API', AGENTCOIN_FUN_API_URL)
+    this.agentcoinService = runtime.getService<AgentcoinService>(
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      AgentcoinServiceType.AGENTCOIN as unknown as ServiceType
+    )
+    this.configService = runtime.getService<ConfigService>(
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      AgentcoinServiceType.CONFIG as unknown as ServiceType
+    )
   }
 
   public async start(): Promise<void> {
@@ -67,11 +81,11 @@ export class AgentcoinClient {
       autoConnect: true,
       transports: ['websocket', 'polling'],
       extraHeaders: {
-        Cookie: await this.runtime.agentcoin.agent.getCookie()
+        Cookie: await this.agentcoinService.getCookie()
       },
       auth: async (cb: (data: unknown) => void) => {
         try {
-          const jwtToken = await this.runtime.agentcoin.agent.getJwtAuthToken()
+          const jwtToken = await this.agentcoinService.getJwtAuthToken()
           cb({ jwtToken })
         } catch (error) {
           elizaLogger.error('Error getting JWT token', error)
@@ -98,7 +112,7 @@ export class AgentcoinClient {
       await this.processMessage(coinChannel, data)
     })
 
-    const identity = await this.runtime.agentcoin.agent.getIdentity()
+    const identity = await this.agentcoinService.getIdentity()
     const eventName = `user:${serializeIdentity(identity)}`
     elizaLogger.info(
       `agentcoin.fun (${process.env.npm_package_version}) client listening for event`,
@@ -181,7 +195,7 @@ export class AgentcoinClient {
     await fs.promises.writeFile(ENV_FILE, envContent)
 
     // notify config service
-    await this.runtime.agentcoin.config.checkEnvAndCharacterUpdate()
+    await this.configService.checkEnvAndCharacterUpdate()
   }
 
   public stop(): void {
@@ -200,7 +214,7 @@ export class AgentcoinClient {
     channel: ChatChannel
     inReplyTo?: UUID
   }): Promise<Memory> {
-    const agentcoinResponse = await this.runtime.agentcoin.agent.sendMessage({
+    const agentcoinResponse = await this.agentcoinService.sendMessage({
       text,
       sender: identity,
       channel,
@@ -267,7 +281,10 @@ export class AgentcoinClient {
       return
     }
 
-    const agentcoinService = this.runtime.agentcoin.agent
+    const agentcoinService = this.runtime.getService<AgentcoinService>(
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      AgentcoinServiceType.AGENTCOIN as unknown as ServiceType
+    )
     const identity = await agentcoinService.getIdentity()
 
     if (message.sender === identity) {

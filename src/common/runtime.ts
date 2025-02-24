@@ -1,6 +1,5 @@
 import { isNull } from '@/common/functions'
 import { Context, NewMessageEvent, SdkEventKind } from '@/common/types'
-import { IAgentcoinService, IConfigService, IWalletService } from '@/services/interfaces'
 import {
   Action,
   AgentRuntime,
@@ -17,23 +16,14 @@ import {
   UUID
 } from '@elizaos/core'
 
-interface AgentcoinDependencies {
-  agent: IAgentcoinService
-  wallet: IWalletService
-  config: IConfigService
-}
-
 interface AgentcoinInternals {
   eventHandler: (event: SdkEventKind, params: Context | NewMessageEvent) => Promise<boolean>
 }
 
 export class AgentcoinRuntime extends AgentRuntime {
-  public readonly agentcoin: AgentcoinDependencies
   private internals: AgentcoinInternals | undefined
 
   public constructor(opts: {
-    // FIXME: hish - Register these services in the runtime `services`
-    agentcoin: AgentcoinDependencies
     eliza: {
       conversationLength?: number
       agentId?: UUID
@@ -55,7 +45,6 @@ export class AgentcoinRuntime extends AgentRuntime {
     }
   }) {
     super(opts.eliza)
-    this.agentcoin = opts.agentcoin
   }
 
   async configure(internals: AgentcoinInternals): Promise<void> {

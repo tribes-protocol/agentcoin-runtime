@@ -2,6 +2,7 @@ import { AgentcoinAPI } from '@/apis/agentcoinfun'
 import { AGENT_PROVISION_FILE, REGISTRATION_FILE } from '@/common/constants'
 import { isNull, toJsonTree } from '@/common/functions'
 import {
+  AgentcoinServiceType,
   AgentProvisionResponse,
   AgentProvisionResponseSchema,
   AgentRegistrationSchema,
@@ -14,17 +15,25 @@ import {
 } from '@/common/types'
 import { IAgentcoinService } from '@/services/interfaces'
 import { KeychainService } from '@/services/keychain'
-import { elizaLogger } from '@elizaos/core'
+import { elizaLogger, IAgentRuntime, Service, ServiceType } from '@elizaos/core'
 import * as fs from 'fs'
 
-export class AgentcoinService implements IAgentcoinService {
+export class AgentcoinService extends Service implements IAgentcoinService {
   private cachedCookie: string | undefined
   private cachedIdentity: Identity | undefined
+
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  public static readonly serviceType = AgentcoinServiceType.AGENTCOIN as unknown as ServiceType
+  // FIXME: This is a hack to make the service type work
 
   constructor(
     private readonly keychain: KeychainService,
     private readonly api: AgentcoinAPI
-  ) {}
+  ) {
+    super()
+  }
+
+  async initialize(_: IAgentRuntime): Promise<void> {}
 
   async getUser(identity: Identity): Promise<User | undefined> {
     return this.api.getUser(identity)

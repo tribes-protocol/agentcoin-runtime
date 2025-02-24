@@ -97,11 +97,6 @@ export class AgentcoinSDK implements IAgentcoinSDK {
 
       elizaLogger.info(elizaLogger.successesTitle, 'Creating runtime for character', character.name)
       runtime = new AgentcoinRuntime({
-        agentcoin: {
-          agent: agentcoinService,
-          wallet: walletService,
-          config: configService
-        },
         eliza: {
           databaseAdapter: db,
           token,
@@ -111,7 +106,7 @@ export class AgentcoinSDK implements IAgentcoinSDK {
           plugins: [bootstrapPlugin, createNodePlugin(), agentcoinPlugin],
           providers: [],
           actions: [],
-          services: [],
+          services: [agentcoinService, walletService, configService],
           managers: [],
           cacheManager: cache
         }
