@@ -115,7 +115,7 @@ export class AgentcoinClient {
 
     // listen on DMs
     this.socket.on(eventName, async (data: unknown) => {
-      elizaLogger.info('Agentcoin client received event', data)
+      // elizaLogger.info('Agentcoin client received event', data)
       try {
         const event = UserDmEventSchema.parse(data)
         const channel = event.channel
@@ -200,11 +200,13 @@ export class AgentcoinClient {
   private async sendMessageAsAgent({
     identity,
     text,
+    action,
     channel,
     inReplyTo
   }: {
     identity: Identity
     text: string
+    action?: string
     channel: ChatChannel
     inReplyTo?: UUID
   }): Promise<Memory> {
@@ -215,14 +217,20 @@ export class AgentcoinClient {
       clientUuid: crypto.randomUUID()
     })
 
-    return this.saveMessage({ message: agentcoinResponse.message, inReplyTo })
+    return this.saveMessage({
+      message: agentcoinResponse.message,
+      action,
+      inReplyTo
+    })
   }
 
   private async saveMessage({
     message,
+    action,
     inReplyTo
   }: {
     message: Message
+    action?: string
     inReplyTo?: UUID
   }): Promise<Memory> {
     const roomId = stringToUuid(serializeChannel(message.channel))
@@ -240,7 +248,8 @@ export class AgentcoinClient {
         text: message.text,
         source: 'agentcoin',
         inReplyTo,
-        agentCoinMessageId: message.id
+        agentCoinMessageId: message.id,
+        action
       },
       createdAt: Date.now(),
       unique: true
@@ -253,11 +262,6 @@ export class AgentcoinClient {
   }
 
   private async processMessage(channel: ChatChannel, data: unknown): Promise<void> {
-    // print all actions in runtime
-    for (const action of this.runtime.actions) {
-      elizaLogger.info('action available:', action.name)
-    }
-
     const messages = HydratedMessageSchema.array().parse(data)
 
     const { message, user } = messages[0]
@@ -359,7 +363,8 @@ export class AgentcoinClient {
         identity,
         text: response.text,
         channel: message.channel,
-        inReplyTo: memory.id
+        inReplyTo: memory.id,
+        action: response.action
       })
       await this.runtime.evaluate(responseMessage, state, true)
       messageResponses.push(responseMessage)
