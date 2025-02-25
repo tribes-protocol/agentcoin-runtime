@@ -1,5 +1,7 @@
 import type { ClientBase } from '@/clients/twitter/base'
 import { buildConversationThread, sendTweet, wait } from '@/clients/twitter/utils'
+import { hasActions } from '@/common/functions'
+import { AgentcoinRuntime } from '@/common/runtime'
 import {
   composeContext,
   type Content,
@@ -8,7 +10,6 @@ import {
   generateShouldRespond,
   getEmbeddingZeroVector,
   type HandlerCallback,
-  type IAgentRuntime,
   type IImageDescriptionService,
   type Memory,
   messageCompletionFooter,
@@ -105,11 +106,11 @@ should stop participating in the conversation.
 
 export class TwitterInteractionClient {
   client: ClientBase
-  runtime: IAgentRuntime
+  runtime: AgentcoinRuntime
 
   private isDryRun: boolean
 
-  constructor(client: ClientBase, runtime: IAgentRuntime) {
+  constructor(client: ClientBase, runtime: AgentcoinRuntime) {
     this.client = client
     this.runtime = runtime
     this.isDryRun = this.client.twitterConfig.TWITTER_DRY_RUN
@@ -234,13 +235,29 @@ export class TwitterInteractionClient {
               ? this.runtime.agentId
               : stringToUuid(tweet.userId)
 
-          await this.runtime.ensureConnection(
-            userIdUUID,
+          const messageText = tweet.text
+          const username = tweet.username
+
+          const shouldContinue = await this.runtime.handle('message', {
+            text: messageText,
+            sender: username,
+            source: 'twitter',
+            timestamp: new Date(tweet.timestamp * 1000)
+          })
+
+          if (!shouldContinue) {
+            elizaLogger.info('TwitterClient received message event but it was suppressed')
+            return
+          }
+
+          await this.runtime.ensureUserRoomConnection({
             roomId,
-            tweet.username,
-            tweet.name,
-            'twitter'
-          )
+            userId: userIdUUID,
+            username,
+            name: tweet.name,
+            email: username,
+            source: 'twitter'
+          })
 
           const thread = await buildConversationThread(tweet, this.client)
 
@@ -298,9 +315,8 @@ export class TwitterInteractionClient {
 
     elizaLogger.log('Processing Tweet: ', tweet.id)
     const formatTweet = (tweet: Tweet): string => {
-      return `  ID: ${tweet.id}
-  From: ${tweet.name} (@${tweet.username})
-  Text: ${tweet.text}`
+      return `ID: ${tweet.id} From: ${tweet.name} (@${tweet.username})
+              Text: ${tweet.text}`
     }
     const currentPost = formatTweet(tweet)
 
@@ -423,6 +439,17 @@ export class TwitterInteractionClient {
         twitterMessageHandlerTemplate
     })
 
+    let shouldContinue = await this.runtime.handle('prellm', {
+      state,
+      responses: [],
+      memory: message
+    })
+
+    if (!shouldContinue) {
+      elizaLogger.info('TwitterClient received prellm event but it was suppressed')
+      return
+    }
+
     const response = await generateMessageResponse({
       runtime: this.runtime,
       context,
@@ -436,6 +463,18 @@ export class TwitterInteractionClient {
     response.inReplyTo = stringId
 
     response.text = removeQuotes(response.text)
+
+    shouldContinue = await this.runtime.handle('postllm', {
+      state,
+      responses: [],
+      memory: message,
+      content: response
+    })
+
+    if (!shouldContinue) {
+      elizaLogger.info('TwitterClient received postllm event but it was suppressed')
+      return
+    }
 
     if (response.text) {
       if (this.isDryRun) {
@@ -456,24 +495,53 @@ export class TwitterInteractionClient {
             return memories
           }
 
-          const responseMessages = await callback(response)
+          const messageResponses = await callback(response)
 
           state = await this.runtime.updateRecentMessageState(state)
 
-          for (const responseMessage of responseMessages) {
-            if (responseMessage === responseMessages[responseMessages.length - 1]) {
+          for (const responseMessage of messageResponses) {
+            if (responseMessage === messageResponses[messageResponses.length - 1]) {
               responseMessage.content.action = response.action
             } else {
               responseMessage.content.action = 'CONTINUE'
             }
             await this.runtime.messageManager.createMemory(responseMessage)
           }
-          const responseTweetId = responseMessages[responseMessages.length - 1]?.content?.tweetId
+          const responseTweetId = messageResponses[messageResponses.length - 1]?.content?.tweetId
+
+          if (!hasActions(messageResponses)) {
+            return
+          }
+
+          // `preaction` event
+          shouldContinue = await this.runtime.handle('preaction', {
+            state,
+            responses: messageResponses,
+            memory: message
+          })
+
+          if (!shouldContinue) {
+            elizaLogger.info('TwitterClient received preaction event but it was suppressed')
+            return
+          }
+
           await this.runtime.processActions(
             message,
-            responseMessages,
+            messageResponses,
             state,
-            (response: Content) => {
+            async (response: Content) => {
+              shouldContinue = await this.runtime.handle('postaction', {
+                state,
+                responses: messageResponses,
+                memory: message,
+                content: response
+              })
+
+              if (!shouldContinue) {
+                elizaLogger.info('TwitterClient received postaction event but it was suppressed')
+                return
+              }
+
               return callback(response, responseTweetId)
             }
           )
