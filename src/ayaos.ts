@@ -12,6 +12,7 @@ import {
   SdkEventKind
 } from '@/common/types'
 import agentcoinPlugin from '@/plugins/agentcoin'
+import tippingPlugin from '@/plugins/tipping'
 import { AgentcoinService } from '@/services/agentcoinfun'
 import { ConfigService } from '@/services/config'
 import { EventService } from '@/services/event'
@@ -108,7 +109,7 @@ export class AyaOS implements IAyaOS {
           modelProvider: character.modelProvider,
           evaluators: [],
           character,
-          plugins: [bootstrapPlugin, createNodePlugin(), agentcoinPlugin],
+          plugins: [bootstrapPlugin, createNodePlugin(), agentcoinPlugin, tippingPlugin],
           providers: [],
           actions: [],
           services: [agentcoinService, walletService, configService],

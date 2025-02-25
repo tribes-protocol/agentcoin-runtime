@@ -22,9 +22,6 @@ const JokeEvaluationSchema = z.object({
   explanation: z.string()
 })
 
-// Since we are tipping
-// in ERC20 tokens, the joke should be really funny. Don't simply give out tips for every joke.
-
 const jokeEvaluationTemplate = `Evaluate if the following joke or statement is funny and deserves
  a tip. Consider factors like creativity, wit, timing, and cultural relevance.
  
@@ -61,7 +58,6 @@ export const tipForJokeAction: Action = {
   description:
     'Evaluates any humorous content in the conversation (jokes, witty remarks, clever wordplay) and automatically sends ERC20 tokens as a reward if deemed genuinely funny. The evaluation considers multiple factors including originality, timing, cleverness, and contextual relevance.',
   validate: async () => {
-    elizaLogger.info('TIP_FOR_JOKE validate when called')
     return true
   },
   handler: async (
