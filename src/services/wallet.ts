@@ -1,7 +1,14 @@
 import { AgentcoinAPI } from '@/apis/agentcoinfun'
 import { BASE_RPC_URL } from '@/common/env'
 import { isNull } from '@/common/functions'
-import { AgentWallet, AgentWalletKind, HexString, Identity, Transaction } from '@/common/types'
+import {
+  AgentWallet,
+  AgentWalletKind,
+  HexString,
+  Identity,
+  ServiceKind,
+  Transaction
+} from '@/common/types'
 import { IWalletService } from '@/services/interfaces'
 import { IAgentRuntime, Service, ServiceType } from '@elizaos/core'
 import { TurnkeyClient } from '@turnkey/http'
@@ -15,7 +22,7 @@ export class WalletService extends Service implements IWalletService {
 
   static get serviceType(): ServiceType {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return 'agentcoin-wallet-service' as ServiceType
+    return ServiceKind.wallet as unknown as ServiceType
   }
 
   constructor(

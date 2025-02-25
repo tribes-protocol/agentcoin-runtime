@@ -361,3 +361,9 @@ export interface Context {
 export type ContextHandler = (context: Context) => Promise<boolean>
 
 export type SdkEventKind = 'message' | 'prellm' | 'postllm' | 'preaction' | 'postaction'
+
+export enum ServiceKind {
+  wallet = 'wallet-service',
+  config = 'config-service',
+  agent = 'agent-service'
+}

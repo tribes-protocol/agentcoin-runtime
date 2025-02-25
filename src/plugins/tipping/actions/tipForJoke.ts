@@ -1,7 +1,7 @@
 import { TOKEN_ADDRESS } from '@/common/env'
 import { isNull } from '@/common/functions'
 import { AgentcoinRuntime } from '@/common/runtime'
-import { EthAddressSchema } from '@/common/types'
+import { EthAddressSchema, ServiceKind } from '@/common/types'
 import { WalletService } from '@/services/wallet'
 import {
   Action,
@@ -114,7 +114,7 @@ export const tipForJokeAction: Action = {
         return false
       }
 
-      const walletService = runtime.getService<WalletService>()
+      const walletService = runtime.getService<WalletService>(ServiceKind.wallet)
       const wallet = await walletService.getDefaultWallet('evm')
 
       const data = encodeFunctionData({
@@ -129,6 +129,7 @@ export const tipForJokeAction: Action = {
       })
 
       const confirmationURL = `https://basescan.org/tx/${txHash}`
+
       if (callback) {
         callback({
           text: `Great joke! I've sent you 69.420 tokens as a tip, ${confirmationURL}`,

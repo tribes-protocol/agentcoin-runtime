@@ -8,6 +8,7 @@ import {
   CreateMessage,
   HydratedMessage,
   Identity,
+  ServiceKind,
   User
 } from '@/common/types'
 import { IAgentcoinService } from '@/services/interfaces'
@@ -21,7 +22,7 @@ export class AgentcoinService extends Service implements IAgentcoinService {
 
   static get serviceType(): ServiceType {
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return 'agentcoin-service' as ServiceType
+    return ServiceKind.agent as unknown as ServiceType
   }
 
   constructor(
