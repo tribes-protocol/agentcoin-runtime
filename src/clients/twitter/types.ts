@@ -118,59 +118,6 @@ export interface RawTweetType {
   }
 }
 
-// export const RawTweetSchema: z.ZodType<RawTweetType> = z.lazy(() =>
-//   z.object({
-//     id: z.string().optional(),
-//     id_str: z.string().optional(),
-//     rest_id: z.string().optional(),
-//     text: z.string().optional(),
-//     html: z.string().optional(),
-//     bookmarkCount: z.number().optional(),
-//     conversationId: z.string().optional(),
-//     hashtags: z.array(z.unknown()).optional(),
-//     inReplyToStatus: z.unknown().optional(),
-//     inReplyToStatusId: z.string().optional(),
-//     isPin: z.boolean().optional(),
-//     isReply: z.boolean().optional(),
-//     isSelfThread: z.boolean().optional(),
-//     mentions: z.array(z.unknown()).optional(),
-//     name: z.string().optional(),
-//     permanentUrl: z.string().optional(),
-//     photos: z.array(z.unknown()).optional(),
-//     place: z.unknown().optional(),
-//     poll: z.unknown().optional(),
-//     quotedStatusId: z.string().optional(),
-//     thread: z.array(z.unknown()).optional(),
-//     timestamp: z.number().optional(),
-//     timeParsed: z.date().optional(),
-//     urls: z.array(z.unknown()).optional(),
-//     userId: z.string().optional(),
-//     username: z.string().optional(),
-//     videos: z.array(z.unknown()).optional(),
-//     views: z.object({ count: z.string().or(z.number()).optional() }).optional(),
-//     sensitiveContent: z.boolean().optional(),
-//     legacy: TweetLegacySchema.optional(),
-//     core: CoreSchema.optional(),
-//     quoted_status_result: z
-//       .object({
-//         result: z.lazy(() => RawTweetSchema).optional()
-//       })
-//       .optional(),
-//     retweeted_status_result: z
-//       .object({
-//         result: z.lazy(() => RawTweetSchema).optional()
-//       })
-//       .optional(),
-//     user_results: z
-//       .object({
-//         result: UserResultSchema.optional()
-//       })
-//       .optional()
-//   })
-// )
-
-// export type RawTweet = z.infer<typeof RawTweetSchema>
-
 const TweetResultSchema = z.object({
   rest_id: z.string(),
   legacy: TweetLegacySchema
