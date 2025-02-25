@@ -3,14 +3,14 @@ import {
   RESPONSE_CHANCES,
   TEAM_COORDINATION,
   TIMING_CONSTANTS
-} from '@/clients/client-telegram/constants'
+} from '@/clients/telegram/constants'
 import {
   telegramAutoPostTemplate,
   telegramMessageHandlerTemplate,
   telegramPinnedMessageTemplate,
   telegramShouldRespondTemplate
-} from '@/clients/client-telegram/templates'
-import { cosineSimilarity, escapeMarkdown } from '@/clients/client-telegram/utils'
+} from '@/clients/telegram/templates'
+import { cosineSimilarity, escapeMarkdown } from '@/clients/telegram/utils'
 import {
   composeContext,
   composeRandomUser,
@@ -1103,7 +1103,8 @@ export class MessageManager {
             ? stringToUuid(
                 message.reply_to_message.message_id.toString() + '-' + this.runtime.agentId
               )
-            : undefined
+            : undefined,
+        telegramMessageId: message.message_id
       }
 
       // Create memory for the message
@@ -1114,10 +1115,11 @@ export class MessageManager {
         roomId,
         content,
         createdAt: message.date * 1000,
-        embedding: getEmbeddingZeroVector()
+        unique: true
       }
 
       // Create memory
+      await this.runtime.messageManager.addEmbeddingToMemory(memory)
       await this.runtime.messageManager.createMemory(memory)
 
       // Update state with the new memory
@@ -1156,6 +1158,7 @@ export class MessageManager {
             // For the last message, use the original action from the response content
             memory.content.action = !isLastMessage ? 'CONTINUE' : content.action
 
+            await this.runtime.messageManager.addEmbeddingToMemory(memory)
             await this.runtime.messageManager.createMemory(memory)
             memories.push(memory)
           }
