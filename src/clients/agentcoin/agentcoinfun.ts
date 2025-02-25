@@ -253,6 +253,11 @@ export class AgentcoinClient {
   }
 
   private async processMessage(channel: ChatChannel, data: unknown): Promise<void> {
+    // print all actions in runtime
+    for (const action of this.runtime.actions) {
+      elizaLogger.info('action available:', action.name)
+    }
+
     const messages = HydratedMessageSchema.array().parse(data)
 
     const { message, user } = messages[0]

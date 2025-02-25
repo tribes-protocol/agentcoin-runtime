@@ -54,6 +54,7 @@ export const tipForJokeAction: Action = {
   similes: ['REWARD_JOKE', 'SEND_TIP'],
   description: 'Evaluate a joke and send ERC20 tokens if it is funny',
   validate: async () => {
+    elizaLogger.info('TIP_FOR_JOKE validate when called')
     return true
   },
   handler: async (
