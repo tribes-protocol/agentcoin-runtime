@@ -1,4 +1,3 @@
-/* eslint-disable max-len */
 import type { ClientBase } from '@/clients/twitter/base'
 import { DEFAULT_MAX_TWEET_LENGTH } from '@/clients/twitter/environment'
 import { twitterMessageHandlerTemplate } from '@/clients/twitter/interactions'
@@ -45,10 +44,14 @@ const twitterPostTemplate = `
 
 {{postDirections}}
 
-# Task: Generate a post in the voice and style and perspective of {{agentName}} @{{twitterUserName}}.
-Write a post that is {{adjective}} about {{topic}} (without mentioning {{topic}} directly), from the perspective of {{agentName}}. Do not add commentary or acknowledge this request, just write the post.
+# Task: Generate a post in the voice, style and perspective of {{agentName}} @{{twitterUserName}}.
+Write a post that is {{adjective}} about {{topic}} (without mentioning {{topic}} directly), 
+from the perspective of {{agentName}}. Do not add commentary or acknowledge this request, 
+just write the post.
 Your response should be 1, 2, or 3 sentences (choose the length at random).
-Your response should not contain any questions. Brief, concise statements only. The total character count MUST be less than {{maxTweetLength}}. No emojis. Use \\n\\n (double spaces) between statements if there are multiple statements in your response.`
+Your response should not contain any questions. Brief, concise statements only. The total character
+ count MUST be less than {{maxTweetLength}}. No emojis. Use \\n\\n (double spaces) 
+ between statements if there are multiple statements in your response.`
 
 export const twitterActionTemplate =
   `
@@ -75,8 +78,8 @@ Actions (respond only with tags):
 Tweet:
 {{currentTweet}}
 
-# Respond with qualifying action tags only. Default to NO action unless extremely confident of relevance.` +
-  postActionResponseFooter
+# Respond with qualifying action tags only. Default to NO action unless extremely 
+confident of relevance.` + postActionResponseFooter
 
 interface PendingTweet {
   tweetTextForPosting: string
@@ -113,6 +116,7 @@ export class TwitterPostClient {
     elizaLogger.log(`- Username: ${this.twitterUsername}`)
     elizaLogger.log(`- Dry Run Mode: ${this.isDryRun ? 'enabled' : 'disabled'}`)
     elizaLogger.log(
+      // eslint-disable-next-line max-len
       `- Post Interval: ${this.client.twitterConfig.POST_INTERVAL_MIN}-${this.client.twitterConfig.POST_INTERVAL_MAX} minutes`
     )
     elizaLogger.log(
@@ -181,6 +185,7 @@ export class TwitterPostClient {
       elizaLogger.log(`Discord bot is ready as ${readyClient.user.tag}!`)
 
       // Generate invite link with required permissions
+      // eslint-disable-next-line max-len
       const invite = `https://discord.com/api/oauth2/authorize?client_id=${readyClient.user.id}&permissions=274877991936&scope=bot`
       // 274877991936 includes permissions for:
       // - Send Messages
@@ -505,7 +510,6 @@ export class TwitterPostClient {
         tweetTextForPosting = rawTweetContent
       }
 
-      // Truncate the content to the maximum tweet length specified in the environment settings, ensuring the truncation respects sentence boundaries.
       if (maxTweetLength) {
         tweetTextForPosting = truncateToCompleteSentence(tweetTextForPosting, maxTweetLength)
       }
@@ -676,7 +680,8 @@ export class TwitterPostClient {
             },
             {
               twitterUserName: this.twitterUsername,
-              currentTweet: `ID: ${tweet.id}\nFrom: ${tweet.name} (@${tweet.username})\nText: ${tweet.text}`
+              currentTweet: `ID: ${tweet.id}\nFrom: ${tweet.name} 
+              (@${tweet.username})\nText: ${tweet.text}`
             }
           )
 
@@ -732,13 +737,12 @@ export class TwitterPostClient {
         })
       }
       // Sort the timeline based on the action decision score,
-      // then slice the results according to the environment variable to limit the number of actions per cycle.
       const sortedTimelines = sortProcessedTimeline(processedTimelines).slice(
         0,
         maxActionsProcessing
       )
 
-      return this.processTimelineActions(sortedTimelines) // Return results array to indicate completion
+      return this.processTimelineActions(sortedTimelines)
     } catch (error) {
       elizaLogger.error('Error in processTweetActions:', error)
       throw error
@@ -752,7 +756,8 @@ export class TwitterPostClient {
    * Each timeline includes the tweet, action response, tweet state, and room context.
    * Results are returned for tracking completed actions.
    *
-   * @param timelines - Array of objects containing tweet details, action responses, and state information.
+   * @param timelines - Array of objects containing tweet details, action responses, and
+   * state information.
    * @returns A promise that resolves to an array of results with details of executed actions.
    */
   private async processTimelineActions(
@@ -834,7 +839,8 @@ export class TwitterPostClient {
               try {
                 const quotedTweet = await this.client.twitterClient.getTweet(tweet.quotedStatusId)
                 if (quotedTweet) {
-                  quotedContent = `\nQuoted Tweet from @${quotedTweet.username}:\n${quotedTweet.text}`
+                  quotedContent = `\nQuoted Tweet from
+                   @${quotedTweet.username}:\n${quotedTweet.text}`
                 }
               } catch (error) {
                 elizaLogger.error('Error fetching quoted tweet:', error)
@@ -881,7 +887,8 @@ export class TwitterPostClient {
             // Check for dry run mode
             if (this.isDryRun) {
               elizaLogger.info(
-                `Dry run: A quote tweet for tweet ID ${tweet.id} would have been posted with the following content: "${quoteContent}".`
+                `Dry run: A quote tweet for tweet ID ${tweet.id} 
+                would have been posted with the following content: "${quoteContent}".`
               )
               executedActions.push('quote (dry run)')
             } else {
