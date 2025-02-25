@@ -66,42 +66,36 @@ export class AgentcoinSDK implements IAgentcoinSDK {
   }
 
   static async start(): Promise<IAgentcoinSDK> {
-    elizaLogger.info('Starting agent...')
-
-    // step 1: provision the hardware if needed.
-    const keychainService = new KeychainService()
-    const agentcoinAPI = new AgentcoinAPI()
-    const agentcoinService = new AgentcoinService(keychainService, agentcoinAPI)
-    await agentcoinService.provisionIfNeeded()
-
-    const agentcoinCookie = await agentcoinService.getCookie()
-    const eventService = new EventService(agentcoinCookie, agentcoinAPI)
-    const walletService = new WalletService(keychainService.turnkeyApiKeyStamper)
-    const processService = new ProcessService()
-    const configService = new ConfigService(eventService, processService)
-
-    // start event service
-    void eventService.start()
-
-    // step 2: load character
-    elizaLogger.info('Loading character...')
-    const character: Character = JSON.parse(fs.readFileSync(CHARACTER_FILE, 'utf8'))
-
-    // step 3: initialize eliza runtime
     let runtime: AgentcoinRuntime | undefined
 
     try {
+      elizaLogger.info('Starting agent...')
+
+      // step 1: provision the hardware if needed.
+      const keychainService = new KeychainService()
+      const agentcoinAPI = new AgentcoinAPI()
+      const agentcoinService = new AgentcoinService(keychainService, agentcoinAPI)
+      await agentcoinService.provisionIfNeeded()
+
+      const agentcoinCookie = await agentcoinService.getCookie()
+      const eventService = new EventService(agentcoinCookie, agentcoinAPI)
+      const walletService = new WalletService(keychainService.turnkeyApiKeyStamper)
+      const processService = new ProcessService()
+      const configService = new ConfigService(eventService, processService)
+
+      // start event service
+      void eventService.start()
+
+      // step 2: load character
+      elizaLogger.info('Loading character...')
+      const character: Character = JSON.parse(fs.readFileSync(CHARACTER_FILE, 'utf8'))
+
       const token = getTokenForProvider(character.modelProvider, character)
       const db = await initializeDatabase()
       const cache = new CacheManager(new DbCacheAdapter(db, character.id))
 
       elizaLogger.info(elizaLogger.successesTitle, 'Creating runtime for character', character.name)
       runtime = new AgentcoinRuntime({
-        agentcoin: {
-          agent: agentcoinService,
-          wallet: walletService,
-          config: configService
-        },
         eliza: {
           databaseAdapter: db,
           token,
@@ -111,7 +105,7 @@ export class AgentcoinSDK implements IAgentcoinSDK {
           plugins: [bootstrapPlugin, createNodePlugin(), agentcoinPlugin],
           providers: [],
           actions: [],
-          services: [],
+          services: [agentcoinService, walletService, configService],
           managers: [],
           cacheManager: cache
         }
@@ -169,8 +163,17 @@ export class AgentcoinSDK implements IAgentcoinSDK {
 
       // step 4: start services (move to runtime.services)
       void Promise.all([knowledgeService.start(), configService.start()])
-    } catch (error) {
-      elizaLogger.error(`Error starting agent for character ${character.name}:`, error)
+    } catch (error: unknown) {
+      elizaLogger.error(
+        'Error starting agent:',
+        error instanceof Error
+          ? {
+              message: error.message,
+              stack: error.stack,
+              cause: error.cause
+            }
+          : String(error)
+      )
       throw error
     }
 

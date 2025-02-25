@@ -1,18 +1,18 @@
 import { CHARACTER_FILE, CODE_DIR, ENV_FILE, RUNTIME_SERVER_SOCKET_FILE } from '@/common/constants'
 import { isNull, isRequiredString } from '@/common/functions'
 import { OperationQueue } from '@/common/lang/operation_queue'
-import { CharacterSchema } from '@/common/types'
+import { AgentcoinServiceType, CharacterSchema } from '@/common/types'
 import { EventService } from '@/services/event'
 import { IConfigService } from '@/services/interfaces'
 import { ProcessService } from '@/services/process'
-import { elizaLogger } from '@elizaos/core'
+import { elizaLogger, IAgentRuntime, Service, ServiceType } from '@elizaos/core'
 import crypto from 'crypto'
 import express from 'express'
 import fs from 'fs'
 import net from 'net'
 import simpleGit from 'simple-git'
 
-export class ConfigService implements IConfigService {
+export class ConfigService extends Service implements IConfigService {
   private readonly operationQueue = new OperationQueue(1)
   private isRunning = false
   private gitCommitHash: string | undefined
@@ -20,10 +20,18 @@ export class ConfigService implements IConfigService {
   private characterChecksum: string | undefined
   private server: net.Server | undefined
 
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  public static readonly serviceType = AgentcoinServiceType.CONFIG as unknown as ServiceType
+  // FIXME: This is a hack to make the service type work
+
   constructor(
     private readonly eventService: EventService,
     private readonly processService: ProcessService
-  ) {}
+  ) {
+    super()
+  }
+
+  async initialize(_: IAgentRuntime): Promise<void> {}
 
   async start(): Promise<void> {
     elizaLogger.info('Starting config service...')

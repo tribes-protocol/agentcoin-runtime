@@ -1,17 +1,24 @@
 import { BASE_RPC_URL } from '@/common/env'
 import { isNull } from '@/common/functions'
-import { AgentWallet, HexString, Transaction } from '@/common/types'
+import { AgentcoinServiceType, AgentWallet, HexString, Transaction } from '@/common/types'
 import { IWalletService } from '@/services/interfaces'
+import { IAgentRuntime, Service, ServiceType } from '@elizaos/core'
 import { TurnkeyClient } from '@turnkey/http'
 import { ApiKeyStamper } from '@turnkey/sdk-server'
 import { createAccountWithAddress } from '@turnkey/viem'
 import { Account, createWalletClient, getAddress, http, WalletClient } from 'viem'
 import { base } from 'viem/chains'
 
-export class WalletService implements IWalletService {
+export class WalletService extends Service implements IWalletService {
   private readonly turnkey: TurnkeyClient
 
+  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+  public static readonly serviceType = AgentcoinServiceType.WALLET as unknown as ServiceType
+  // FIXME: This is a hack to make the service type work
+
   constructor(apiKeyStamper: ApiKeyStamper) {
+    super()
+
     this.turnkey = new TurnkeyClient(
       {
         baseUrl: 'https://api.turnkey.com'
@@ -19,6 +26,8 @@ export class WalletService implements IWalletService {
       apiKeyStamper
     )
   }
+
+  async initialize(_: IAgentRuntime): Promise<void> {}
 
   async signPersonalMessage(wallet: AgentWallet, message: string): Promise<string> {
     const account = this.getAccount(wallet)
