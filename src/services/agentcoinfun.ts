@@ -5,8 +5,6 @@ import {
   AgentProvisionResponse,
   AgentProvisionResponseSchema,
   AgentRegistrationSchema,
-  AgentWallet,
-  AgentWalletKind,
   CreateMessage,
   HydratedMessage,
   Identity,
@@ -37,12 +35,6 @@ export class AgentcoinService extends Service implements IAgentcoinService {
 
   async getUser(identity: Identity): Promise<User | undefined> {
     return this.api.getUser(identity)
-  }
-
-  async getDefaultWallet(kind: AgentWalletKind): Promise<AgentWallet> {
-    const cookie = await this.getCookie()
-    const identity = await this.getIdentity()
-    return this.api.getDefaultWallet(identity, kind, { cookie })
   }
 
   async getIdentity(): Promise<Identity> {

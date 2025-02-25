@@ -1,5 +1,5 @@
 import { AyaOS } from '@/ayaos'
-import { AgentcoinRuntime } from '@/common/runtime'
+import { tipForJokeAction } from '@/plugins/tipping/actions/tipForJoke'
 import { elizaLogger } from '@elizaos/core'
 
 async function main(): Promise<void> {
@@ -16,15 +16,7 @@ async function main(): Promise<void> {
       return true
     })
 
-    sdk.register('provider', {
-      get: async (_runtime: AgentcoinRuntime, _memory, _state) => {
-        // const account = await runtime.databaseAdapter.getAccountById(memory.userId)
-        // if (account?.username === 'hish') {
-        //   return 'the user hishboy loves it when you refer to him as Mr Bombastic'
-        // }
-        return ''
-      }
-    })
+    sdk.register('action', tipForJokeAction)
 
     elizaLogger.success('sdk initialized', sdk.agentId)
   } catch {

@@ -1,6 +1,7 @@
+import { AgentcoinAPI } from '@/apis/agentcoinfun'
 import { BASE_RPC_URL } from '@/common/env'
 import { isNull } from '@/common/functions'
-import { AgentWallet, HexString, Transaction } from '@/common/types'
+import { AgentWallet, AgentWalletKind, HexString, Identity, Transaction } from '@/common/types'
 import { IWalletService } from '@/services/interfaces'
 import { IAgentRuntime, Service, ServiceType } from '@elizaos/core'
 import { TurnkeyClient } from '@turnkey/http'
@@ -17,7 +18,12 @@ export class WalletService extends Service implements IWalletService {
     return 'agentcoin-wallet-service' as ServiceType
   }
 
-  constructor(apiKeyStamper: ApiKeyStamper) {
+  constructor(
+    private readonly agentcoinCookie: string,
+    private readonly agentcoinIdentity: Identity,
+    private readonly agentcoinAPI: AgentcoinAPI,
+    apiKeyStamper: ApiKeyStamper
+  ) {
     super()
 
     this.turnkey = new TurnkeyClient(
@@ -29,6 +35,12 @@ export class WalletService extends Service implements IWalletService {
   }
 
   async initialize(_: IAgentRuntime): Promise<void> {}
+
+  async getDefaultWallet(kind: AgentWalletKind): Promise<AgentWallet> {
+    return this.agentcoinAPI.getDefaultWallet(this.agentcoinIdentity, kind, {
+      cookie: this.agentcoinCookie
+    })
+  }
 
   async signPersonalMessage(wallet: AgentWallet, message: string): Promise<string> {
     const account = this.getAccount(wallet)

@@ -12,10 +12,10 @@ import {
 export interface IWalletService {
   signPersonalMessage(wallet: AgentWallet, message: string): Promise<string>
   signAndSubmitTransaction(wallet: AgentWallet, transaction: Transaction): Promise<HexString>
+  getDefaultWallet(kind: AgentWalletKind): Promise<AgentWallet>
 }
 
 export interface IAgentcoinService {
-  getDefaultWallet(kind: AgentWalletKind): Promise<AgentWallet>
   sendMessage(message: CreateMessage): Promise<HydratedMessage>
   getIdentity(): Promise<Identity>
   getUser(identity: Identity): Promise<User | undefined>

@@ -78,8 +78,14 @@ export class AyaOS implements IAyaOS {
       await agentcoinService.provisionIfNeeded()
 
       const agentcoinCookie = await agentcoinService.getCookie()
+      const agentcoinIdentity = await agentcoinService.getIdentity()
       const eventService = new EventService(agentcoinCookie, agentcoinAPI)
-      const walletService = new WalletService(keychainService.turnkeyApiKeyStamper)
+      const walletService = new WalletService(
+        agentcoinCookie,
+        agentcoinIdentity,
+        agentcoinAPI,
+        keychainService.turnkeyApiKeyStamper
+      )
       const processService = new ProcessService()
       const configService = new ConfigService(eventService, processService)
 

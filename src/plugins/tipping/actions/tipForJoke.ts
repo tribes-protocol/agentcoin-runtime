@@ -2,7 +2,6 @@ import { TOKEN_ADDRESS } from '@/common/env'
 import { isNull } from '@/common/functions'
 import { AgentcoinRuntime } from '@/common/runtime'
 import { EthAddressSchema } from '@/common/types'
-import { AgentcoinService } from '@/services/agentcoinfun'
 import { WalletService } from '@/services/wallet'
 import {
   Action,
@@ -102,21 +101,26 @@ export const tipForJokeAction: Action = {
     }
 
     try {
-      // FIXME: how to get the recipient address?
-      const recipientAddress = EthAddressSchema.parse('0xf4D70D2fd1DE59ff34aA0350263ba742cb94b1c8')
-      if (isNull(recipientAddress)) {
-        throw new Error('No recipient address found')
+      const account = await runtime.databaseAdapter.getAccountById(message.userId)
+      const ethAddress = account?.details?.ethAddress
+      if (isNull(ethAddress)) {
+        elizaLogger.error('No account found for user', message.userId)
+        return false
       }
 
-      const agentcoinService = runtime.getService<AgentcoinService>()
-      const walletService = runtime.getService<WalletService>()
+      const recipientAddress = EthAddressSchema.parse(ethAddress)
+      if (isNull(recipientAddress)) {
+        elizaLogger.error('No recipient address found for user', message.userId)
+        return false
+      }
 
-      const wallet = await agentcoinService.getDefaultWallet('evm')
+      const walletService = runtime.getService<WalletService>()
+      const wallet = await walletService.getDefaultWallet('evm')
 
       const data = encodeFunctionData({
         abi: erc20Abi,
         functionName: 'transfer',
-        args: [recipientAddress, parseEther('100')]
+        args: [recipientAddress, parseEther('69.420')]
       })
 
       const txHash = await walletService.signAndSubmitTransaction(wallet, {
@@ -124,9 +128,10 @@ export const tipForJokeAction: Action = {
         data
       })
 
+      const confirmationURL = `https://basescan.org/tx/${txHash}`
       if (callback) {
         callback({
-          text: `Great joke! I've sent you 100 tokens as a tip, https://basescan.org/tx/${txHash}`,
+          text: `Great joke! I've sent you 69.420 tokens as a tip, ${confirmationURL}`,
           content: { ...res, txHash }
         }).catch((error) => {
           elizaLogger.error('Error sending callback:', error)
