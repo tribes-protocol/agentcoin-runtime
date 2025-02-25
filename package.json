@@ -8,7 +8,8 @@
     "lint": "eslint src/**/*.ts",
     "dev": "tsx src/index.ts",
     "start": "NODE_ENV=production tsx dist/index.js",
-    "agent": "dotenv --e /root/.agentcoin-fun/env.production -- tsx dist/index.js"
+    "agent": "dotenv --e /root/.agentcoin-fun/env.production -- tsx dist/index.js",
+    "check-packages": "bash ./scripts/check-packages.sh"
   },
   "dependencies": {
     "@elizaos/adapter-postgres": "0.1.9",

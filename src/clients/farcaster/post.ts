@@ -1,8 +1,8 @@
-import { sendCast } from '@/clients/client-farcaster/actions'
-import type { FarcasterClient } from '@/clients/client-farcaster/client'
-import { createCastMemory } from '@/clients/client-farcaster/memory'
-import { formatTimeline, postTemplate } from '@/clients/client-farcaster/prompts'
-import { castUuid, MAX_CAST_LENGTH } from '@/clients/client-farcaster/utils'
+import { sendCast } from '@/clients/farcaster/actions'
+import type { FarcasterClient } from '@/clients/farcaster/client'
+import { createCastMemory } from '@/clients/farcaster/memory'
+import { formatTimeline, postTemplate } from '@/clients/farcaster/prompts'
+import { castUuid, MAX_CAST_LENGTH } from '@/clients/farcaster/utils'
 import {
   composeContext,
   elizaLogger,

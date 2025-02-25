@@ -1,5 +1,5 @@
 /* eslint-disable max-len */
-import type { Cast } from '@/clients/client-farcaster/types'
+import type { Cast } from '@/clients/farcaster/types'
 import { type Character, messageCompletionFooter, shouldRespondFooter } from '@elizaos/core'
 
 export const formatCast = (cast: Cast): string => {

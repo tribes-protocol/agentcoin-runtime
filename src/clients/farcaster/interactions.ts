@@ -1,14 +1,14 @@
-import { sendCast } from '@/clients/client-farcaster/actions'
-import type { FarcasterClient } from '@/clients/client-farcaster/client'
-import { buildConversationThread, createCastMemory } from '@/clients/client-farcaster/memory'
+import { sendCast } from '@/clients/farcaster/actions'
+import type { FarcasterClient } from '@/clients/farcaster/client'
+import { buildConversationThread, createCastMemory } from '@/clients/farcaster/memory'
 import {
   formatCast,
   formatTimeline,
   messageHandlerTemplate,
   shouldRespondTemplate
-} from '@/clients/client-farcaster/prompts'
-import type { Cast, Profile } from '@/clients/client-farcaster/types'
-import { castUuid } from '@/clients/client-farcaster/utils'
+} from '@/clients/farcaster/prompts'
+import type { Cast, Profile } from '@/clients/farcaster/types'
+import { castUuid } from '@/clients/farcaster/utils'
 import {
   composeContext,
   type Content,
