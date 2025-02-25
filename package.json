@@ -14,7 +14,6 @@
   "dependencies": {
     "@elizaos/adapter-postgres": "0.1.9",
     "@elizaos/client-direct": "0.1.9",
-    "@elizaos/client-twitter": "0.1.9",
     "@elizaos/core": "0.1.9",
     "@elizaos/plugin-bootstrap": "0.1.9",
     "@elizaos/plugin-node": "0.1.9",
