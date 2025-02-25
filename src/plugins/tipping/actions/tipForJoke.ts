@@ -51,8 +51,15 @@ export interface JokeEvaluationContent extends Content {
 
 export const tipForJokeAction: Action = {
   name: 'TIP_FOR_JOKE',
-  similes: ['REWARD_JOKE', 'SEND_TIP'],
-  description: 'Evaluate a joke and send ERC20 tokens if it is funny',
+  similes: [
+    'REWARD_HUMOR',
+    'SEND_TIP_FOR_JOKE',
+    'APPRECIATE_HUMOR',
+    'COMPENSATE_COMEDY',
+    'REWARD_WITTY_REMARK'
+  ],
+  description:
+    'Evaluates any humorous content in the conversation (jokes, witty remarks, clever wordplay) and automatically sends ERC20 tokens as a reward if deemed genuinely funny. The evaluation considers multiple factors including originality, timing, cleverness, and contextual relevance.',
   validate: async () => {
     elizaLogger.info('TIP_FOR_JOKE validate when called')
     return true
@@ -159,20 +166,20 @@ export const tipForJokeAction: Action = {
       {
         user: '{{user1}}',
         content: {
-          text: 'Why did the scarecrow win an award? Because he was outstanding in his field!'
+          text: "Hey everyone, did you hear about the mathematician who's afraid of negative numbers? He'll stop at nothing to avoid them!"
         }
       },
       {
         user: '{{user2}}',
         content: {
-          text: "That's a good one! Let me send you a tip for that joke.",
+          text: "That's actually quite clever! The wordplay with 'nothing' is brilliant.",
           action: 'TIP_FOR_JOKE'
         }
       },
       {
         user: '{{user2}}',
         content: {
-          text: "Great joke! I've sent you 100 tokens as a tip."
+          text: "I love a good math pun! I've sent you 69.420 tokens as appreciation for that witty joke."
         }
       }
     ],
@@ -180,20 +187,20 @@ export const tipForJokeAction: Action = {
       {
         user: '{{user1}}',
         content: {
-          text: 'What do you call a bear with no teeth? A gummy bear!'
+          text: "We were discussing blockchain earlier and it reminded me - Why don't programmers like nature? It has too many bugs!"
         }
       },
       {
         user: '{{user2}}',
         content: {
-          text: "Haha that's hilarious! You deserve a tip for that one.",
+          text: "Haha! A tech joke that's perfectly timed with our discussion.",
           action: 'TIP_FOR_JOKE'
         }
       },
       {
         user: '{{user2}}',
         content: {
-          text: "Great joke! I've sent you 100 tokens as a tip."
+          text: "That was both relevant and funny! Here's 69.420 tokens for making us laugh while staying on topic."
         }
       }
     ],
@@ -201,20 +208,20 @@ export const tipForJokeAction: Action = {
       {
         user: '{{user1}}',
         content: {
-          text: 'What did the grape say when it got stepped on? Nothing, it just let out a little wine!'
+          text: "Speaking of crypto winters... What do you call a bear market that's gone on too long? Un-BEAR-able! 🐻"
         }
       },
       {
         user: '{{user2}}',
         content: {
-          text: 'That joke was grape! Let me tip you for that.',
+          text: "Now that's the kind of market commentary I can appreciate! 😄",
           action: 'TIP_FOR_JOKE'
         }
       },
       {
         user: '{{user2}}',
         content: {
-          text: "Great joke! I've sent you 100 tokens as a tip."
+          text: 'Perfect crypto humor! Sending you 69.420 tokens for that well-timed market pun.'
         }
       }
     ]
