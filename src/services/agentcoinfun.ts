@@ -2,7 +2,6 @@ import { AgentcoinAPI } from '@/apis/agentcoinfun'
 import { AGENT_PROVISION_FILE, REGISTRATION_FILE } from '@/common/constants'
 import { isNull, toJsonTree } from '@/common/functions'
 import {
-  AgentcoinServiceType,
   AgentProvisionResponse,
   AgentProvisionResponseSchema,
   AgentRegistrationSchema,
@@ -22,9 +21,10 @@ export class AgentcoinService extends Service implements IAgentcoinService {
   private cachedCookie: string | undefined
   private cachedIdentity: Identity | undefined
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  public static readonly serviceType = AgentcoinServiceType.AGENTCOIN as unknown as ServiceType
-  // FIXME: This is a hack to make the service type work
+  static get serviceType(): ServiceType {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return 'agentcoin-service' as ServiceType
+  }
 
   constructor(
     private readonly keychain: KeychainService,

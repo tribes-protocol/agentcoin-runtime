@@ -1,10 +1,10 @@
+import { AyaOS } from '@/ayaos'
 import { AgentcoinRuntime } from '@/common/runtime'
-import { AgentcoinSDK } from '@/sdk'
 import { elizaLogger } from '@elizaos/core'
 
 async function main(): Promise<void> {
   try {
-    const sdk = await AgentcoinSDK.start()
+    const sdk = await AyaOS.start()
 
     sdk.on('message', async (message) => {
       console.log('message', message.text)

@@ -1,7 +1,7 @@
 import { CHARACTER_FILE, CODE_DIR, ENV_FILE, RUNTIME_SERVER_SOCKET_FILE } from '@/common/constants'
 import { isNull, isRequiredString } from '@/common/functions'
 import { OperationQueue } from '@/common/lang/operation_queue'
-import { AgentcoinServiceType, CharacterSchema } from '@/common/types'
+import { CharacterSchema } from '@/common/types'
 import { EventService } from '@/services/event'
 import { IConfigService } from '@/services/interfaces'
 import { ProcessService } from '@/services/process'
@@ -20,9 +20,10 @@ export class ConfigService extends Service implements IConfigService {
   private characterChecksum: string | undefined
   private server: net.Server | undefined
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  public static readonly serviceType = AgentcoinServiceType.CONFIG as unknown as ServiceType
-  // FIXME: This is a hack to make the service type work
+  static get serviceType(): ServiceType {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return 'agentcoin-config-service' as ServiceType
+  }
 
   constructor(
     private readonly eventService: EventService,

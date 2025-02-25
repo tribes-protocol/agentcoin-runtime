@@ -13,6 +13,7 @@ import {
   Plugin,
   Provider,
   Service,
+  ServiceType,
   UUID
 } from '@elizaos/core'
 
@@ -61,6 +62,26 @@ export class AgentcoinRuntime extends AgentRuntime {
     }
 
     return this.internals.eventHandler(event, params)
+  }
+
+  getService<T extends Service>(_service?: ServiceType | string | null): T | null {
+    // Loop through services map to find matching instance
+    for (const [_, service] of this.services) {
+      if (service instanceof Service) {
+        // Check if service is instance of T
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        return service as T
+      }
+    }
+    return null
+
+    // if (service in ServiceType) {
+    //   // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    //   return super.getService<T>(service as ServiceType)
+    // }
+
+    // // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    // return super.getService(service as ServiceType)
   }
 
   async ensureUserRoomConnection(options: {
