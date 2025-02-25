@@ -39,6 +39,8 @@ class TwitterManager {
 
     // Mentions and interactions
     this.interaction = new TwitterInteractionClient(this.client, runtime)
+
+    elizaLogger.info('🐦 Twitter client initialized')
   }
 }
 
