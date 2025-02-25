@@ -9,6 +9,8 @@ import {
 } from '@/clients/farcaster/prompts'
 import type { Cast, Profile } from '@/clients/farcaster/types'
 import { castUuid } from '@/clients/farcaster/utils'
+import { hasActions } from '@/common/functions'
+import { AgentcoinRuntime } from '@/common/runtime'
 import {
   composeContext,
   type Content,
