@@ -3,6 +3,7 @@ import { DEFAULT_MAX_TWEET_LENGTH } from '@/clients/twitter/environment'
 import { twitterMessageHandlerTemplate } from '@/clients/twitter/interactions'
 import { MediaData, RawTweetType } from '@/clients/twitter/types'
 import { buildConversationThread, fetchMediaData } from '@/clients/twitter/utils'
+import { AgentcoinRuntime } from '@/common/runtime'
 import {
   ActionResponse,
   cleanJsonResponse,
@@ -12,7 +13,6 @@ import {
   generateText,
   generateTweetActions,
   getEmbeddingZeroVector,
-  type IAgentRuntime,
   type IImageDescriptionService,
   ModelClass,
   parseJSONObjectFromText,
@@ -94,7 +94,7 @@ type PendingTweetApprovalStatus = 'PENDING' | 'APPROVED' | 'REJECTED'
 
 export class TwitterPostClient {
   client: ClientBase
-  runtime: IAgentRuntime
+  runtime: AgentcoinRuntime
   twitterUsername: string
   private isProcessing = false
   private lastProcessTime = 0
@@ -105,7 +105,7 @@ export class TwitterPostClient {
   private discordApprovalChannelId: string
   private approvalCheckInterval: number
 
-  constructor(client: ClientBase, runtime: IAgentRuntime) {
+  constructor(client: ClientBase, runtime: AgentcoinRuntime) {
     this.client = client
     this.runtime = runtime
     this.twitterUsername = this.client.twitterConfig.TWITTER_USERNAME
@@ -147,6 +147,7 @@ export class TwitterPostClient {
 
     // Initialize Discord webhook
     const approvalRequired: boolean =
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       this.runtime.getSetting('TWITTER_APPROVAL_ENABLED')?.toLocaleLowerCase() === 'true'
     if (approvalRequired) {
       const discordToken = this.runtime.getSetting('TWITTER_APPROVAL_DISCORD_BOT_TOKEN')
@@ -297,7 +298,7 @@ export class TwitterPostClient {
   }
 
   async processAndCacheTweet(
-    runtime: IAgentRuntime,
+    runtime: AgentcoinRuntime,
     client: ClientBase,
     tweet: Tweet,
     roomId: UUID,
@@ -403,7 +404,7 @@ export class TwitterPostClient {
   }
 
   async postTweet(
-    runtime: IAgentRuntime,
+    runtime: AgentcoinRuntime,
     client: ClientBase,
     tweetTextForPosting: string,
     roomId: UUID,
@@ -439,12 +440,14 @@ export class TwitterPostClient {
 
     try {
       const roomId = stringToUuid('twitter_generate_room-' + this.client.profile.username)
-      await this.runtime.ensureUserExists(
-        this.runtime.agentId,
-        this.client.profile.username,
-        this.runtime.character.name,
-        'twitter'
-      )
+
+      await this.runtime.ensureUserRoomConnection({
+        roomId,
+        userId: this.runtime.agentId,
+        username: this.client.profile.username,
+        name: this.client.profile.username,
+        source: 'twitter'
+      })
 
       const topics = this.runtime.character.topics.join(', ')
       const maxTweetLength = this.client.twitterConfig.MAX_TWEET_LENGTH
@@ -464,6 +467,17 @@ export class TwitterPostClient {
         }
       )
 
+      let shouldContinue = await this.runtime.handle('prellm', {
+        state,
+        responses: [],
+        memory: null
+      })
+
+      if (!shouldContinue) {
+        elizaLogger.info('AgentcoinClient received prellm event but it was suppressed')
+        return
+      }
+
       const context = composeContext({
         state,
         template: this.runtime.character.templates?.twitterPostTemplate || twitterPostTemplate
@@ -476,6 +490,18 @@ export class TwitterPostClient {
         context,
         modelClass: ModelClass.SMALL
       })
+
+      shouldContinue = await this.runtime.handle('postllm', {
+        state,
+        responses: [],
+        memory: null,
+        content: { text: response }
+      })
+
+      if (!shouldContinue) {
+        elizaLogger.info('AgentcoinClient received postllm event but it was suppressed')
+        return
+      }
 
       const rawTweetContent = cleanJsonResponse(response)
 
