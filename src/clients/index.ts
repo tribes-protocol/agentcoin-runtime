@@ -1,6 +1,6 @@
-import { AgentcoinClientInterface } from '@/clients/agentcoinfun'
+import { AgentcoinClientInterface } from '@/clients/agentcoin/agentcoinfun'
+import TelegramClientInterface from '@/clients/telegram'
 import { FarcasterClientInterface } from '@elizaos/client-farcaster'
-import { TelegramClientInterface } from '@elizaos/client-telegram'
 import { TwitterClientInterface } from '@elizaos/client-twitter'
 import { AgentRuntime, Character, Client, Clients } from '@elizaos/core'
 

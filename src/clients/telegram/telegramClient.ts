@@ -1,18 +1,19 @@
-import { getOrCreateRecommenderInBe } from '@/clients/client-telegram/getOrCreateRecommenderInBe'
-import { MessageManager } from '@/clients/client-telegram/messageManager'
-import { type IAgentRuntime, elizaLogger } from '@elizaos/core'
+import { getOrCreateRecommenderInBe } from '@/clients/telegram/getOrCreateRecommenderInBe'
+import { MessageManager } from '@/clients/telegram/messageManager'
+import { AgentcoinRuntime } from '@/common/runtime'
+import { elizaLogger } from '@elizaos/core'
 import { type Context, Telegraf } from 'telegraf'
 
 export class TelegramClient {
   private bot: Telegraf<Context>
-  private runtime: IAgentRuntime
+  private runtime: AgentcoinRuntime
   private messageManager: MessageManager
   private backend
   private backendToken
   private tgTrader
   private options
 
-  constructor(runtime: IAgentRuntime, botToken: string) {
+  constructor(runtime: AgentcoinRuntime, botToken: string) {
     elizaLogger.log('📱 Constructing new TelegramClient...')
     this.options = {
       telegram: {
@@ -44,8 +45,8 @@ export class TelegramClient {
   }
 
   private async initializeBot(): Promise<void> {
-    await this.bot.launch({ dropPendingUpdates: true })
-    elizaLogger.log('✨ Telegram bot successfully launched and is running!')
+    void this.bot.launch({ dropPendingUpdates: true })
+    elizaLogger.info('✨ Telegram bot successfully launched and is running!')
 
     const botInfo = await this.bot.telegram.getMe()
     this.bot.botInfo = botInfo

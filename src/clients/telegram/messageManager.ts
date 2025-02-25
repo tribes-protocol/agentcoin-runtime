@@ -3,14 +3,14 @@ import {
   RESPONSE_CHANCES,
   TEAM_COORDINATION,
   TIMING_CONSTANTS
-} from '@/clients/client-telegram/constants'
+} from '@/clients/telegram/constants'
 import {
   telegramAutoPostTemplate,
   telegramMessageHandlerTemplate,
   telegramPinnedMessageTemplate,
   telegramShouldRespondTemplate
-} from '@/clients/client-telegram/templates'
-import { cosineSimilarity, escapeMarkdown } from '@/clients/client-telegram/utils'
+} from '@/clients/telegram/templates'
+import { cosineSimilarity, escapeMarkdown } from '@/clients/telegram/utils'
 import {
   composeContext,
   composeRandomUser,
@@ -20,7 +20,6 @@ import {
   generateShouldRespond,
   getEmbeddingZeroVector,
   type HandlerCallback,
-  type IAgentRuntime,
   type IImageDescriptionService,
   type Media,
   type Memory,
@@ -33,6 +32,8 @@ import {
 import type { Message } from '@telegraf/types'
 import type { Context, Telegraf } from 'telegraf'
 
+import { hasActions } from '@/common/functions'
+import { AgentcoinRuntime } from '@/common/runtime'
 import fs from 'fs'
 
 enum MediaType {
@@ -72,7 +73,7 @@ export type InterestChats = {
 
 export class MessageManager {
   public bot: Telegraf<Context>
-  private runtime: IAgentRuntime
+  private runtime: AgentcoinRuntime
   private interestChats: InterestChats = {}
   private teamMemberUsernames: Map<string, string> = new Map()
 
@@ -80,7 +81,7 @@ export class MessageManager {
   private lastChannelActivity: { [channelId: string]: number } = {}
   private autoPostInterval: NodeJS.Timeout
 
-  constructor(bot: Telegraf<Context>, runtime: IAgentRuntime) {
+  constructor(bot: Telegraf<Context>, runtime: AgentcoinRuntime) {
     this.bot = bot
     this.runtime = runtime
 
@@ -918,6 +919,20 @@ export class MessageManager {
     const messageText =
       'text' in message ? message.text : 'caption' in message ? message.caption : ''
 
+    const userName = ctx.from.username || ctx.from.first_name || ctx.from.id.toString()
+
+    let shouldContinue = await this.runtime.handle('message', {
+      text: messageText,
+      sender: userName,
+      source: 'telegram',
+      timestamp: new Date(message.date * 1000)
+    })
+
+    if (!shouldContinue) {
+      elizaLogger.info('AgentcoinClient received message event but it was suppressed')
+      return
+    }
+
     // Add team handling at the start
     if (
       this.runtime.character.clientConfig?.telegram?.isPartOfTeam &&
@@ -1039,9 +1054,6 @@ export class MessageManager {
       // Convert IDs to UUIDs
       const userId = stringToUuid(ctx.from.id.toString())
 
-      // Get user name
-      const userName = ctx.from.username || ctx.from.first_name || 'Unknown User'
-
       // Get chat ID
       const chatId = stringToUuid(ctx.chat?.id.toString() + '-' + this.runtime.agentId)
 
@@ -1052,7 +1064,14 @@ export class MessageManager {
       const roomId = chatId
 
       // Ensure connection
-      await this.runtime.ensureConnection(userId, roomId, userName, userName, 'telegram')
+      await this.runtime.ensureUserRoomConnection({
+        roomId,
+        userId,
+        username: userName,
+        name: userName,
+        email: userName,
+        source: 'telegram'
+      })
 
       // Get message ID
       const messageId = stringToUuid(roomId + '-' + message.message_id.toString())
@@ -1084,7 +1103,8 @@ export class MessageManager {
             ? stringToUuid(
                 message.reply_to_message.message_id.toString() + '-' + this.runtime.agentId
               )
-            : undefined
+            : undefined,
+        telegramMessageId: message.message_id
       }
 
       // Create memory for the message
@@ -1095,10 +1115,11 @@ export class MessageManager {
         roomId,
         content,
         createdAt: message.date * 1000,
-        embedding: getEmbeddingZeroVector()
+        unique: true
       }
 
       // Create memory
+      await this.runtime.messageManager.addEmbeddingToMemory(memory)
       await this.runtime.messageManager.createMemory(memory)
 
       // Update state with the new memory
@@ -1137,6 +1158,7 @@ export class MessageManager {
             // For the last message, use the original action from the response content
             memory.content.action = !isLastMessage ? 'CONTINUE' : content.action
 
+            await this.runtime.messageManager.addEmbeddingToMemory(memory)
             await this.runtime.messageManager.createMemory(memory)
             memories.push(memory)
           }
@@ -1155,20 +1177,72 @@ export class MessageManager {
             telegramMessageHandlerTemplate
         })
 
+        shouldContinue = await this.runtime.handle('prellm', {
+          state,
+          responses: [],
+          memory
+        })
+
+        if (!shouldContinue) {
+          elizaLogger.info('AgentcoinClient received prellm event but it was suppressed')
+          return
+        }
+
         const responseContent = await this._generateResponse(memory, state, context)
 
         if (!responseContent || !responseContent.text) return
 
         // Execute callback to send messages and log memories
-        const responseMessages = await callback(responseContent)
+        const messageResponses = await callback(responseContent)
+
+        shouldContinue = await this.runtime.handle('postllm', {
+          state,
+          responses: [],
+          memory,
+          content: responseContent
+        })
+
+        if (!shouldContinue) {
+          elizaLogger.info('AgentcoinClient received postllm event but it was suppressed')
+          return
+        }
 
         // Update state after response
         state = await this.runtime.updateRecentMessageState(state)
 
-        // Handle any resulting actions
-        await this.runtime.processActions(memory, responseMessages, state, callback)
-      }
+        if (!hasActions(messageResponses)) {
+          return
+        }
 
+        // `preaction` event
+        shouldContinue = await this.runtime.handle('preaction', {
+          state,
+          responses: messageResponses,
+          memory
+        })
+
+        if (!shouldContinue) {
+          elizaLogger.info('AgentcoinClient received preaction event but it was suppressed')
+          return
+        }
+
+        // Handle any resulting actions
+        await this.runtime.processActions(memory, messageResponses, state, async (newMessage) => {
+          shouldContinue = await this.runtime.handle('postaction', {
+            state,
+            responses: messageResponses,
+            memory,
+            content: newMessage
+          })
+
+          if (!shouldContinue) {
+            elizaLogger.info('AgentcoinClient received postaction event but it was suppressed')
+            return
+          }
+
+          return callback(newMessage)
+        })
+      }
       await this.runtime.evaluate(memory, state, shouldRespond, callback)
     } catch (error) {
       elizaLogger.error('❌ Error handling message:', error)

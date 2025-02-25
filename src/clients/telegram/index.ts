@@ -1,10 +1,11 @@
-import { validateTelegramConfig } from '@/clients/client-telegram/environment'
-import { TelegramClient } from '@/clients/client-telegram/telegramClient'
+import { validateTelegramConfig } from '@/clients/telegram/environment'
+import { TelegramClient } from '@/clients/telegram/telegramClient'
+import { AgentcoinRuntime } from '@/common/runtime'
 import type { Client, IAgentRuntime } from '@elizaos/core'
 import { elizaLogger } from '@elizaos/core'
 
 export const TelegramClientInterface: Client = {
-  start: async (runtime: IAgentRuntime) => {
+  start: async (runtime: AgentcoinRuntime) => {
     await validateTelegramConfig(runtime)
 
     const tg = new TelegramClient(runtime, runtime.getSetting('TELEGRAM_BOT_TOKEN'))
