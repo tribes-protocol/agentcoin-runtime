@@ -1,5 +1,5 @@
-import { getOrCreateRecommenderInBe } from '@/clients/client-telegram/getOrCreateRecommenderInBe'
-import { MessageManager } from '@/clients/client-telegram/messageManager'
+import { getOrCreateRecommenderInBe } from '@/clients/telegram/getOrCreateRecommenderInBe'
+import { MessageManager } from '@/clients/telegram/messageManager'
 import { AgentcoinRuntime } from '@/common/runtime'
 import { elizaLogger } from '@elizaos/core'
 import { type Context, Telegraf } from 'telegraf'

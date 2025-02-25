@@ -36,7 +36,7 @@ import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
 
-export interface IAgentcoinSDK {
+export interface IAyaOS {
   readonly agentId: UUID
   on(event: 'message', handler: NewMessageHandler): void
   on(event: 'prellm', handler: ContextHandler): void
@@ -49,7 +49,7 @@ export interface IAgentcoinSDK {
   register(kind: 'action', handler: Action): void
 }
 
-export class AgentcoinSDK implements IAgentcoinSDK {
+export class AyaOS implements IAyaOS {
   private messageHandlers: NewMessageHandler[] = []
   private preLLMHandlers: ContextHandler[] = []
   private postLLMHandlers: ContextHandler[] = []
@@ -65,7 +65,7 @@ export class AgentcoinSDK implements IAgentcoinSDK {
     this.runtime = runtime
   }
 
-  static async start(): Promise<IAgentcoinSDK> {
+  static async start(): Promise<IAyaOS> {
     let runtime: AgentcoinRuntime | undefined
 
     try {
@@ -164,6 +164,7 @@ export class AgentcoinSDK implements IAgentcoinSDK {
       // step 4: start services (move to runtime.services)
       void Promise.all([knowledgeService.start(), configService.start()])
     } catch (error: unknown) {
+      console.log('sdk error', error)
       elizaLogger.error(
         'Error starting agent:',
         error instanceof Error
@@ -184,7 +185,7 @@ export class AgentcoinSDK implements IAgentcoinSDK {
       runtime.character.name
     )
 
-    const sdk = new AgentcoinSDK(runtime)
+    const sdk = new AyaOS(runtime)
     await runtime.configure({
       eventHandler: (event, params) => sdk.handle(event, params)
     })

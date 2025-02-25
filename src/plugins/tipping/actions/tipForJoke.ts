@@ -1,7 +1,7 @@
 import { TOKEN_ADDRESS } from '@/common/env'
 import { isNull } from '@/common/functions'
 import { AgentcoinRuntime } from '@/common/runtime'
-import { AgentcoinServiceType, EthAddressSchema } from '@/common/types'
+import { EthAddressSchema } from '@/common/types'
 import { AgentcoinService } from '@/services/agentcoinfun'
 import { WalletService } from '@/services/wallet'
 import {
@@ -13,7 +13,6 @@ import {
   HandlerCallback,
   Memory,
   ModelClass,
-  ServiceType,
   State
 } from '@elizaos/core'
 import { encodeFunctionData, erc20Abi, parseEther } from 'viem'
@@ -109,15 +108,8 @@ export const tipForJokeAction: Action = {
         throw new Error('No recipient address found')
       }
 
-      const agentcoinService = runtime.getService<AgentcoinService>(
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        AgentcoinServiceType.AGENTCOIN as unknown as ServiceType
-      )
-
-      const walletService = runtime.getService<WalletService>(
-        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-        AgentcoinServiceType.WALLET as unknown as ServiceType
-      )
+      const agentcoinService = runtime.getService<AgentcoinService>()
+      const walletService = runtime.getService<WalletService>()
 
       const wallet = await agentcoinService.getDefaultWallet('evm')
 
