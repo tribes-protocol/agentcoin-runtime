@@ -101,7 +101,9 @@ export async function buildConversationThread({
 
     if (currentCast.inReplyTo) {
       const parentCast = await client.getCast(currentCast.inReplyTo.hash)
-      await processThread(parentCast)
+      if (parentCast) {
+        await processThread(parentCast)
+      }
     }
   }
 

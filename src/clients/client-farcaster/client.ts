@@ -84,39 +84,44 @@ export class FarcasterClient {
     }
   }
 
-  async getCast(castHash: string): Promise<Cast> {
-    if (this.cache.has(`farcaster/cast/${castHash}`)) {
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      return this.cache.get(`farcaster/cast/${castHash}`) as Cast
-    }
+  async getCast(castHash: string): Promise<Cast | undefined> {
+    try {
+      if (this.cache.has(`farcaster/cast/${castHash}`)) {
+        // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+        return this.cache.get(`farcaster/cast/${castHash}`) as Cast
+      }
 
-    const response = await this.neynar.lookupCastByHashOrWarpcastUrl({
-      identifier: castHash,
-      type: 'hash'
-    })
-    const cast = {
-      hash: response.cast.hash,
-      authorFid: response.cast.author.fid,
-      text: response.cast.text,
-      profile: {
-        fid: response.cast.author.fid,
-        name: response.cast.author.display_name || 'anon',
-        username: response.cast.author.username
-      },
-      ...(response.cast.parent_hash
-        ? {
-            inReplyTo: {
-              hash: response.cast.parent_hash,
-              fid: response.cast.parent_author.fid
+      const response = await this.neynar.lookupCastByHashOrWarpcastUrl({
+        identifier: castHash,
+        type: 'hash'
+      })
+      const cast = {
+        hash: response.cast.hash,
+        authorFid: response.cast.author.fid,
+        text: response.cast.text,
+        profile: {
+          fid: response.cast.author.fid,
+          name: response.cast.author.display_name || 'anon',
+          username: response.cast.author.username
+        },
+        ...(response.cast.parent_hash
+          ? {
+              inReplyTo: {
+                hash: response.cast.parent_hash,
+                fid: response.cast.parent_author.fid
+              }
             }
-          }
-        : {}),
-      timestamp: new Date(response.cast.timestamp)
+          : {}),
+        timestamp: new Date(response.cast.timestamp)
+      }
+
+      this.cache.set(`farcaster/cast/${castHash}`, cast)
+
+      return cast
+    } catch (err) {
+      elizaLogger.error('Error fetching cast', err)
+      return undefined
     }
-
-    this.cache.set(`farcaster/cast/${castHash}`, cast)
-
-    return cast
   }
 
   async getCastsByFid(request: FidRequest): Promise<Cast[]> {

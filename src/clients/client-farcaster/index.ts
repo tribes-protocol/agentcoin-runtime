@@ -5,6 +5,7 @@ import {
 } from '@/clients/client-farcaster/environment'
 import { FarcasterInteractionManager } from '@/clients/client-farcaster/interactions'
 import { FarcasterPostManager } from '@/clients/client-farcaster/post'
+import { AgentcoinRuntime } from '@/common/runtime'
 import { elizaLogger, type Client, type IAgentRuntime } from '@elizaos/core'
 import { Configuration, NeynarAPIClient } from '@neynar/nodejs-sdk'
 
@@ -20,7 +21,7 @@ class FarcasterManager {
   interactions: FarcasterInteractionManager
   private signerUuid: string
 
-  constructor(runtime: IAgentRuntime, farcasterConfig: FarcasterConfig) {
+  constructor(runtime: AgentcoinRuntime, farcasterConfig: FarcasterConfig) {
     const cache = new Map<string, unknown>()
     this.signerUuid = runtime.getSetting('FARCASTER_NEYNAR_SIGNER_UUID')
 
@@ -50,6 +51,8 @@ class FarcasterManager {
       this.signerUuid,
       cache
     )
+
+    elizaLogger.info('✅ Farcaster client initialized.')
   }
 
   async start(): Promise<void> {
@@ -62,7 +65,7 @@ class FarcasterManager {
 }
 
 export const FarcasterClientInterface: Client = {
-  async start(runtime: IAgentRuntime) {
+  async start(runtime: AgentcoinRuntime) {
     const farcasterConfig = await validateFarcasterConfig(runtime)
 
     elizaLogger.log('Farcaster client started')
@@ -71,7 +74,6 @@ export const FarcasterClientInterface: Client = {
 
     // Start all services
     await manager.start()
-    runtime.clients.farcaster = manager
     return manager
   },
 
