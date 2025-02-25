@@ -1,4 +1,4 @@
-import type { FarcasterConfig } from '@/clients/client-farcaster/environment'
+import type { FarcasterConfig } from '@/clients/farcaster/environment'
 import type {
   Cast,
   CastId,
@@ -6,7 +6,7 @@ import type {
   NeynarCastResponse,
   NeynarCastResponseRaw,
   Profile
-} from '@/clients/client-farcaster/types'
+} from '@/clients/farcaster/types'
 import { type IAgentRuntime, elizaLogger } from '@elizaos/core'
 import { type NeynarAPIClient, isApiErrorResponse } from '@neynar/nodejs-sdk'
 

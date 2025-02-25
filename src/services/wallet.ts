@@ -1,6 +1,6 @@
 import { BASE_RPC_URL } from '@/common/env'
 import { isNull } from '@/common/functions'
-import { AgentcoinServiceType, AgentWallet, HexString, Transaction } from '@/common/types'
+import { AgentWallet, HexString, Transaction } from '@/common/types'
 import { IWalletService } from '@/services/interfaces'
 import { IAgentRuntime, Service, ServiceType } from '@elizaos/core'
 import { TurnkeyClient } from '@turnkey/http'
@@ -12,9 +12,10 @@ import { base } from 'viem/chains'
 export class WalletService extends Service implements IWalletService {
   private readonly turnkey: TurnkeyClient
 
-  // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-  public static readonly serviceType = AgentcoinServiceType.WALLET as unknown as ServiceType
-  // FIXME: This is a hack to make the service type work
+  static get serviceType(): ServiceType {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return 'agentcoin-wallet-service' as ServiceType
+  }
 
   constructor(apiKeyStamper: ApiKeyStamper) {
     super()

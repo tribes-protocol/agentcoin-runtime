@@ -1,6 +1,6 @@
-import type { FarcasterClient } from '@/clients/client-farcaster/client'
-import type { Cast } from '@/clients/client-farcaster/types'
-import { castUuid } from '@/clients/client-farcaster/utils'
+import type { FarcasterClient } from '@/clients/farcaster/client'
+import type { Cast } from '@/clients/farcaster/types'
+import { castUuid } from '@/clients/farcaster/utils'
 import {
   elizaLogger,
   getEmbeddingZeroVector,

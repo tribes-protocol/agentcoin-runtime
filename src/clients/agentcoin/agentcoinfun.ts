@@ -10,7 +10,6 @@ import {
 } from '@/common/functions'
 import { AgentcoinRuntime } from '@/common/runtime'
 import {
-  AgentcoinServiceType,
   AgentIdentitySchema,
   Character,
   ChatChannel,
@@ -38,7 +37,6 @@ import {
   IAgentRuntime,
   Memory,
   ModelClass,
-  ServiceType,
   stringToUuid,
   UUID
 } from '@elizaos/core'
@@ -55,14 +53,8 @@ export class AgentcoinClient {
 
   constructor(private readonly runtime: AgentcoinRuntime) {
     elizaLogger.info('Connecting to Agentcoin API', AGENTCOIN_FUN_API_URL)
-    this.agentcoinService = runtime.getService<AgentcoinService>(
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      AgentcoinServiceType.AGENTCOIN as unknown as ServiceType
-    )
-    this.configService = runtime.getService<ConfigService>(
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      AgentcoinServiceType.CONFIG as unknown as ServiceType
-    )
+    this.agentcoinService = runtime.getService<AgentcoinService>()
+    this.configService = runtime.getService<ConfigService>()
   }
 
   public async start(): Promise<void> {
@@ -282,10 +274,7 @@ export class AgentcoinClient {
       return
     }
 
-    const agentcoinService = this.runtime.getService<AgentcoinService>(
-      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-      AgentcoinServiceType.AGENTCOIN as unknown as ServiceType
-    )
+    const agentcoinService = this.runtime.getService<AgentcoinService>()
     const identity = await agentcoinService.getIdentity()
 
     if (message.sender === identity) {

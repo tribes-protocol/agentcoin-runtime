@@ -1,10 +1,7 @@
-import { FarcasterClient } from '@/clients/client-farcaster/client'
-import {
-  validateFarcasterConfig,
-  type FarcasterConfig
-} from '@/clients/client-farcaster/environment'
-import { FarcasterInteractionManager } from '@/clients/client-farcaster/interactions'
-import { FarcasterPostManager } from '@/clients/client-farcaster/post'
+import { FarcasterClient } from '@/clients/farcaster/client'
+import { validateFarcasterConfig, type FarcasterConfig } from '@/clients/farcaster/environment'
+import { FarcasterInteractionManager } from '@/clients/farcaster/interactions'
+import { FarcasterPostManager } from '@/clients/farcaster/post'
 import { AgentcoinRuntime } from '@/common/runtime'
 import { elizaLogger, type Client, type IAgentRuntime } from '@elizaos/core'
 import { Configuration, NeynarAPIClient } from '@neynar/nodejs-sdk'

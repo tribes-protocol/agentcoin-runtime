@@ -24,3 +24,6 @@ jobs:
 
       - name: Run linting
         run: bun run lint
+
+      - name: Check package.json
+        run: bun run check-packages
