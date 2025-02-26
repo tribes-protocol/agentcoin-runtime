@@ -366,6 +366,7 @@ export type MessageStatusEnum = z.infer<typeof MessageStatusEnumSchema>
 
 export const MessageStatusSchema = z.object({
   status: MessageStatusEnumSchema,
+  user: UserSchema,
   createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
 })
 
