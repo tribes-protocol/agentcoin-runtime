@@ -53,8 +53,6 @@ export class AgentcoinService extends Service implements IAgentcoinService {
   async sendStatus(channel: ChatChannel, status: MessageStatusEnum): Promise<void> {
     const cookie = await this.getCookie()
 
-    console.log('sending status...', status, 'to channel', channel, 'with cookie', cookie)
-
     await this.api.sendStatus(
       {
         channel,
