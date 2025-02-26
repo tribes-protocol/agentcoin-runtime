@@ -22,7 +22,7 @@ import {
   SentinelCommand,
   SentinelCommandSchema,
   ServiceKind,
-  UserDmEventSchema
+  MessageEventSchema
 } from '@/common/types'
 import * as fs from 'fs'
 
@@ -117,8 +117,13 @@ export class AgentcoinClient {
     this.socket.on(eventName, async (data: unknown) => {
       elizaLogger.info('Agentcoin client received event', data)
       try {
-        const event = UserDmEventSchema.parse(data)
+        const event = MessageEventSchema.parse(data)
         const channel = event.channel
+
+        if (channel.kind !== ChatChannelKind.DM) {
+          elizaLogger.info('Agentcoin client received msg for unknown channel', channel)
+          return
+        }
 
         // validate channel
         if (channel.firstIdentity !== identity && channel.secondIdentity !== identity) {
@@ -126,8 +131,16 @@ export class AgentcoinClient {
           return
         }
 
-        // process message if allowed
-        await this.processMessage(channel, [event.message])
+        switch (event.kind) {
+          case 'message': {
+            // process message if allowed
+            await this.processMessage(channel, event.data)
+            break
+          }
+          case 'status':
+            console.log('received status', event)
+            break
+        }
       } catch (error) {
         console.error('Error processing message from agentcoin client', error)
         elizaLogger.error('Error processing message from agentcoin client', error)
@@ -267,6 +280,14 @@ export class AgentcoinClient {
       return
     }
 
+    const identity = await this.agentcoinService.getIdentity()
+
+    if (message.sender === identity) {
+      return
+    }
+
+    await this.agentcoinService.sendStatus(channel, 'thinking')
+
     // `message` event
     let shouldContinue = await this.runtime.handle('message', {
       text: message.text,
@@ -277,12 +298,7 @@ export class AgentcoinClient {
 
     if (!shouldContinue) {
       elizaLogger.info('AgentcoinClient received message event but it was suppressed')
-      return
-    }
-
-    const identity = await this.agentcoinService.getIdentity()
-
-    if (message.sender === identity) {
+      await this.agentcoinService.sendStatus(channel, 'idle')
       return
     }
 
@@ -322,8 +338,11 @@ export class AgentcoinClient {
 
     if (!shouldContinue) {
       elizaLogger.info('AgentcoinClient received prellm event but it was suppressed')
+      await this.agentcoinService.sendStatus(channel, 'idle')
       return
     }
+
+    await this.agentcoinService.sendStatus(channel, 'typing')
 
     const response = await generateMessageResponse({
       runtime: this.runtime,
@@ -341,10 +360,12 @@ export class AgentcoinClient {
 
     if (!shouldContinue) {
       elizaLogger.info('AgentcoinClient received postllm event but it was suppressed')
+      await this.agentcoinService.sendStatus(channel, 'idle')
       return
     }
 
     if (isNull(response.text) || response.text.trim().length === 0) {
+      await this.agentcoinService.sendStatus(channel, 'idle')
       return
     }
 
@@ -370,6 +391,8 @@ export class AgentcoinClient {
       return
     }
 
+    await this.agentcoinService.sendStatus(channel, 'thinking')
+
     // `preaction` event
     shouldContinue = await this.runtime.handle('preaction', {
       state,
@@ -379,6 +402,7 @@ export class AgentcoinClient {
 
     if (!shouldContinue) {
       elizaLogger.info('AgentcoinClient received preaction event but it was suppressed')
+      await this.agentcoinService.sendStatus(channel, 'idle')
       return
     }
 

@@ -5,9 +5,11 @@ import {
   AgentProvisionResponse,
   AgentProvisionResponseSchema,
   AgentRegistrationSchema,
+  ChatChannel,
   CreateMessage,
   HydratedMessage,
   Identity,
+  MessageStatusEnum,
   ServiceKind,
   User
 } from '@/common/types'
@@ -46,6 +48,20 @@ export class AgentcoinService extends Service implements IAgentcoinService {
       this.cachedIdentity = agentId
     }
     return this.cachedIdentity
+  }
+
+  async sendStatus(channel: ChatChannel, status: MessageStatusEnum): Promise<void> {
+    const cookie = await this.getCookie()
+
+    console.log('sending status...', status, 'to channel', channel, 'with cookie', cookie)
+
+    await this.api.sendStatus(
+      {
+        channel,
+        status
+      },
+      { cookie }
+    )
   }
 
   async sendMessage(message: CreateMessage): Promise<HydratedMessage> {
