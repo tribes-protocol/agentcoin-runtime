@@ -439,7 +439,7 @@ export class TwitterPostClient {
     elizaLogger.log('Generating new tweet')
 
     try {
-      const roomId = stringToUuid('twitter_generate_room-' + this.client.profile.username)
+      const roomId = stringToUuid('user_twitter_feed:' + this.client.profile.username)
 
       await this.runtime.ensureUserRoomConnection({
         roomId,
