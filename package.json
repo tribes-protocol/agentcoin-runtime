@@ -14,7 +14,6 @@
   "dependencies": {
     "@elizaos/adapter-postgres": "0.1.9",
     "@elizaos/client-direct": "0.1.9",
-    "@elizaos/client-twitter": "0.1.9",
     "@elizaos/core": "0.1.9",
     "@elizaos/plugin-bootstrap": "0.1.9",
     "@elizaos/plugin-node": "0.1.9",
@@ -24,6 +23,8 @@
     "@turnkey/http": "2.18.0",
     "@turnkey/sdk-server": "1.7.3",
     "@turnkey/viem": "0.6.10",
+    "agent-twitter-client": "0.0.18",
+    "discord.js": "14.16.3",
     "amqplib": "0.10.5",
     "axios": "1.7.9",
     "d3-dsv": "2",
