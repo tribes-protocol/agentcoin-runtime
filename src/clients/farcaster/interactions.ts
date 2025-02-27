@@ -97,7 +97,7 @@ export class FarcasterInteractionManager {
       })
 
       if (!shouldContinue) {
-        elizaLogger.info('AgentcoinClient received message event but it was suppressed')
+        elizaLogger.info('FarcasterClient received message event but it was suppressed')
         return
       }
 

@@ -3,7 +3,8 @@ import { validateTwitterConfig, type TwitterConfig } from '@/clients/twitter/env
 import { TwitterInteractionClient } from '@/clients/twitter/interactions'
 import { TwitterPostClient } from '@/clients/twitter/post'
 import { TwitterSearchClient } from '@/clients/twitter/search'
-import { elizaLogger, type Client, type IAgentRuntime } from '@elizaos/core'
+import { AgentcoinRuntime } from '@/common/runtime'
+import { elizaLogger, type Client } from '@elizaos/core'
 
 /**
  * A manager that orchestrates all specialized Twitter logic:
@@ -19,7 +20,7 @@ class TwitterManager {
   search: TwitterSearchClient
   interaction: TwitterInteractionClient
 
-  constructor(runtime: IAgentRuntime, twitterConfig: TwitterConfig) {
+  constructor(runtime: AgentcoinRuntime, twitterConfig: TwitterConfig) {
     // Pass twitterConfig to the base client
     this.client = new ClientBase(runtime, twitterConfig)
 
@@ -38,11 +39,13 @@ class TwitterManager {
 
     // Mentions and interactions
     this.interaction = new TwitterInteractionClient(this.client, runtime)
+
+    elizaLogger.info('🐦 Twitter client initialized')
   }
 }
 
 export const TwitterClientInterface: Client = {
-  async start(runtime: IAgentRuntime) {
+  async start(runtime: AgentcoinRuntime) {
     const twitterConfig: TwitterConfig = await validateTwitterConfig(runtime)
 
     elizaLogger.log('Twitter client started')
@@ -66,7 +69,7 @@ export const TwitterClientInterface: Client = {
     return manager
   },
 
-  async stop(_runtime: IAgentRuntime) {
+  async stop(_runtime: AgentcoinRuntime) {
     elizaLogger.warn('Twitter client does not support stopping yet')
   }
 }
