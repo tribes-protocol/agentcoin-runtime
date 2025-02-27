@@ -1,7 +1,7 @@
-import { AgentcoinClientInterface } from '@/clients/agentcoin/agentcoinfun'
+import { AgentcoinClientInterface } from '@/clients/agentcoin'
+import FarcasterClientInterface from '@/clients/farcaster'
 import TelegramClientInterface from '@/clients/telegram'
-import { FarcasterClientInterface } from '@elizaos/client-farcaster'
-import { TwitterClientInterface } from '@elizaos/client-twitter'
+import TwitterClientInterface from '@/clients/twitter'
 import { AgentRuntime, Character, Client, Clients } from '@elizaos/core'
 
 export async function initializeClients(
