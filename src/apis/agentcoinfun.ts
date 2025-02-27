@@ -12,6 +12,8 @@ import {
   HydratedMessage,
   HydratedMessageSchema,
   Identity,
+  Knowledge,
+  KnowledgeSchema,
   User,
   UserSchema
 } from '@/common/types'
@@ -183,5 +185,21 @@ export class AgentcoinAPI {
     const wallet = AgentWalletSchema.parse(responseData)
 
     return wallet
+  }
+
+  async getKnowledges(identity: Identity, options: { cookie: string }): Promise<Knowledge[]> {
+    const response = await fetch(`${AGENTCOIN_FUN_API_URL}/api/agents/knowledge/get`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: options.cookie },
+      body: JSON.stringify({ agentId: identity })
+    })
+
+    if (response.status !== 200) {
+      throw new Error('Failed to get knowledges')
+    }
+
+    const responseData = await response.json()
+    const knowledges = KnowledgeSchema.array().parse(responseData)
+    return knowledges
   }
 }

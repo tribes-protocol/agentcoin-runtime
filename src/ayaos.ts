@@ -118,7 +118,12 @@ export class AyaOS implements IAyaOS {
         }
       })
 
-      const knowledgeService = new KnowledgeService(runtime)
+      const knowledgeService = new KnowledgeService(
+        runtime,
+        agentcoinAPI,
+        agentcoinCookie,
+        agentcoinIdentity
+      )
 
       // shutdown handler
       let isShuttingDown = false

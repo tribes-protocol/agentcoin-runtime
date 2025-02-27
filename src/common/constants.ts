@@ -25,5 +25,3 @@ export const RUNTIME_SERVER_SOCKET_FILE = path.join(AGENTCOIN_FUN_DIR, 'runtime-
 if (!fs.existsSync(AGENTCOIN_FUN_DIR)) {
   fs.mkdirSync(AGENTCOIN_FUN_DIR, { recursive: true })
 }
-
-export const KNOWLEDGE_DIR = path.join(AGENTCOIN_FUN_DIR, 'knowledge')
