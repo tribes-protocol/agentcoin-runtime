@@ -98,10 +98,10 @@ export class FarcasterPostManager {
     try {
       const profile = await this.client.getProfile(this.fid)
 
-      const generateRoomId = stringToUuid('farcaster_generate_room')
+      const generatedRoomId = stringToUuid('user_farcaster_feed:' + profile.username)
 
       await this.runtime.ensureUserRoomConnection({
-        roomId: generateRoomId,
+        roomId: generatedRoomId,
         userId: this.runtime.agentId,
         username: profile.username,
         name: profile.name,
@@ -120,7 +120,7 @@ export class FarcasterPostManager {
 
       const state = await this.runtime.composeState(
         {
-          roomId: generateRoomId,
+          roomId: generatedRoomId,
           userId: this.runtime.agentId,
           agentId: this.runtime.agentId,
           content: { text: '', action: '' }
@@ -195,7 +195,7 @@ export class FarcasterPostManager {
           client: this.client,
           runtime: this.runtime,
           signerUuid: this.signerUuid,
-          roomId: generateRoomId,
+          roomId: generatedRoomId,
           content: { text: content },
           profile
         })
