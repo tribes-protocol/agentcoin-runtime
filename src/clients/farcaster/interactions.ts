@@ -9,6 +9,8 @@ import {
 } from '@/clients/farcaster/prompts'
 import type { Cast, Profile } from '@/clients/farcaster/types'
 import { castUuid } from '@/clients/farcaster/utils'
+import { hasActions } from '@/common/functions'
+import { AgentcoinRuntime } from '@/common/runtime'
 import {
   composeContext,
   type Content,
@@ -16,7 +18,6 @@ import {
   generateMessageResponse,
   generateShouldRespond,
   type HandlerCallback,
-  type IAgentRuntime,
   type Memory,
   ModelClass,
   stringToUuid
@@ -27,7 +28,7 @@ export class FarcasterInteractionManager {
   private timeout: NodeJS.Timeout | undefined
   constructor(
     public client: FarcasterClient,
-    public runtime: IAgentRuntime,
+    public runtime: AgentcoinRuntime,
     private signerUuid: string,
     public cache: Map<string, unknown>
   ) {}
@@ -68,6 +69,7 @@ export class FarcasterInteractionManager {
 
     const agent = await this.client.getProfile(agentFid)
     for (const mention of mentions) {
+      console.log('mention received:', mention.text)
       const messageHash = toHex(mention.hash)
       const conversationId = `${messageHash}-${this.runtime.agentId}`
       const roomId = stringToUuid(conversationId)
@@ -84,13 +86,29 @@ export class FarcasterInteractionManager {
         continue
       }
 
-      await this.runtime.ensureConnection(
-        userId,
+      const messageText = mention.text
+      const username = mention.profile.username
+
+      const shouldContinue = await this.runtime.handle('message', {
+        text: messageText,
+        sender: username,
+        source: 'farcaster',
+        timestamp: new Date(mention.timestamp)
+      })
+
+      if (!shouldContinue) {
+        elizaLogger.info('FarcasterClient received message event but it was suppressed')
+        return
+      }
+
+      await this.runtime.ensureUserRoomConnection({
         roomId,
-        mention.profile.username,
-        mention.profile.name,
-        'farcaster'
-      )
+        userId,
+        username,
+        name: mention.profile.name,
+        email: username,
+        source: 'farcaster'
+      })
 
       const thread = await buildConversationThread({
         client: this.client,
@@ -214,11 +232,34 @@ export class FarcasterInteractionManager {
         messageHandlerTemplate
     })
 
+    let shouldContinue = await this.runtime.handle('prellm', {
+      state,
+      responses: [],
+      memory
+    })
+
+    if (!shouldContinue) {
+      elizaLogger.info('AgentcoinClient received prellm event but it was suppressed')
+      return
+    }
+
     const responseContent = await generateMessageResponse({
       runtime: this.runtime,
       context,
       modelClass: ModelClass.LARGE
     })
+
+    shouldContinue = await this.runtime.handle('postllm', {
+      state,
+      responses: [],
+      memory,
+      content: responseContent
+    })
+
+    if (!shouldContinue) {
+      elizaLogger.info('AgentcoinClient received postllm event but it was suppressed')
+      return
+    }
 
     responseContent.inReplyTo = memoryId
 
@@ -261,15 +302,45 @@ export class FarcasterInteractionManager {
       }
     }
 
-    const responseMessages = await callback(responseContent)
+    const messageResponses = await callback(responseContent)
 
     const newState = await this.runtime.updateRecentMessageState(state)
 
+    if (!hasActions(messageResponses)) {
+      return
+    }
+
+    // `preaction` event
+    shouldContinue = await this.runtime.handle('preaction', {
+      state,
+      responses: messageResponses,
+      memory
+    })
+
+    if (!shouldContinue) {
+      elizaLogger.info('AgentcoinClient received preaction event but it was suppressed')
+      return
+    }
+
     await this.runtime.processActions(
       { ...memory, content: { ...memory.content, cast } },
-      responseMessages,
+      messageResponses,
       newState,
-      callback
+      async (newMessage) => {
+        shouldContinue = await this.runtime.handle('postaction', {
+          state,
+          responses: messageResponses,
+          memory,
+          content: newMessage
+        })
+
+        if (!shouldContinue) {
+          elizaLogger.info('AgentcoinClient received postaction event but it was suppressed')
+          return
+        }
+
+        return callback(newMessage)
+      }
     )
   }
 }

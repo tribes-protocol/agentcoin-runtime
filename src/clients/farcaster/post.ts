@@ -3,25 +3,19 @@ import type { FarcasterClient } from '@/clients/farcaster/client'
 import { createCastMemory } from '@/clients/farcaster/memory'
 import { formatTimeline, postTemplate } from '@/clients/farcaster/prompts'
 import { castUuid, MAX_CAST_LENGTH } from '@/clients/farcaster/utils'
-import {
-  composeContext,
-  elizaLogger,
-  generateText,
-  type IAgentRuntime,
-  ModelClass,
-  stringToUuid
-} from '@elizaos/core'
+import { AgentcoinRuntime } from '@/common/runtime'
+import { composeContext, elizaLogger, generateText, ModelClass, stringToUuid } from '@elizaos/core'
 
 export class FarcasterPostManager {
   client: FarcasterClient
-  runtime: IAgentRuntime
+  runtime: AgentcoinRuntime
   fid: number
   isDryRun: boolean
   private timeout: NodeJS.Timeout | undefined
 
   constructor(
     client: FarcasterClient,
-    runtime: IAgentRuntime,
+    runtime: AgentcoinRuntime,
     private signerUuid: string,
     public cache: Map<string, unknown>
   ) {
@@ -103,12 +97,17 @@ export class FarcasterPostManager {
     elizaLogger.info('Generating new cast')
     try {
       const profile = await this.client.getProfile(this.fid)
-      await this.runtime.ensureUserExists(
-        this.runtime.agentId,
-        profile.username,
-        this.runtime.character.name,
-        'farcaster'
-      )
+
+      const generatedRoomId = stringToUuid('user_farcaster_feed:' + profile.username)
+
+      await this.runtime.ensureUserRoomConnection({
+        roomId: generatedRoomId,
+        userId: this.runtime.agentId,
+        username: profile.username,
+        name: profile.name,
+        email: profile.username,
+        source: 'farcaster'
+      })
 
       const { timeline } = await this.client.getTimeline({
         fid: this.fid,
@@ -119,11 +118,9 @@ export class FarcasterPostManager {
 
       const formattedHomeTimeline = formatTimeline(this.runtime.character, timeline)
 
-      const generateRoomId = stringToUuid('farcaster_generate_room')
-
       const state = await this.runtime.composeState(
         {
-          roomId: generateRoomId,
+          roomId: generatedRoomId,
           userId: this.runtime.agentId,
           agentId: this.runtime.agentId,
           content: { text: '', action: '' }
@@ -140,11 +137,34 @@ export class FarcasterPostManager {
         template: this.runtime.character.templates?.farcasterPostTemplate || postTemplate
       })
 
+      let shouldContinue = await this.runtime.handle('prellm', {
+        state,
+        responses: [],
+        memory: null
+      })
+
+      if (!shouldContinue) {
+        elizaLogger.info('AgentcoinClient received prellm event but it was suppressed')
+        return
+      }
+
       const newContent = await generateText({
         runtime: this.runtime,
         context,
         modelClass: ModelClass.SMALL
       })
+
+      shouldContinue = await this.runtime.handle('postllm', {
+        state,
+        responses: [],
+        memory: null,
+        content: { text: newContent }
+      })
+
+      if (!shouldContinue) {
+        elizaLogger.info('AgentcoinClient received postllm event but it was suppressed')
+        return
+      }
 
       const slice = newContent.replaceAll(/\\n/g, '\n').trim()
 
@@ -175,7 +195,7 @@ export class FarcasterPostManager {
           client: this.client,
           runtime: this.runtime,
           signerUuid: this.signerUuid,
-          roomId: generateRoomId,
+          roomId: generatedRoomId,
           content: { text: content },
           profile
         })
