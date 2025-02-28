@@ -56,7 +56,7 @@ export const tipForJokeAction: Action = {
     'REWARD_WITTY_REMARK'
   ],
   description:
-    'Evaluates any humorous content in the conversation (jokes, witty remarks, clever wordplay) and automatically sends ERC20 tokens as a reward if deemed genuinely funny. The evaluation considers multiple factors including originality, timing, cleverness, and contextual relevance.',
+    'Evaluates any humorous content in the conversation (jokes, witty remarks, clever wordplay) and automatically sends ERC20 tokens as a reward if deemed genuinely funny. The evaluation considers multiple factors including originality, timing, cleverness, and contextual relevance. Also make sure to never tip yourself for jokes that you (the AI) told.',
   validate: async () => {
     return true
   },
@@ -68,6 +68,11 @@ export const tipForJokeAction: Action = {
     callback?: HandlerCallback
   ): Promise<boolean> => {
     elizaLogger.info('Starting TIP_FOR_JOKE handler...')
+
+    if (message.userId === runtime.agentId) {
+      elizaLogger.info('Cannot tip myself for my own jokes.')
+      return false
+    }
 
     if (!state) {
       state = await runtime.composeState(message)

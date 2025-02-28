@@ -202,7 +202,7 @@ export function isValidSignature(message: string, publicKey: string, signature: 
 export function hasActions(responses: Memory[]): boolean {
   for (const messageResponse of responses) {
     const action = messageResponse.content.action
-    if (isNull(action) || action.toLowerCase() === 'NONE') {
+    if (isNull(action) || action.toUpperCase() === 'NONE') {
       continue
     }
 
