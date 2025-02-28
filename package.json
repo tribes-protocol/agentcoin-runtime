@@ -7,6 +7,9 @@
   "files": [
     "dist"
   ],
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "build": "tsup src/ayaos.ts --format esm --dts",
     "lint": "eslint src/**/*.ts",
