@@ -202,8 +202,8 @@ export function isValidSignature(message: string, publicKey: string, signature: 
 export function hasActions(responses: Memory[]): boolean {
   let hasActions = false
   for (const messageResponse of responses) {
-    if (messageResponse.content.action) {
-      elizaLogger.info(`foundaction: ${messageResponse.content.action}`)
+    if (messageResponse.content.action && messageResponse.content.action.toLowerCase() !== 'NONE') {
+      elizaLogger.info(`found action: ${messageResponse.content.action}`)
       hasActions = true
       break
     }
