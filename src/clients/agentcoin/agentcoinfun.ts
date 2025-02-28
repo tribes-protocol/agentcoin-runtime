@@ -19,10 +19,10 @@ import {
   HydratedMessageSchema,
   Identity,
   Message,
+  MessageEventSchema,
   SentinelCommand,
   SentinelCommandSchema,
-  ServiceKind,
-  MessageEventSchema
+  ServiceKind
 } from '@/common/types'
 import * as fs from 'fs'
 
@@ -393,6 +393,7 @@ export class AgentcoinClient {
     }
 
     if (!hasActions(messageResponses)) {
+      elizaLogger.info('AgentcoinClient received message with no actions. done!')
       return
     }
 

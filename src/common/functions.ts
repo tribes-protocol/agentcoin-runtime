@@ -203,6 +203,7 @@ export function hasActions(responses: Memory[]): boolean {
   let hasActions = false
   for (const messageResponse of responses) {
     if (messageResponse.content.action) {
+      elizaLogger.info(`foundaction: ${messageResponse.content.action}`)
       hasActions = true
       break
     }
