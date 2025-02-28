@@ -68,13 +68,35 @@ export class KnowledgeService {
     elizaLogger.info('Knowledge sync service stopped')
   }
 
+  private async getAllKnowledge(): Promise<Knowledge[]> {
+    const knowledges: Knowledge[] = []
+    let offset = 0
+    const limit = 100
+
+    while (true) {
+      const knowledges = await this.agentCoinApi.getKnowledges(this.agentCoinIdentity, {
+        cookie: this.agentCoinCookie,
+        limit,
+        offset
+      })
+
+      if (knowledges.length === 0) {
+        break
+      }
+
+      knowledges.push(...knowledges)
+
+      offset += limit
+    }
+
+    return knowledges
+  }
+
   private async syncKnowledge(): Promise<void> {
     elizaLogger.info('Syncing knowledge...')
     try {
       const [knowledges, existingKnowledges] = await Promise.all([
-        this.agentCoinApi.getKnowledges(this.agentCoinIdentity, {
-          cookie: this.agentCoinCookie
-        }),
+        this.getAllKnowledge(),
         this.runtime.databaseAdapter.getKnowledge({
           agentId: this.runtime.agentId
         })
