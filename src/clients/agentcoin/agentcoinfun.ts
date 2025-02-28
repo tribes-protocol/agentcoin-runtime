@@ -397,7 +397,10 @@ export class AgentcoinClient {
       return
     }
 
-    await this.agentcoinService.sendStatus(channel, 'thinking')
+    if (messageResponses[0]?.content.action !== 'CONTINUE') {
+      // if the action is not continue, we need to send a status update
+      await this.agentcoinService.sendStatus(channel, 'thinking')
+    }
 
     // `preaction` event
     shouldContinue = await this.runtime.handle('preaction', {
