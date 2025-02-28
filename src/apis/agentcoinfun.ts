@@ -7,6 +7,7 @@ import {
   AgentWallet,
   AgentWalletKind,
   AgentWalletSchema,
+  ChatStatusBody,
   CreateMessage,
   ErrorResponseSchema,
   HydratedMessage,
@@ -160,6 +161,19 @@ export class AgentcoinAPI {
     const hydratedMessage = HydratedMessageSchema.parse(responseData)
 
     return hydratedMessage
+  }
+
+  async sendStatus(newMessage: ChatStatusBody, options: { cookie: string }): Promise<void> {
+    const response = await fetch(`${AGENTCOIN_FUN_API_URL}/api/chat/status`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Cookie: options.cookie },
+      body: JSON.stringify(toJsonTree(newMessage))
+    })
+    if (response.status !== 200) {
+      const error = await response.json()
+      const parsed = ErrorResponseSchema.parse(error)
+      throw new Error(parsed.error)
+    }
   }
 
   async getDefaultWallet(
