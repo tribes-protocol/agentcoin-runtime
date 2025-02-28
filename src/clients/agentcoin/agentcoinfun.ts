@@ -138,7 +138,7 @@ export class AgentcoinClient {
             break
           }
           case 'status':
-            console.log('received status', event)
+            console.log('received status', event.data.status)
             break
         }
       } catch (error) {
