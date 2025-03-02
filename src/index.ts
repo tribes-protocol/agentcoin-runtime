@@ -1,10 +1,10 @@
-import { Agent } from '@/ayaos'
+import { Agent } from '@/agent'
 import { tipForJokeAction } from '@/plugins/tipping/actions/tipForJoke'
 import { elizaLogger } from '@elizaos/core'
 
 async function main(): Promise<void> {
   try {
-    const agent = await Agent.create()
+    const agent = new Agent()
 
     agent.on('message', async (message) => {
       console.log('message', message.text)
