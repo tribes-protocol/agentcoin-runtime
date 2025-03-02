@@ -358,7 +358,8 @@ export type SdkEventKind = 'message' | 'prellm' | 'postllm' | 'preaction' | 'pos
 export enum ServiceKind {
   wallet = 'wallet-service',
   config = 'config-service',
-  agent = 'agent-service'
+  agent = 'agent-service',
+  knowledge = 'knowledge-service'
 }
 
 export const MessageStatusEnumSchema = z.enum(['idle', 'thinking', 'typing'])

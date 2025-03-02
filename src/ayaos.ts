@@ -37,8 +37,9 @@ import { fileURLToPath } from 'url'
 
 const __filename = fileURLToPath(import.meta.url)
 
-export interface IAyaOS {
+export interface IAyaAgent {
   readonly agentId: UUID
+  start(): Promise<void>
   on(event: 'message', handler: NewMessageHandler): void
   on(event: 'prellm', handler: ContextHandler): void
   on(event: 'postllm', handler: ContextHandler): void
@@ -50,7 +51,7 @@ export interface IAyaOS {
   register(kind: 'action', handler: Action): void
 }
 
-export class AyaOS implements IAyaOS {
+export class Agent implements IAyaAgent {
   private messageHandlers: NewMessageHandler[] = []
   private preLLMHandlers: ContextHandler[] = []
   private postLLMHandlers: ContextHandler[] = []
@@ -66,9 +67,9 @@ export class AyaOS implements IAyaOS {
     this.runtime = runtime
   }
 
-  static async start(): Promise<IAyaOS> {
+  static async create(): Promise<IAyaAgent> {
     let runtime: AgentcoinRuntime | undefined
-
+    let knowledgeService: KnowledgeService | undefined
     try {
       elizaLogger.info('Starting agent...')
 
@@ -118,7 +119,7 @@ export class AyaOS implements IAyaOS {
         }
       })
 
-      const knowledgeService = new KnowledgeService(runtime)
+      knowledgeService = new KnowledgeService(runtime)
 
       // shutdown handler
       let isShuttingDown = false
@@ -163,17 +164,10 @@ export class AyaOS implements IAyaOS {
       process.once('SIGTERM', () => {
         void shutdown('SIGTERM')
       })
-
-      await runtime.initialize()
-      runtime.clients = await initializeClients(character, runtime)
-      elizaLogger.debug(`Started ${character.name} as ${runtime.agentId}`)
-
-      // step 4: start services (move to runtime.services)
-      void Promise.all([knowledgeService.start(), configService.start()])
     } catch (error: unknown) {
       console.log('sdk error', error)
       elizaLogger.error(
-        'Error starting agent:',
+        'Error creating agent:',
         error instanceof Error
           ? {
               message: error.message,
@@ -192,11 +186,29 @@ export class AyaOS implements IAyaOS {
       runtime.character.name
     )
 
-    const sdk = new AyaOS(runtime)
+    const sdk = new Agent(runtime)
+
+    if (knowledgeService) {
+      sdk.register('service', knowledgeService)
+    } else {
+      throw new Error('KnowledgeService not found')
+    }
+
     await runtime.configure({
       eventHandler: (event, params) => sdk.handle(event, params)
     })
     return sdk
+  }
+
+  public async start(): Promise<void> {
+    await this.runtime.initialize()
+    this.runtime.clients = await initializeClients(this.runtime.character, this.runtime)
+    elizaLogger.debug(`Started ${this.runtime.character.name} as ${this.runtime.agentId}`)
+
+    const knowledgeService = this.runtime.getService(KnowledgeService)
+    const configService = this.runtime.getService(ConfigService)
+
+    await Promise.all([knowledgeService.start(), configService.start()])
   }
 
   register(kind: 'service', handler: Service): void

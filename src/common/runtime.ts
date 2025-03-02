@@ -64,9 +64,19 @@ export class AgentcoinRuntime extends AgentRuntime {
     return this.internals.eventHandler(event, params)
   }
 
-  getService<T extends Service>(service: ServiceType | string): T | null {
+  getService<T extends Service>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    service: ServiceType | string | ((new (...args: any[]) => T) & { serviceType: ServiceType })
+  ): T | null {
+    if (typeof service === 'function') {
+      // Handle case where a class constructor is passed
+      const serviceType = service.serviceType
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return super.getService(serviceType) as T
+    }
+    // Handle existing case where ServiceType or string is passed
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return super.getService(service as ServiceType)
+    return super.getService(service as ServiceType) as T
   }
 
   async ensureUserRoomConnection(options: {

@@ -21,8 +21,7 @@ import {
   Message,
   MessageEventSchema,
   SentinelCommand,
-  SentinelCommandSchema,
-  ServiceKind
+  SentinelCommandSchema
 } from '@/common/types'
 import * as fs from 'fs'
 
@@ -54,8 +53,8 @@ export class AgentcoinClient {
 
   constructor(private readonly runtime: AgentcoinRuntime) {
     elizaLogger.info('Connecting to Agentcoin API', AGENTCOIN_FUN_API_URL)
-    this.agentcoinService = runtime.getService<AgentcoinService>(ServiceKind.agent)
-    this.configService = runtime.getService<ConfigService>(ServiceKind.config)
+    this.agentcoinService = runtime.getService(AgentcoinService)
+    this.configService = runtime.getService(ConfigService)
   }
 
   public async start(): Promise<void> {

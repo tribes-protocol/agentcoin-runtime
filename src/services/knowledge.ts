@@ -1,11 +1,13 @@
 import { KNOWLEDGE_DIR } from '@/common/constants'
-import { Knowledge, KnowledgeSchema } from '@/common/types'
+import { Knowledge, KnowledgeSchema, ServiceKind } from '@/common/types'
 import {
   elizaLogger,
   embed,
   getEmbeddingZeroVector,
   IAgentRuntime,
   RAGKnowledgeManager,
+  Service,
+  ServiceType,
   splitChunks,
   stringToUuid,
   UUID
@@ -20,11 +22,19 @@ import { TextLoader } from 'langchain/document_loaders/fs/text'
 
 import path from 'path'
 
-export class KnowledgeService {
+export class KnowledgeService extends Service {
   private readonly knowledgeRoot: string
   private isRunning = false
 
+  static get serviceType(): ServiceType {
+    // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+    return ServiceKind.knowledge as unknown as ServiceType
+  }
+
+  async initialize(_: IAgentRuntime): Promise<void> {}
+
   constructor(private readonly runtime: IAgentRuntime) {
+    super()
     if (this.runtime.ragKnowledgeManager instanceof RAGKnowledgeManager) {
       this.knowledgeRoot = this.runtime.ragKnowledgeManager.knowledgeRoot
     } else {
