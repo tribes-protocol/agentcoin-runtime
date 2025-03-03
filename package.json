@@ -1,6 +1,6 @@
 {
   "name": "@tribesxyz/ayaos",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "main": "dist/ayaos.js",
   "types": "dist/ayaos.d.ts",
   "type": "module",
