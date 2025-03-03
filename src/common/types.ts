@@ -1,5 +1,5 @@
 import { isRequiredString, sortIdentities } from '@/common/functions'
-import { Content, Memory, State } from '@elizaos/core'
+import { Action, Content, Memory, State } from '@elizaos/core'
 import { isAddress } from 'viem'
 import { z } from 'zod'
 
@@ -335,15 +335,6 @@ export const SentinelCommandSchema = z.discriminatedUnion('kind', [
 
 export type SentinelCommand = z.infer<typeof SentinelCommandSchema>
 
-export type NewMessageEvent = {
-  text: string
-  sender: string
-  source: string
-  timestamp: Date
-}
-
-export type NewMessageHandler = (message: NewMessageEvent) => Promise<boolean>
-
 export interface Context {
   memory: Memory
   responses: Memory[]
@@ -353,12 +344,13 @@ export interface Context {
 
 export type ContextHandler = (context: Context) => Promise<boolean>
 
-export type SdkEventKind = 'message' | 'prellm' | 'postllm' | 'preaction' | 'postaction'
+export type SdkEventKind = 'llm:pre' | 'llm:post' | 'tool:pre' | 'tool:post'
 
 export enum ServiceKind {
   wallet = 'wallet-service',
   config = 'config-service',
-  agent = 'agent-service'
+  agent = 'agent-service',
+  knowledge = 'knowledge-service'
 }
 
 export const MessageStatusEnumSchema = z.enum(['idle', 'thinking', 'typing'])
@@ -396,3 +388,6 @@ export const MessageEventSchema = z.discriminatedUnion('kind', [
 ])
 
 export type MessageEvent = z.infer<typeof MessageEventSchema>
+
+// type alias for some Eliza types
+export type Tool = Action

@@ -1,23 +1,24 @@
-import { AyaOS } from '@/ayaos'
+import { Agent } from '@/agent'
 import { tipForJokeAction } from '@/plugins/tipping/actions/tipForJoke'
 import { elizaLogger } from '@elizaos/core'
 
 async function main(): Promise<void> {
   try {
-    const agent = await AyaOS.start()
+    const agent = new Agent()
 
-    agent.on('message', async (message) => {
-      console.log('message', message.text)
+    agent.on('llm:pre', async (context) => {
+      console.log('llm:pre', context.memory)
       return true
     })
 
-    agent.on('postllm', async (context) => {
-      console.log('postllm', context.memory.content.text)
+    agent.on('llm:post', async (context) => {
+      console.log('llm:post', context.memory)
       return true
     })
 
-    agent.register('action', tipForJokeAction)
+    agent.register('tool', tipForJokeAction)
 
+    await agent.start()
     elizaLogger.success('sdk initialized', agent.agentId)
   } catch {
     process.exit(1)

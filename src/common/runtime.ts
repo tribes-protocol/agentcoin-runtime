@@ -1,5 +1,5 @@
 import { isNull } from '@/common/functions'
-import { Context, NewMessageEvent, SdkEventKind } from '@/common/types'
+import { Context, SdkEventKind } from '@/common/types'
 import {
   Action,
   AgentRuntime,
@@ -17,12 +17,10 @@ import {
   UUID
 } from '@elizaos/core'
 
-interface AgentcoinInternals {
-  eventHandler: (event: SdkEventKind, params: Context | NewMessageEvent) => Promise<boolean>
-}
+type AgentEventHandler = (event: SdkEventKind, params: Context) => Promise<boolean>
 
 export class AgentcoinRuntime extends AgentRuntime {
-  private internals: AgentcoinInternals | undefined
+  private eventHandler: AgentEventHandler | undefined
 
   public constructor(opts: {
     eliza: {
@@ -48,25 +46,41 @@ export class AgentcoinRuntime extends AgentRuntime {
     super(opts.eliza)
   }
 
-  async configure(internals: AgentcoinInternals): Promise<void> {
-    if (!isNull(this.internals)) {
-      throw new Error('AgentcoinRuntime already configured')
+  async initialize(options?: { eventHandler: AgentEventHandler }): Promise<void> {
+    await super.initialize()
+
+    if (!isNull(this.eventHandler)) {
+      throw new Error('AgentcoinRuntime already initialized')
     }
 
-    this.internals = internals
+    if (isNull(options?.eventHandler)) {
+      throw new Error('AgentcoinRuntime event handler not provided')
+    }
+
+    this.eventHandler = options.eventHandler
   }
 
-  async handle(event: SdkEventKind, params: Context | NewMessageEvent): Promise<boolean> {
-    if (isNull(this.internals)) {
+  async handle(event: SdkEventKind, params: Context): Promise<boolean> {
+    if (isNull(this.eventHandler)) {
       throw new Error('AgentcoinRuntime not initialized')
     }
 
-    return this.internals.eventHandler(event, params)
+    return this.eventHandler(event, params)
   }
 
-  getService<T extends Service>(service: ServiceType | string): T | null {
+  getService<T extends Service>(
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    service: ServiceType | string | ((new (...args: any[]) => T) & { serviceType: ServiceType })
+  ): T | null {
+    if (typeof service === 'function') {
+      // Handle case where a class constructor is passed
+      const serviceType = service.serviceType
+      // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
+      return super.getService(serviceType) as T
+    }
+    // Handle existing case where ServiceType or string is passed
     // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-    return super.getService(service as ServiceType)
+    return super.getService(service as ServiceType) as T
   }
 
   async ensureUserRoomConnection(options: {

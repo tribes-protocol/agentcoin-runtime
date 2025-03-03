@@ -21,8 +21,7 @@ import {
   Message,
   MessageEventSchema,
   SentinelCommand,
-  SentinelCommandSchema,
-  ServiceKind
+  SentinelCommandSchema
 } from '@/common/types'
 import * as fs from 'fs'
 
@@ -54,8 +53,8 @@ export class AgentcoinClient {
 
   constructor(private readonly runtime: AgentcoinRuntime) {
     elizaLogger.info('Connecting to Agentcoin API', AGENTCOIN_FUN_API_URL)
-    this.agentcoinService = runtime.getService<AgentcoinService>(ServiceKind.agent)
-    this.configService = runtime.getService<ConfigService>(ServiceKind.config)
+    this.agentcoinService = runtime.getService(AgentcoinService)
+    this.configService = runtime.getService(ConfigService)
   }
 
   public async start(): Promise<void> {
@@ -292,20 +291,6 @@ export class AgentcoinClient {
 
     await this.agentcoinService.sendStatus(channel, 'thinking')
 
-    // `message` event
-    let shouldContinue = await this.runtime.handle('message', {
-      text: message.text,
-      sender: message.sender,
-      source: 'agentcoin',
-      timestamp: message.createdAt ?? new Date()
-    })
-
-    if (!shouldContinue) {
-      elizaLogger.info('AgentcoinClient received message event but it was suppressed')
-      await this.agentcoinService.sendStatus(channel, 'idle')
-      return
-    }
-
     const roomId = stringToUuid(serializeChannel(channel))
     const userId = stringToUuid(serializeIdentity(message.sender))
 
@@ -334,7 +319,7 @@ export class AgentcoinClient {
     })
 
     // `prellm` event
-    shouldContinue = await this.runtime.handle('prellm', {
+    let shouldContinue = await this.runtime.handle('llm:pre', {
       state,
       responses: [],
       memory
@@ -355,7 +340,7 @@ export class AgentcoinClient {
     })
 
     // `postllm` event
-    shouldContinue = await this.runtime.handle('postllm', {
+    shouldContinue = await this.runtime.handle('llm:post', {
       state,
       responses: [],
       memory,
@@ -403,7 +388,7 @@ export class AgentcoinClient {
     }
 
     // `preaction` event
-    shouldContinue = await this.runtime.handle('preaction', {
+    shouldContinue = await this.runtime.handle('tool:pre', {
       state,
       responses: messageResponses,
       memory
@@ -418,7 +403,7 @@ export class AgentcoinClient {
     await this.runtime.processActions(memory, messageResponses, state, async (newMessage) => {
       try {
         // `postaction` event
-        shouldContinue = await this.runtime.handle('postaction', {
+        shouldContinue = await this.runtime.handle('tool:post', {
           state,
           responses: messageResponses,
           memory,

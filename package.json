@@ -11,7 +11,7 @@
     "access": "public"
   },
   "scripts": {
-    "build": "tsup src/ayaos.ts --format esm --dts",
+    "build": "tsup src/index.ts --format esm --dts",
     "lint": "eslint src/**/*.ts",
     "dev": "tsx src/index.ts",
     "start": "NODE_ENV=production tsx dist/index.js",
