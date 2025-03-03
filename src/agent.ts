@@ -4,7 +4,7 @@ import { getTokenForProvider } from '@/common/config'
 import { CHARACTER_FILE } from '@/common/constants'
 import { initializeDatabase } from '@/common/db'
 import { AgentcoinRuntime } from '@/common/runtime'
-import { Context, ContextHandler, NewMessageEvent, SdkEventKind } from '@/common/types'
+import { Context, ContextHandler, SdkEventKind } from '@/common/types'
 import { IAyaAgent } from '@/iagent'
 import agentcoinPlugin from '@/plugins/agentcoin'
 import { tipForJokeAction } from '@/plugins/tipping/actions'
@@ -154,7 +154,9 @@ export class Agent implements IAyaAgent {
       })
 
       // initialize the runtime
-      await this.runtime.initialize()
+      await this.runtime.initialize({
+        eventHandler: (event, params) => this.handle(event, params)
+      })
 
       const [clients] = await Promise.all([
         initializeClients(this.runtime.character, this.runtime),
@@ -185,10 +187,6 @@ export class Agent implements IAyaAgent {
       'name',
       runtime.character.name
     )
-
-    await runtime.configure({
-      eventHandler: (event, params) => this.handle(event, params)
-    })
   }
 
   register(kind: 'service', handler: Service): void
@@ -259,12 +257,11 @@ export class Agent implements IAyaAgent {
     }
   }
 
-  protected async handle(event: SdkEventKind, params: Context | NewMessageEvent): Promise<boolean> {
+  private async handle(event: SdkEventKind, params: Context): Promise<boolean> {
     switch (event) {
       case 'llm:pre': {
         for (const handler of this.preLLMHandlers) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const shouldContinue = await handler(params as Context)
+          const shouldContinue = await handler(params)
           if (!shouldContinue) return false
         }
         break
@@ -272,8 +269,7 @@ export class Agent implements IAyaAgent {
 
       case 'llm:post': {
         for (const handler of this.postLLMHandlers) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const shouldContinue = await handler(params as Context)
+          const shouldContinue = await handler(params)
           if (!shouldContinue) return false
         }
         break
@@ -281,8 +277,7 @@ export class Agent implements IAyaAgent {
 
       case 'tool:pre': {
         for (const handler of this.preActionHandlers) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const shouldContinue = await handler(params as Context)
+          const shouldContinue = await handler(params)
           if (!shouldContinue) return false
         }
         break
@@ -290,8 +285,7 @@ export class Agent implements IAyaAgent {
 
       case 'tool:post': {
         for (const handler of this.postActionHandlers) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const shouldContinue = await handler(params as Context)
+          const shouldContinue = await handler(params)
           if (!shouldContinue) return false
         }
         break

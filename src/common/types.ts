@@ -335,15 +335,6 @@ export const SentinelCommandSchema = z.discriminatedUnion('kind', [
 
 export type SentinelCommand = z.infer<typeof SentinelCommandSchema>
 
-export type NewMessageEvent = {
-  text: string
-  sender: string
-  source: string
-  timestamp: Date
-}
-
-export type NewMessageHandler = (message: NewMessageEvent) => Promise<boolean>
-
 export interface Context {
   memory: Memory
   responses: Memory[]
