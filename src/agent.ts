@@ -4,7 +4,7 @@ import { getTokenForProvider } from '@/common/config'
 import { CHARACTER_FILE } from '@/common/constants'
 import { initializeDatabase } from '@/common/db'
 import { AgentcoinRuntime } from '@/common/runtime'
-import { Context, ContextHandler, SdkEventKind } from '@/common/types'
+import { Context, ContextHandler, SdkEventKind, Tool } from '@/common/types'
 import { IAyaAgent } from '@/iagent'
 import agentcoinPlugin from '@/plugins/agentcoin'
 import { tipForJokeAction } from '@/plugins/tipping/actions'
@@ -16,7 +16,6 @@ import { KnowledgeService } from '@/services/knowledge'
 import { ProcessService } from '@/services/process'
 import { WalletService } from '@/services/wallet'
 import {
-  Action,
   CacheManager,
   DbCacheAdapter,
   elizaLogger,
@@ -191,7 +190,7 @@ export class Agent implements IAyaAgent {
 
   register(kind: 'service', handler: Service): void
   register(kind: 'provider', handler: Provider): void
-  register(kind: 'tool', handler: Action): void
+  register(kind: 'tool', handler: Tool): void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   register(kind: string, handler: any): void {
     switch (kind) {

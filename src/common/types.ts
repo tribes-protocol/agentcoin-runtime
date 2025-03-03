@@ -1,5 +1,5 @@
 import { isRequiredString, sortIdentities } from '@/common/functions'
-import { Content, Memory, State } from '@elizaos/core'
+import { Action, Content, Memory, State } from '@elizaos/core'
 import { isAddress } from 'viem'
 import { z } from 'zod'
 
@@ -388,3 +388,6 @@ export const MessageEventSchema = z.discriminatedUnion('kind', [
 ])
 
 export type MessageEvent = z.infer<typeof MessageEventSchema>
+
+// type alias for some Eliza types
+export type Tool = Action
