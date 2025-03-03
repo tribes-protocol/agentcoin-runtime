@@ -69,7 +69,7 @@ export class KnowledgeService {
   }
 
   private async getAllKnowledge(): Promise<Knowledge[]> {
-    const knowledges: Knowledge[] = []
+    const allKnowledge: Knowledge[] = []
     let cursor = 0
     const limit = 100
 
@@ -80,7 +80,7 @@ export class KnowledgeService {
         cursor
       })
 
-      knowledges.push(...knowledges)
+      allKnowledge.push(...knowledges)
 
       if (knowledges.length < limit) {
         break
@@ -89,7 +89,9 @@ export class KnowledgeService {
       cursor = knowledges[knowledges.length - 1].id
     }
 
-    return knowledges
+    elizaLogger.info(`Found ${allKnowledge.length} knowledges`)
+
+    return allKnowledge
   }
 
   private async syncKnowledge(): Promise<void> {
