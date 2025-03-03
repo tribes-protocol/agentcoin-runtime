@@ -4,13 +4,7 @@ import { getTokenForProvider } from '@/common/config'
 import { CHARACTER_FILE } from '@/common/constants'
 import { initializeDatabase } from '@/common/db'
 import { AgentcoinRuntime } from '@/common/runtime'
-import {
-  Context,
-  ContextHandler,
-  NewMessageEvent,
-  NewMessageHandler,
-  SdkEventKind
-} from '@/common/types'
+import { Context, ContextHandler, NewMessageEvent, SdkEventKind } from '@/common/types'
 import { IAyaAgent } from '@/iagent'
 import agentcoinPlugin from '@/plugins/agentcoin'
 import { tipForJokeAction } from '@/plugins/tipping/actions'
@@ -39,7 +33,6 @@ import { fileURLToPath } from 'url'
 const __filename = fileURLToPath(import.meta.url)
 
 export class Agent implements IAyaAgent {
-  private messageHandlers: NewMessageHandler[] = []
   private preLLMHandlers: ContextHandler[] = []
   private postLLMHandlers: ContextHandler[] = []
   private preActionHandlers: ContextHandler[] = []
@@ -200,14 +193,14 @@ export class Agent implements IAyaAgent {
 
   register(kind: 'service', handler: Service): void
   register(kind: 'provider', handler: Provider): void
-  register(kind: 'action', handler: Action): void
+  register(kind: 'tool', handler: Action): void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   register(kind: string, handler: any): void {
     switch (kind) {
       case 'service':
         void this.runtime.registerService(handler)
         break
-      case 'action':
+      case 'tool':
         this.runtime.registerAction(handler)
         break
       case 'provider':
@@ -218,27 +211,23 @@ export class Agent implements IAyaAgent {
     }
   }
 
-  on(event: 'message', handler: NewMessageHandler): void
-  on(event: 'prellm', handler: ContextHandler): void
-  on(event: 'postllm', handler: ContextHandler): void
-  on(event: 'preaction', handler: ContextHandler): void
-  on(event: 'postaction', handler: ContextHandler): void
+  on(event: 'llm:pre', handler: ContextHandler): void
+  on(event: 'llm:post', handler: ContextHandler): void
+  on(event: 'tool:pre', handler: ContextHandler): void
+  on(event: 'tool:post', handler: ContextHandler): void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   on(event: string, handler: any): void {
     switch (event) {
-      case 'message':
-        this.messageHandlers.push(handler)
-        break
-      case 'prellm':
+      case 'llm:pre':
         this.preLLMHandlers.push(handler)
         break
-      case 'postllm':
+      case 'llm:post':
         this.postLLMHandlers.push(handler)
         break
-      case 'preaction':
+      case 'tool:pre':
         this.preActionHandlers.push(handler)
         break
-      case 'postaction':
+      case 'tool:post':
         this.postActionHandlers.push(handler)
         break
       default:
@@ -246,27 +235,23 @@ export class Agent implements IAyaAgent {
     }
   }
 
-  off(event: 'message', handler: NewMessageHandler): void
-  off(event: 'prellm', handler: ContextHandler): void
-  off(event: 'postllm', handler: ContextHandler): void
-  off(event: 'preaction', handler: ContextHandler): void
-  off(event: 'postaction', handler: ContextHandler): void
+  off(event: 'llm:pre', handler: ContextHandler): void
+  off(event: 'llm:post', handler: ContextHandler): void
+  off(event: 'tool:pre', handler: ContextHandler): void
+  off(event: 'tool:post', handler: ContextHandler): void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   off(event: string, handler: any): void {
     switch (event) {
-      case 'message':
-        this.messageHandlers = this.messageHandlers.filter((h) => h !== handler)
-        break
-      case 'prellm':
+      case 'llm:pre':
         this.preLLMHandlers = this.preLLMHandlers.filter((h) => h !== handler)
         break
-      case 'postllm':
+      case 'llm:post':
         this.postLLMHandlers = this.postLLMHandlers.filter((h) => h !== handler)
         break
-      case 'preaction':
+      case 'tool:pre':
         this.preActionHandlers = this.preActionHandlers.filter((h) => h !== handler)
         break
-      case 'postaction':
+      case 'tool:post':
         this.postActionHandlers = this.postActionHandlers.filter((h) => h !== handler)
         break
       default:
@@ -276,16 +261,7 @@ export class Agent implements IAyaAgent {
 
   protected async handle(event: SdkEventKind, params: Context | NewMessageEvent): Promise<boolean> {
     switch (event) {
-      case 'message': {
-        for (const handler of this.messageHandlers) {
-          // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
-          const result = await handler(params as NewMessageEvent)
-          if (!result) return false
-        }
-        break
-      }
-
-      case 'prellm': {
+      case 'llm:pre': {
         for (const handler of this.preLLMHandlers) {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const shouldContinue = await handler(params as Context)
@@ -294,7 +270,7 @@ export class Agent implements IAyaAgent {
         break
       }
 
-      case 'postllm': {
+      case 'llm:post': {
         for (const handler of this.postLLMHandlers) {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const shouldContinue = await handler(params as Context)
@@ -303,7 +279,7 @@ export class Agent implements IAyaAgent {
         break
       }
 
-      case 'preaction': {
+      case 'tool:pre': {
         for (const handler of this.preActionHandlers) {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const shouldContinue = await handler(params as Context)
@@ -312,7 +288,7 @@ export class Agent implements IAyaAgent {
         break
       }
 
-      case 'postaction': {
+      case 'tool:post': {
         for (const handler of this.postActionHandlers) {
           // eslint-disable-next-line @typescript-eslint/consistent-type-assertions
           const shouldContinue = await handler(params as Context)
