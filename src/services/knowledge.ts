@@ -70,23 +70,23 @@ export class KnowledgeService {
 
   private async getAllKnowledge(): Promise<Knowledge[]> {
     const knowledges: Knowledge[] = []
-    let offset = 0
+    let cursor = 0
     const limit = 100
 
     while (true) {
       const knowledges = await this.agentCoinApi.getKnowledges(this.agentCoinIdentity, {
         cookie: this.agentCoinCookie,
         limit,
-        offset
+        cursor
       })
-
-      if (knowledges.length === 0) {
-        break
-      }
 
       knowledges.push(...knowledges)
 
-      offset += limit
+      if (knowledges.length < limit) {
+        break
+      }
+
+      cursor = knowledges[knowledges.length - 1].id
     }
 
     return knowledges

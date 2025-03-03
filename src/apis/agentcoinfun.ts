@@ -189,12 +189,12 @@ export class AgentcoinAPI {
 
   async getKnowledges(
     identity: Identity,
-    options: { cookie: string; limit: number; offset: number }
+    options: { cookie: string; limit: number; cursor: number }
   ): Promise<Knowledge[]> {
     const response = await fetch(`${AGENTCOIN_FUN_API_URL}/api/agents/knowledge/get`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Cookie: options.cookie },
-      body: JSON.stringify({ agentId: identity, limit: options.limit, offset: options.offset })
+      body: JSON.stringify({ agentId: identity, limit: options.limit, cursor: options.cursor })
     })
 
     if (response.status !== 200) {
