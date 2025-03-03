@@ -1,5 +1,11 @@
 # @tribesxyz/ayaos
 
+## 0.0.5
+
+### Patch Changes
+
+- 7076e87: expose new agent api
+
 ## 0.0.4
 
 ### Patch Changes
