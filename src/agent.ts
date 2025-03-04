@@ -11,7 +11,6 @@ import { AgentcoinService } from '@/services/agentcoinfun'
 import { ConfigService } from '@/services/config'
 import { EventService } from '@/services/event'
 import { KeychainService } from '@/services/keychain'
-import { KnowledgeService } from '@/services/knowledge'
 import { ProcessService } from '@/services/process'
 import { WalletService } from '@/services/wallet'
 import {
@@ -112,12 +111,12 @@ export class Agent implements IAyaAgent {
       })
       this.runtime_ = runtime
 
-      const knowledgeService = new KnowledgeService(
-        runtime,
-        agentcoinAPI,
-        agentcoinCookie,
-        agentcoinIdentity
-      )
+      // const knowledgeService = new KnowledgeService(
+      //   runtime,
+      //   agentcoinAPI,
+      //   agentcoinCookie,
+      //   agentcoinIdentity
+      // )
 
       // shutdown handler
       let isShuttingDown = false
@@ -129,7 +128,8 @@ export class Agent implements IAyaAgent {
           isShuttingDown = true
 
           elizaLogger.warn(`Received ${signal} signal. Stopping agent...`)
-          await Promise.all([configService.stop(), eventService.stop(), knowledgeService.stop()])
+          await Promise.all([configService.stop(), eventService.stop()])
+          // , knowledgeService.stop()])
           elizaLogger.success('Agent stopped services successfully!')
 
           if (runtime) {
@@ -171,7 +171,7 @@ export class Agent implements IAyaAgent {
       this.runtime.clients = await initializeClients(this.runtime.character, this.runtime)
 
       // no need to await these. it'll lock up the main process
-      void knowledgeService.start()
+      // void knowledgeService.start()
       void configService.start()
 
       elizaLogger.info(`Started ${this.runtime.character.name} as ${this.runtime.agentId}`)
@@ -221,7 +221,7 @@ export class Agent implements IAyaAgent {
       case 'provider':
         this.providers.push(handler)
         if (this.runtime_) {
-          this.runtime.providers.push(handler)
+          this.runtime.registerContextProvider(handler)
         }
         break
       case 'plugin':
@@ -233,7 +233,7 @@ export class Agent implements IAyaAgent {
       case 'evaluator':
         this.evaluators.push(handler)
         if (this.runtime_) {
-          this.runtime.evaluators.push(handler)
+          this.runtime.registerEvaluator(handler)
         }
         break
       default:
