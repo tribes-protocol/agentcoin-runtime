@@ -235,21 +235,7 @@ export class TwitterInteractionClient {
               ? this.runtime.agentId
               : stringToUuid(tweet.userId)
 
-          const messageText = tweet.text
           const username = tweet.username
-
-          const shouldContinue = await this.runtime.handle('message', {
-            text: messageText,
-            sender: username,
-            source: 'twitter',
-            timestamp: new Date(tweet.timestamp * 1000)
-          })
-
-          if (!shouldContinue) {
-            elizaLogger.info('TwitterClient received message event but it was suppressed')
-            return
-          }
-
           await this.runtime.ensureUserRoomConnection({
             roomId,
             userId: userIdUUID,
@@ -439,14 +425,14 @@ export class TwitterInteractionClient {
         twitterMessageHandlerTemplate
     })
 
-    let shouldContinue = await this.runtime.handle('prellm', {
+    let shouldContinue = await this.runtime.handle('llm:pre', {
       state,
       responses: [],
       memory: message
     })
 
     if (!shouldContinue) {
-      elizaLogger.info('TwitterClient received prellm event but it was suppressed')
+      elizaLogger.info('TwitterClient received llm:pre event but it was suppressed')
       return
     }
 
@@ -464,7 +450,7 @@ export class TwitterInteractionClient {
 
     response.text = removeQuotes(response.text)
 
-    shouldContinue = await this.runtime.handle('postllm', {
+    shouldContinue = await this.runtime.handle('llm:post', {
       state,
       responses: [],
       memory: message,
@@ -472,7 +458,7 @@ export class TwitterInteractionClient {
     })
 
     if (!shouldContinue) {
-      elizaLogger.info('TwitterClient received postllm event but it was suppressed')
+      elizaLogger.info('TwitterClient received llm:post event but it was suppressed')
       return
     }
 
@@ -514,7 +500,7 @@ export class TwitterInteractionClient {
           }
 
           // `preaction` event
-          shouldContinue = await this.runtime.handle('preaction', {
+          shouldContinue = await this.runtime.handle('tool:pre', {
             state,
             responses: messageResponses,
             memory: message
@@ -530,7 +516,7 @@ export class TwitterInteractionClient {
             messageResponses,
             state,
             async (response: Content) => {
-              shouldContinue = await this.runtime.handle('postaction', {
+              shouldContinue = await this.runtime.handle('tool:post', {
                 state,
                 responses: messageResponses,
                 memory: message,

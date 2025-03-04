@@ -86,20 +86,7 @@ export class FarcasterInteractionManager {
         continue
       }
 
-      const messageText = mention.text
       const username = mention.profile.username
-
-      const shouldContinue = await this.runtime.handle('message', {
-        text: messageText,
-        sender: username,
-        source: 'farcaster',
-        timestamp: new Date(mention.timestamp)
-      })
-
-      if (!shouldContinue) {
-        elizaLogger.info('FarcasterClient received message event but it was suppressed')
-        return
-      }
 
       await this.runtime.ensureUserRoomConnection({
         roomId,
@@ -232,7 +219,7 @@ export class FarcasterInteractionManager {
         messageHandlerTemplate
     })
 
-    let shouldContinue = await this.runtime.handle('prellm', {
+    let shouldContinue = await this.runtime.handle('llm:pre', {
       state,
       responses: [],
       memory
@@ -249,7 +236,7 @@ export class FarcasterInteractionManager {
       modelClass: ModelClass.LARGE
     })
 
-    shouldContinue = await this.runtime.handle('postllm', {
+    shouldContinue = await this.runtime.handle('llm:post', {
       state,
       responses: [],
       memory,
@@ -311,7 +298,7 @@ export class FarcasterInteractionManager {
     }
 
     // `preaction` event
-    shouldContinue = await this.runtime.handle('preaction', {
+    shouldContinue = await this.runtime.handle('tool:pre', {
       state,
       responses: messageResponses,
       memory
@@ -327,7 +314,7 @@ export class FarcasterInteractionManager {
       messageResponses,
       newState,
       async (newMessage) => {
-        shouldContinue = await this.runtime.handle('postaction', {
+        shouldContinue = await this.runtime.handle('tool:post', {
           state,
           responses: messageResponses,
           memory,

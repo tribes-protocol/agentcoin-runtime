@@ -137,14 +137,14 @@ export class FarcasterPostManager {
         template: this.runtime.character.templates?.farcasterPostTemplate || postTemplate
       })
 
-      let shouldContinue = await this.runtime.handle('prellm', {
+      let shouldContinue = await this.runtime.handle('llm:pre', {
         state,
         responses: [],
         memory: null
       })
 
       if (!shouldContinue) {
-        elizaLogger.info('AgentcoinClient received prellm event but it was suppressed')
+        elizaLogger.info('FarcasterPostManager received llm:pre event but it was suppressed')
         return
       }
 
@@ -154,7 +154,7 @@ export class FarcasterPostManager {
         modelClass: ModelClass.SMALL
       })
 
-      shouldContinue = await this.runtime.handle('postllm', {
+      shouldContinue = await this.runtime.handle('llm:post', {
         state,
         responses: [],
         memory: null,
@@ -162,7 +162,7 @@ export class FarcasterPostManager {
       })
 
       if (!shouldContinue) {
-        elizaLogger.info('AgentcoinClient received postllm event but it was suppressed')
+        elizaLogger.info('FarcasterPostManager received llm:post event but it was suppressed')
         return
       }
 

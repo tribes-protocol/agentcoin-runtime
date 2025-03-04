@@ -1,5 +1,5 @@
 import { isRequiredString, sortIdentities } from '@/common/functions'
-import { Content, Memory, State } from '@elizaos/core'
+import { Action, Content, Memory, State } from '@elizaos/core'
 import { isAddress } from 'viem'
 import { z } from 'zod'
 
@@ -333,15 +333,6 @@ export const SentinelCommandSchema = z.discriminatedUnion('kind', [
 
 export type SentinelCommand = z.infer<typeof SentinelCommandSchema>
 
-export type NewMessageEvent = {
-  text: string
-  sender: string
-  source: string
-  timestamp: Date
-}
-
-export type NewMessageHandler = (message: NewMessageEvent) => Promise<boolean>
-
 export interface Context {
   memory: Memory
   responses: Memory[]
@@ -351,12 +342,13 @@ export interface Context {
 
 export type ContextHandler = (context: Context) => Promise<boolean>
 
-export type SdkEventKind = 'message' | 'prellm' | 'postllm' | 'preaction' | 'postaction'
+export type SdkEventKind = 'llm:pre' | 'llm:post' | 'tool:pre' | 'tool:post'
 
 export enum ServiceKind {
   wallet = 'wallet-service',
   config = 'config-service',
-  agent = 'agent-service'
+  agent = 'agent-service',
+  knowledge = 'knowledge-service'
 }
 
 const PdfFileSchema = z.object({
@@ -401,3 +393,42 @@ export const KnowledgeSchema = z.object({
 })
 
 export type Knowledge = z.infer<typeof KnowledgeSchema>
+
+export const MessageStatusEnumSchema = z.enum(['idle', 'thinking', 'typing'])
+export type MessageStatusEnum = z.infer<typeof MessageStatusEnumSchema>
+
+export const MessageStatusSchema = z.object({
+  status: MessageStatusEnumSchema,
+  user: UserSchema,
+  createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
+})
+
+export type MessageStatus = z.infer<typeof MessageStatusSchema>
+
+export const ChatStatusBodySchema = z.object({
+  channel: ChatChannelSchema,
+  status: MessageStatusEnumSchema
+})
+
+export type ChatStatusBody = z.infer<typeof ChatStatusBodySchema>
+
+export const MessageEventKindSchema = z.enum(['message', 'status'])
+export type MessageEventKind = z.infer<typeof MessageEventKindSchema>
+
+export const MessageEventSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('message'),
+    data: HydratedMessageSchema.array(),
+    channel: DMChannelSchema
+  }),
+  z.object({
+    kind: z.literal('status'),
+    data: MessageStatusSchema,
+    channel: ChatChannelSchema
+  })
+])
+
+export type MessageEvent = z.infer<typeof MessageEventSchema>
+
+// type alias for some Eliza types
+export type Tool = Action

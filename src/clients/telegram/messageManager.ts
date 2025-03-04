@@ -921,18 +921,6 @@ export class MessageManager {
 
     const userName = ctx.from.username || ctx.from.first_name || ctx.from.id.toString()
 
-    let shouldContinue = await this.runtime.handle('message', {
-      text: messageText,
-      sender: userName,
-      source: 'telegram',
-      timestamp: new Date(message.date * 1000)
-    })
-
-    if (!shouldContinue) {
-      elizaLogger.info('AgentcoinClient received message event but it was suppressed')
-      return
-    }
-
     // Add team handling at the start
     if (
       this.runtime.character.clientConfig?.telegram?.isPartOfTeam &&
@@ -1177,14 +1165,14 @@ export class MessageManager {
             telegramMessageHandlerTemplate
         })
 
-        shouldContinue = await this.runtime.handle('prellm', {
+        let shouldContinue = await this.runtime.handle('llm:pre', {
           state,
           responses: [],
           memory
         })
 
         if (!shouldContinue) {
-          elizaLogger.info('AgentcoinClient received prellm event but it was suppressed')
+          elizaLogger.info('TelegramMessageManager received llm:pre event but it was suppressed')
           return
         }
 
@@ -1195,7 +1183,7 @@ export class MessageManager {
         // Execute callback to send messages and log memories
         const messageResponses = await callback(responseContent)
 
-        shouldContinue = await this.runtime.handle('postllm', {
+        shouldContinue = await this.runtime.handle('llm:post', {
           state,
           responses: [],
           memory,
@@ -1203,7 +1191,7 @@ export class MessageManager {
         })
 
         if (!shouldContinue) {
-          elizaLogger.info('AgentcoinClient received postllm event but it was suppressed')
+          elizaLogger.info('TelegramMessageManager received llm:post event but it was suppressed')
           return
         }
 
@@ -1215,20 +1203,20 @@ export class MessageManager {
         }
 
         // `preaction` event
-        shouldContinue = await this.runtime.handle('preaction', {
+        shouldContinue = await this.runtime.handle('tool:pre', {
           state,
           responses: messageResponses,
           memory
         })
 
         if (!shouldContinue) {
-          elizaLogger.info('AgentcoinClient received preaction event but it was suppressed')
+          elizaLogger.info('TelegramMessageManager received tool:pre event but it was suppressed')
           return
         }
 
         // Handle any resulting actions
         await this.runtime.processActions(memory, messageResponses, state, async (newMessage) => {
-          shouldContinue = await this.runtime.handle('postaction', {
+          shouldContinue = await this.runtime.handle('tool:post', {
             state,
             responses: messageResponses,
             memory,
@@ -1236,7 +1224,9 @@ export class MessageManager {
           })
 
           if (!shouldContinue) {
-            elizaLogger.info('AgentcoinClient received postaction event but it was suppressed')
+            elizaLogger.info(
+              'TelegramMessageManager received tool:post event but it was suppressed'
+            )
             return
           }
 

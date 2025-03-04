@@ -7,9 +7,11 @@ const conversationProvider: Provider = {
     const isSelf = memory.userId === runtime.agentId
 
     if (isSelf) {
-      // for now if the sender is the agent, we don't need to add context. this might
-      // change in the future.
-      return ''
+      return `
+      **This is your message**
+      User ID: ${memory.userId}
+      Name: ${runtime.character.name}
+      `
     }
 
     // source != 'agentcoin', bail out
@@ -32,6 +34,7 @@ const conversationProvider: Provider = {
     const ethAddress = account.details?.ethAddress
 
     const details = [
+      `User ID: ${memory.userId}`,
       username && `Username: ${username}`,
       name && `Name: ${name}`,
       email && `Email: ${email}`,
