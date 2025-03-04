@@ -1,5 +1,11 @@
 # @tribesxyz/ayaos
 
+## 0.0.8
+
+### Patch Changes
+
+- 658af1c: disable agentcoin knowledge service
+
 ## 0.0.7
 
 ### Patch Changes
