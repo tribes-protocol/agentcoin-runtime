@@ -1,8 +1,6 @@
 import { AgentcoinAPI } from '@/apis/agentcoinfun'
 import { AgentcoinRuntime } from '@/common/runtime'
-import { Identity, Knowledge } from '@/common/types'
-import { KNOWLEDGE_DIR } from '@/common/constants'
-import { Knowledge, KnowledgeSchema, ServiceKind } from '@/common/types'
+import { Identity, Knowledge, ServiceKind } from '@/common/types'
 import {
   elizaLogger,
   embed,
