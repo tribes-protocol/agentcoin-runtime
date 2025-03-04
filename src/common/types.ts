@@ -207,14 +207,12 @@ export const GitStateSchema = z.object({
 
 export type GitState = z.infer<typeof GitStateSchema>
 
-export const KnowledgeSchema = z.object({
-  source: z.string(),
-  filename: z.string(),
-  action: z.enum(['create', 'delete']),
-  updatedAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
+export const UserDmEventSchema = z.object({
+  channel: DMChannelSchema,
+  message: HydratedMessageSchema
 })
 
-export type Knowledge = z.infer<typeof KnowledgeSchema>
+export type UserEvent = z.infer<typeof UserDmEventSchema>
 
 // Character schema
 
@@ -352,6 +350,49 @@ export enum ServiceKind {
   agent = 'agent-service',
   knowledge = 'knowledge-service'
 }
+
+const PdfFileSchema = z.object({
+  kind: z.literal('pdf'),
+  url: z.string()
+})
+
+const TxtFileSchema = z.object({
+  kind: z.literal('txt'),
+  url: z.string()
+})
+
+const MarkdownFileSchema = z.object({
+  kind: z.literal('markdown'),
+  url: z.string()
+})
+
+const DocxFileSchema = z.object({
+  kind: z.literal('docx'),
+  url: z.string()
+})
+
+const CsvFileSchema = z.object({
+  kind: z.literal('csv'),
+  url: z.string()
+})
+
+export const KnowledgeMetadataSchema = z.discriminatedUnion('kind', [
+  PdfFileSchema,
+  TxtFileSchema,
+  MarkdownFileSchema,
+  DocxFileSchema,
+  CsvFileSchema
+])
+
+export const KnowledgeSchema = z.object({
+  id: z.number(),
+  metadata: KnowledgeMetadataSchema,
+  name: z.string(),
+  agentId: AgentIdentitySchema,
+  createdAt: z.preprocess((arg) => (isRequiredString(arg) ? new Date(arg) : arg), z.date())
+})
+
+export type Knowledge = z.infer<typeof KnowledgeSchema>
 
 export const MessageStatusEnumSchema = z.enum(['idle', 'thinking', 'typing'])
 export type MessageStatusEnum = z.infer<typeof MessageStatusEnumSchema>

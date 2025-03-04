@@ -1,5 +1,6 @@
-import { KNOWLEDGE_DIR } from '@/common/constants'
-import { Knowledge, KnowledgeSchema, ServiceKind } from '@/common/types'
+import { AgentcoinAPI } from '@/apis/agentcoinfun'
+import { AgentcoinRuntime } from '@/common/runtime'
+import { Identity, Knowledge, ServiceKind } from '@/common/types'
 import {
   elizaLogger,
   embed,
@@ -33,7 +34,12 @@ export class KnowledgeService extends Service {
 
   async initialize(_: IAgentRuntime): Promise<void> {}
 
-  constructor(private readonly runtime: IAgentRuntime) {
+  constructor(
+    private readonly runtime: AgentcoinRuntime,
+    private readonly agentCoinApi: AgentcoinAPI,
+    private readonly agentCoinCookie: string,
+    private readonly agentCoinIdentity: Identity
+  ) {
     super()
     if (this.runtime.ragKnowledgeManager instanceof RAGKnowledgeManager) {
       this.knowledgeRoot = this.runtime.ragKnowledgeManager.knowledgeRoot
@@ -47,82 +53,111 @@ export class KnowledgeService extends Service {
       return
     }
 
-    console.log('📌 Knowledge indexing job started...')
+    elizaLogger.info('📌 Knowledge sync job started...')
     this.isRunning = true
 
     while (this.isRunning) {
       try {
-        await this.processJsonFiles(KNOWLEDGE_DIR)
+        await this.syncKnowledge()
       } catch (error) {
-        console.error('⚠️ Error in indexing job:', error)
+        if (error instanceof Error) {
+          elizaLogger.error('⚠️ Error in sync job:', error.message)
+        } else {
+          elizaLogger.error('⚠️ Error in sync job:', error)
+        }
       }
 
       // Wait for 1 minute before the next run
       await new Promise((resolve) => setTimeout(resolve, 60_000))
     }
 
-    console.log('✅ Indexing job stopped gracefully.')
+    elizaLogger.info('✅ Sync job stopped gracefully.')
   }
 
   async stop(): Promise<void> {
     this.isRunning = false
-    elizaLogger.info('Knowledge service stopped')
+    elizaLogger.info('Knowledge sync service stopped')
   }
 
-  private async processJsonFiles(jsonDirectory: string): Promise<void> {
-    try {
-      const dirExists = await fs
-        .access(jsonDirectory)
-        .then(() => true)
-        .catch(() => false)
-      if (!dirExists) {
-        return
+  private async getAllKnowledge(): Promise<Knowledge[]> {
+    const allKnowledge: Knowledge[] = []
+    let cursor = 0
+    const limit = 100
+
+    while (true) {
+      const knowledges = await this.agentCoinApi.getKnowledges(this.agentCoinIdentity, {
+        cookie: this.agentCoinCookie,
+        limit,
+        cursor
+      })
+
+      allKnowledge.push(...knowledges)
+
+      if (knowledges.length < limit) {
+        break
       }
 
-      const files = (await fs.readdir(jsonDirectory)).filter((file) => file.endsWith('.json'))
+      cursor = knowledges[knowledges.length - 1].id
+    }
 
-      for (const jsonFile of files) {
-        const filePath = path.join(jsonDirectory, jsonFile)
-        const metadata = await fs.readFile(filePath, 'utf-8')
+    elizaLogger.info(`Found ${allKnowledge.length} knowledges`)
 
-        let data: Knowledge
-        try {
-          data = KnowledgeSchema.parse(JSON.parse(metadata))
-        } catch (error) {
-          console.error(`Invalid JSON format in ${jsonFile}:`, error)
-          continue
-        }
+    return allKnowledge
+  }
 
-        const itemId = stringToUuid(jsonFile)
-        const existingKnowledge = await this.runtime.databaseAdapter.getKnowledge({
-          id: itemId,
+  private async syncKnowledge(): Promise<void> {
+    elizaLogger.info('Syncing knowledge...')
+    try {
+      const [knowledges, existingKnowledges] = await Promise.all([
+        this.getAllKnowledge(),
+        this.runtime.databaseAdapter.getKnowledge({
           agentId: this.runtime.agentId
         })
+      ])
 
-        switch (data.action) {
-          case 'delete': {
-            if (existingKnowledge.length > 0) {
-              console.log(`Deleting knowledge item ${itemId}`)
-              await fs.unlink(path.join(this.knowledgeRoot, data.filename))
-              await this.runtime.ragKnowledgeManager.cleanupDeletedKnowledgeFiles()
-            }
-            break
-          }
-          case 'create': {
-            if (existingKnowledge.length === 0) {
-              await this.processFileMetadata(data, itemId)
-            }
-            break
-          }
+      const existingParentKnowledges = existingKnowledges.filter(
+        (knowledge) => !knowledge.content.metadata?.isChunk
+      )
+      const existingKnowledgeIds = existingParentKnowledges.map((knowledge) => knowledge.id)
+
+      const remoteKnowledgeIds: UUID[] = []
+      for (const knowledge of knowledges) {
+        const itemId = stringToUuid(knowledge.metadata.url)
+        remoteKnowledgeIds.push(itemId)
+
+        if (!existingKnowledgeIds.includes(itemId)) {
+          elizaLogger.info(`Processing new knowledge: ${knowledge.name}`)
+          await this.processFileKnowledge(knowledge, itemId)
         }
       }
+
+      const knowledgesToRemove = existingParentKnowledges.filter(
+        (knowledge) => !remoteKnowledgeIds.includes(knowledge.id)
+      )
+
+      for (const knowledge of knowledgesToRemove) {
+        elizaLogger.info(`Removing knowledge: ${knowledge.content.metadata?.source}`)
+
+        await this.runtime.databaseAdapter.removeKnowledge(knowledge.id)
+
+        await fs.unlink(path.join(this.knowledgeRoot, knowledge.content.metadata?.source))
+        await this.runtime.ragKnowledgeManager.cleanupDeletedKnowledgeFiles()
+      }
+      elizaLogger.info(
+        `Knowledge sync completed: ${remoteKnowledgeIds.length} remote items, ` +
+          `${knowledgesToRemove.length} items removed`
+      )
     } catch (error) {
-      console.error('Error processing JSON files:', error)
+      if (error instanceof Error) {
+        elizaLogger.error('Error processing knowledge files:', error.message)
+      } else {
+        elizaLogger.error('Error processing knowledge files:', error)
+      }
       throw error
     }
   }
 
-  private async processFileMetadata(data: Knowledge, itemId: UUID): Promise<void> {
+  private async processFileKnowledge(data: Knowledge, itemId: UUID): Promise<void> {
     try {
       const content = await this.downloadFile(data)
 
@@ -131,7 +166,7 @@ export class KnowledgeService extends Service {
         agentId: this.runtime.agentId,
         content: {
           text: '',
-          metadata: { source: data.filename }
+          metadata: { source: data.name }
         },
         embedding: new Float32Array(getEmbeddingZeroVector()),
         createdAt: Date.now()
@@ -154,7 +189,7 @@ export class KnowledgeService extends Service {
               text: chunk,
               metadata: {
                 isChunk: true,
-                source: data.filename,
+                source: data.name,
                 originalId: itemId,
                 chunkIndex: index
               }
@@ -165,18 +200,18 @@ export class KnowledgeService extends Service {
         })
       )
     } catch (error) {
-      console.error(`Error processing file metadata for ${data.filename}:`, error)
+      elizaLogger.error(`Error processing file metadata for ${data.name}:`, error)
     }
   }
 
   private async downloadFile(file: Knowledge): Promise<string> {
     await fs.mkdir(this.knowledgeRoot, { recursive: true })
-    const outputPath = path.join(this.knowledgeRoot, file.filename)
+    const outputPath = path.join(this.knowledgeRoot, file.name)
 
     try {
       const response = await axios({
         method: 'GET',
-        url: file.source,
+        url: file.metadata.url,
         responseType: 'arraybuffer'
       })
 
@@ -194,9 +229,9 @@ export class KnowledgeService extends Service {
         return ext in loaderMap
       }
 
-      const fileExtension = path.extname(file.filename).toLowerCase()
+      const fileExtension = path.extname(file.name).toLowerCase()
       if (!isValidFileExtension(fileExtension)) {
-        console.error(`Unsupported file type: ${fileExtension}`)
+        elizaLogger.error(`Unsupported file type: ${fileExtension}`)
         throw new Error(`Unsupported file type: ${fileExtension}`)
       }
 
@@ -206,14 +241,14 @@ export class KnowledgeService extends Service {
         const loader = new LoaderClass(outputPath)
         const docs = await loader.load()
         const content = docs.map((doc) => doc.pageContent).join('\n')
-        console.log(`Successfully processed file: ${file.filename}`)
+        elizaLogger.info(`Successfully processed file: ${file.name}`)
         return content
       } catch (error) {
-        console.error(`Error parsing ${fileExtension} file: ${file.filename}`, error)
+        elizaLogger.error(`Error parsing ${fileExtension} file: ${file.name}`, error)
         return ''
       }
     } catch (error) {
-      console.error(`Error processing file from ${file.source}:`, error)
+      elizaLogger.error(`Error processing file from ${file.metadata.url}:`, error)
       throw error
     }
   }
