@@ -1,5 +1,11 @@
 # @tribesxyz/ayaos
 
+## 0.0.7
+
+### Patch Changes
+
+- 9325b51: Allow registration of tools prior to runtime init
+
 ## 0.0.6
 
 ### Patch Changes
