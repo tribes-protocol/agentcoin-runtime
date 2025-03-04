@@ -7,7 +7,6 @@ import { AgentcoinRuntime } from '@/common/runtime'
 import { Context, ContextHandler, SdkEventKind, Tool } from '@/common/types'
 import { IAyaAgent } from '@/iagent'
 import agentcoinPlugin from '@/plugins/agentcoin'
-import { tipForJokeAction } from '@/plugins/tipping/actions'
 import { AgentcoinService } from '@/services/agentcoinfun'
 import { ConfigService } from '@/services/config'
 import { EventService } from '@/services/event'
@@ -19,6 +18,8 @@ import {
   CacheManager,
   DbCacheAdapter,
   elizaLogger,
+  Evaluator,
+  Plugin,
   Provider,
   Service,
   UUID,
@@ -36,6 +37,11 @@ export class Agent implements IAyaAgent {
   private postLLMHandlers: ContextHandler[] = []
   private preActionHandlers: ContextHandler[] = []
   private postActionHandlers: ContextHandler[] = []
+  private services: Service[] = []
+  private providers: Provider[] = []
+  private tools: Tool[] = []
+  private plugins: Plugin[] = []
+  private evaluators: Evaluator[] = []
   private runtime_: AgentcoinRuntime | undefined
 
   get runtime(): AgentcoinRuntime {
@@ -94,12 +100,12 @@ export class Agent implements IAyaAgent {
           databaseAdapter: db,
           token,
           modelProvider: character.modelProvider,
-          evaluators: [],
+          evaluators: [...this.evaluators],
           character,
-          plugins: [bootstrapPlugin, createNodePlugin(), agentcoinPlugin],
-          providers: [],
-          actions: [tipForJokeAction],
-          services: [agentcoinService, walletService, configService],
+          plugins: [bootstrapPlugin, createNodePlugin(), agentcoinPlugin, ...this.plugins],
+          providers: [...this.providers],
+          actions: [...this.tools],
+          services: [agentcoinService, walletService, configService, ...this.services],
           managers: [],
           cacheManager: cache
         }
@@ -162,14 +168,13 @@ export class Agent implements IAyaAgent {
         eventHandler: (event, params) => this.handle(event, params)
       })
 
-      const [clients] = await Promise.all([
-        initializeClients(this.runtime.character, this.runtime),
-        knowledgeService.start(),
-        configService.start()
-      ])
-      this.runtime.clients = clients
+      this.runtime.clients = await initializeClients(this.runtime.character, this.runtime)
 
-      elizaLogger.debug(`Started ${this.runtime.character.name} as ${this.runtime.agentId}`)
+      // no need to await these. it'll lock up the main process
+      void knowledgeService.start()
+      void configService.start()
+
+      elizaLogger.info(`Started ${this.runtime.character.name} as ${this.runtime.agentId}`)
     } catch (error: unknown) {
       console.log('sdk error', error)
       elizaLogger.error(
@@ -196,17 +201,40 @@ export class Agent implements IAyaAgent {
   register(kind: 'service', handler: Service): void
   register(kind: 'provider', handler: Provider): void
   register(kind: 'tool', handler: Tool): void
+  register(kind: 'plugin', handler: Plugin): void
+  register(kind: 'evaluator', handler: Evaluator): void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   register(kind: string, handler: any): void {
     switch (kind) {
       case 'service':
-        void this.runtime.registerService(handler)
+        this.services.push(handler)
+        if (this.runtime_) {
+          void this.runtime.registerService(handler)
+        }
         break
       case 'tool':
-        this.runtime.registerAction(handler)
+        this.tools.push(handler)
+        if (this.runtime_) {
+          this.runtime.registerAction(handler)
+        }
         break
       case 'provider':
-        this.runtime.providers.push(handler)
+        this.providers.push(handler)
+        if (this.runtime_) {
+          this.runtime.providers.push(handler)
+        }
+        break
+      case 'plugin':
+        this.plugins.push(handler)
+        if (this.runtime_) {
+          this.runtime.plugins.push(handler)
+        }
+        break
+      case 'evaluator':
+        this.evaluators.push(handler)
+        if (this.runtime_) {
+          this.runtime.evaluators.push(handler)
+        }
         break
       default:
         throw new Error(`Unknown registration kind: ${kind}`)
