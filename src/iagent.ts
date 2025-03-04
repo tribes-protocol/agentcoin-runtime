@@ -1,5 +1,5 @@
 import { ContextHandler, Tool } from '@/common/types'
-import { Provider, Service, UUID } from '@elizaos/core'
+import { Plugin, Provider, Service, UUID } from '@elizaos/core'
 
 export interface IAyaAgent {
   readonly agentId: UUID
@@ -19,4 +19,5 @@ export interface IAyaAgent {
   register(kind: 'service', handler: Service): void
   register(kind: 'provider', handler: Provider): void
   register(kind: 'tool', handler: Tool): void
+  register(kind: 'plugin', handler: Plugin): void
 }
