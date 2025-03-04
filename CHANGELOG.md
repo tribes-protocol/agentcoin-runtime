@@ -1,5 +1,11 @@
 # @tribesxyz/ayaos
 
+## 0.0.6
+
+### Patch Changes
+
+- 4621f09: dont export elizaos
+
 ## 0.0.5
 
 ### Patch Changes
