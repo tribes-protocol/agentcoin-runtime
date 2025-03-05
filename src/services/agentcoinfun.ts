@@ -118,7 +118,7 @@ export class AgentcoinService extends Service implements IAgentcoinService {
 
   async getJwtAuthToken(): Promise<string> {
     const cookie = await this.getCookie()
-    const match = cookie.match(/agent_auth_token=([^;]+)/)
+    const match = cookie.match(/jwt_auth_token=([^;]+)/)
     if (!match) {
       throw new Error('Could not extract JWT token from cookie')
     }
