@@ -1,5 +1,6 @@
-import { isNull } from '@/common/functions'
+import { formatKnowledge, isNull } from '@/common/functions'
 import { Context, SdkEventKind } from '@/common/types'
+import { KnowledgeBaseService } from '@/services/knowledge-base'
 import {
   Action,
   AgentRuntime,
@@ -9,11 +10,13 @@ import {
   ICacheManager,
   IDatabaseAdapter,
   IMemoryManager,
+  Memory,
   ModelProviderName,
   Plugin,
   Provider,
   Service,
   ServiceType,
+  State,
   UUID
 } from '@elizaos/core'
 
@@ -147,5 +150,37 @@ export class AgentcoinRuntime extends AgentRuntime {
 
       elizaLogger.success(`User ${username} created successfully.`)
     }
+  }
+
+  async composeState(
+    message: Memory,
+    additionalKeys?: {
+      [key: string]: unknown
+    }
+  ): Promise<State> {
+    const state = await super.composeState(message, additionalKeys)
+
+    // don't do anything if the message is from the agent to itself
+    if (message.userId === this.agentId) {
+      return state
+    }
+
+    // const ragEnabled = this.character.settings?.ragKnowledge ?? false
+
+    // Since ElizaOS rag knowledge is currently broken on postgres adapter, we're just going
+    // to override the knowledge state with our own kb service results
+    const kbService = this.getService(KnowledgeBaseService)
+    const kbItems = await kbService.search({
+      q: message.content.text,
+      limit: 10,
+      matchThreshold: 0.3
+    })
+
+    state.knowledge = (state.knowledge ?? '') + '\n\n' + formatKnowledge(kbItems)
+    state.knowledgeData = [...(state.knowledgeData ?? []), ...kbItems]
+    state.ragKnowledgeData = []
+    state.ragKnowledge = ''
+
+    return state
   }
 }

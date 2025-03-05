@@ -10,7 +10,9 @@ import agentcoinPlugin from '@/plugins/agentcoin'
 import { AgentcoinService } from '@/services/agentcoinfun'
 import { ConfigService } from '@/services/config'
 import { EventService } from '@/services/event'
+import { IKnowledgeBaseService } from '@/services/interfaces'
 import { KeychainService } from '@/services/keychain'
+import { KnowledgeBaseService } from '@/services/knowledge-base'
 import { ProcessService } from '@/services/process'
 import { WalletService } from '@/services/wallet'
 import {
@@ -28,7 +30,6 @@ import { bootstrapPlugin } from '@elizaos/plugin-bootstrap'
 import { createNodePlugin } from '@elizaos/plugin-node'
 import fs from 'fs'
 import { fileURLToPath } from 'url'
-
 const __filename = fileURLToPath(import.meta.url)
 
 export class Agent implements IAyaAgent {
@@ -52,6 +53,10 @@ export class Agent implements IAyaAgent {
 
   get agentId(): UUID {
     return this.runtime.agentId
+  }
+
+  get knowledge(): IKnowledgeBaseService {
+    return this.runtime.getService(KnowledgeBaseService)
   }
 
   async start(): Promise<void> {
@@ -111,6 +116,7 @@ export class Agent implements IAyaAgent {
       })
       this.runtime_ = runtime
 
+      const knowledgeBaseService = new KnowledgeBaseService(runtime)
       // const knowledgeService = new KnowledgeService(
       //   runtime,
       //   agentcoinAPI,
@@ -169,6 +175,7 @@ export class Agent implements IAyaAgent {
       })
 
       this.runtime.clients = await initializeClients(this.runtime.character, this.runtime)
+      this.register('service', knowledgeBaseService)
 
       // no need to await these. it'll lock up the main process
       // void knowledgeService.start()
