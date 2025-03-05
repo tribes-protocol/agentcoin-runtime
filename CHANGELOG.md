@@ -1,5 +1,11 @@
 # @tribesxyz/ayaos
 
+## 0.0.10
+
+### Patch Changes
+
+- b0d9839: change jwt auth token name
+
 ## 0.0.9
 
 ### Patch Changes
