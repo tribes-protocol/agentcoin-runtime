@@ -1,5 +1,11 @@
 # @tribesxyz/ayaos
 
+## 0.0.9
+
+### Patch Changes
+
+- 871e380: rollout own rag search using drizzle
+
 ## 0.0.8
 
 ### Patch Changes
