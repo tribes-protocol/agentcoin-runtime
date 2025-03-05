@@ -10,7 +10,7 @@ import {
   telegramPinnedMessageTemplate,
   telegramShouldRespondTemplate
 } from '@/clients/telegram/templates'
-import { cosineSimilarity, escapeMarkdown } from '@/clients/telegram/utils'
+import { cosineSimilarity } from '@/clients/telegram/utils'
 import {
   composeContext,
   composeRandomUser,
@@ -33,6 +33,7 @@ import type { Message } from '@telegraf/types'
 import type { Context, Telegraf } from 'telegraf'
 
 import { hasActions } from '@/common/functions'
+import { convertMarkdownToTelegram } from '@/common/markdown'
 import { AgentcoinRuntime } from '@/common/runtime'
 import fs from 'fs'
 
@@ -774,11 +775,11 @@ export class MessageManager {
       const sentMessages: Message.TextMessage[] = []
 
       for (let i = 0; i < chunks.length; i++) {
-        const chunk = escapeMarkdown(chunks[i])
+        const chunk = convertMarkdownToTelegram(chunks[i])
         const sentMessage = await ctx.telegram.sendMessage(ctx.chat.id, chunk, {
           reply_parameters:
             i === 0 && replyToMessageId ? { message_id: replyToMessageId } : undefined,
-          parse_mode: 'Markdown'
+          parse_mode: 'MarkdownV2'
         })
 
         sentMessages.push(sentMessage)
@@ -895,6 +896,7 @@ export class MessageManager {
       return // Exit if no message or sender info
     }
 
+    await ctx.telegram.sendChatAction(ctx.chat.id, 'typing')
     this.lastChannelActivity[ctx.chat.id.toString()] = Date.now()
 
     // Check for pinned message and route to monitor function
