@@ -1,3 +1,4 @@
+import { UUID_PATTERN } from '@/common/constants'
 import {
   ChatChannel,
   ChatChannelKind,
@@ -244,10 +245,7 @@ export function formatKnowledge(knowledge: KnowledgeItem[]): string {
  * @throws Error if the input is not a valid UUID
  */
 export function ensureUUID(input: string): UUID {
-  // UUID regex pattern with 5 groups of hexadecimal digits separated by hyphens
-  const uuidPattern = /^[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+$/i
-
-  if (!uuidPattern.test(input)) {
+  if (!UUID_PATTERN.test(input)) {
     throw new Error(`Invalid UUID format: ${input}`)
   }
 

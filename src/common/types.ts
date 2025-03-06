@@ -349,7 +349,8 @@ export enum ServiceKind {
   config = 'config-service',
   agent = 'agent-service',
   knowledge = 'knowledge-service',
-  knowledgeBase = 'knowledge-base-service'
+  knowledgeBase = 'knowledge-base-service',
+  memories = 'memories-service'
 }
 
 const PdfFileSchema = z.object({

@@ -14,7 +14,7 @@ import {
   stringToUuid,
   UUID
 } from '@elizaos/core'
-import { cosineDistance, desc, gt, sql } from 'drizzle-orm'
+import { and, cosineDistance, desc, eq, gt, sql } from 'drizzle-orm'
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter'
 
 export class KnowledgeBaseService extends Service implements IKnowledgeBaseService {
@@ -66,7 +66,7 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
         similarity
       })
       .from(Knowledges)
-      .where(gt(similarity, matchThreshold))
+      .where(and(gt(similarity, matchThreshold), eq(Knowledges.agentId, this.runtime.agentId)))
       .orderBy((t) => desc(t.similarity))
       .limit(limit)
 

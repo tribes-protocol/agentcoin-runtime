@@ -10,9 +10,10 @@ import agentcoinPlugin from '@/plugins/agentcoin'
 import { AgentcoinService } from '@/services/agentcoinfun'
 import { ConfigService } from '@/services/config'
 import { EventService } from '@/services/event'
-import { IKnowledgeBaseService } from '@/services/interfaces'
+import { IKnowledgeBaseService, IMemoriesService } from '@/services/interfaces'
 import { KeychainService } from '@/services/keychain'
 import { KnowledgeBaseService } from '@/services/knowledge-base'
+import { MemoriesService } from '@/services/memories'
 import { ProcessService } from '@/services/process'
 import { WalletService } from '@/services/wallet'
 import {
@@ -57,6 +58,10 @@ export class Agent implements IAyaAgent {
 
   get knowledge(): IKnowledgeBaseService {
     return this.runtime.getService(KnowledgeBaseService)
+  }
+
+  get memories(): IMemoriesService {
+    return this.runtime.getService(MemoriesService)
   }
 
   async start(): Promise<void> {
@@ -117,12 +122,7 @@ export class Agent implements IAyaAgent {
       this.runtime_ = runtime
 
       const knowledgeBaseService = new KnowledgeBaseService(runtime)
-      // const knowledgeService = new KnowledgeService(
-      //   runtime,
-      //   agentcoinAPI,
-      //   agentcoinCookie,
-      //   agentcoinIdentity
-      // )
+      const memoriesService = new MemoriesService(runtime)
 
       // shutdown handler
       let isShuttingDown = false
@@ -176,6 +176,7 @@ export class Agent implements IAyaAgent {
 
       this.runtime.clients = await initializeClients(this.runtime.character, this.runtime)
       this.register('service', knowledgeBaseService)
+      this.register('service', memoriesService)
 
       // no need to await these. it'll lock up the main process
       // void knowledgeService.start()

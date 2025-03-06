@@ -25,3 +25,6 @@ export const RUNTIME_SERVER_SOCKET_FILE = path.join(AGENTCOIN_FUN_DIR, 'runtime-
 if (!fs.existsSync(AGENTCOIN_FUN_DIR)) {
   fs.mkdirSync(AGENTCOIN_FUN_DIR, { recursive: true })
 }
+
+// UUID regex pattern with 5 groups of hexadecimal digits separated by hyphens
+export const UUID_PATTERN = /^[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+-[0-9a-f]+$/i
