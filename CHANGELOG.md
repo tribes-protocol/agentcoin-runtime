@@ -1,5 +1,11 @@
 # @tribesxyz/ayaos
 
+## 0.0.11
+
+### Patch Changes
+
+- 725b536: send tg typing status while thinking
+
 ## 0.0.10
 
 ### Patch Changes
