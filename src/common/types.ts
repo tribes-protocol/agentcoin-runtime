@@ -334,7 +334,7 @@ export const SentinelCommandSchema = z.discriminatedUnion('kind', [
 export type SentinelCommand = z.infer<typeof SentinelCommandSchema>
 
 export interface Context {
-  memory: Memory
+  memory?: Memory
   responses: Memory[]
   state?: State
   content?: Content

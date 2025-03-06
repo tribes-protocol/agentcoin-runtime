@@ -8,13 +8,13 @@ async function main(): Promise<void> {
     const agent = new Agent()
     console.log('agent created')
     agent.on('llm:pre', async (context) => {
-      console.log('llm:pre', context.memory.content)
+      console.log('llm:pre', context.memory?.content)
       return true
     })
     console.log('llm:pre registered')
 
     agent.on('llm:post', async (context) => {
-      console.log('llm:post', context.memory.content)
+      console.log('llm:post', context.memory?.content)
       return true
     })
     console.log('llm:post registered')
