@@ -32,6 +32,7 @@ import { ConfigService } from '@/services/config'
 import {
   Client,
   composeContext,
+  Content,
   elizaLogger,
   generateMessageResponse,
   IAgentRuntime,
@@ -211,19 +212,19 @@ export class AgentcoinClient {
 
   private async sendMessageAsAgent({
     identity,
-    text,
-    action,
-    channel,
-    inReplyTo
+    content
   }: {
     identity: Identity
-    text: string
-    action?: string
-    channel: ChatChannel
-    inReplyTo?: UUID
+    content: Content
   }): Promise<Memory> {
+    const { text, action, channel, inReplyTo, attachments } = content
+
+    // FIXME: hish - need to update code to handle multiple attachments
+    const firstAttachment = attachments?.[0]
+    const imageUrl = firstAttachment?.url
+
     const agentcoinResponse = await this.agentcoinService.sendMessage({
-      text,
+      text: imageUrl ? text + ` ${imageUrl}` : text,
       sender: identity,
       channel,
       clientUuid: crypto.randomUUID()
@@ -367,10 +368,7 @@ export class AgentcoinClient {
     } else {
       const responseMessage = await this.sendMessageAsAgent({
         identity,
-        text: response.text,
-        channel: message.channel,
-        inReplyTo: memory.id,
-        action: response.action
+        content: response
       })
       await this.runtime.evaluate(responseMessage, state, true)
       messageResponses.push(responseMessage)
@@ -417,9 +415,7 @@ export class AgentcoinClient {
 
         const newMemory = await this.sendMessageAsAgent({
           identity,
-          text: newMessage.text,
-          channel: message.channel,
-          inReplyTo: memory.id
+          content: newMessage
         })
 
         await this.runtime.evaluate(newMemory, state, true)
