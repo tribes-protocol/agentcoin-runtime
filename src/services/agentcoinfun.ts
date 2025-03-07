@@ -22,6 +22,7 @@ import * as fs from 'fs'
 import * as path from 'path'
 import { AGENTCOIN_FUN_DIR } from '@/common/constants'
 import { AGENTCOIN_FUN_API_URL } from '@/common/env'
+import { getDefaultCharacter } from '@/common/character'
 
 export class AgentcoinService extends Service implements IAgentcoinService {
   private cachedCookie: string | undefined
@@ -150,6 +151,22 @@ export class AgentcoinService extends Service implements IAgentcoinService {
       `jwt_auth_token=${token}`
     )
 
+    await this.createCharacterFile()
+
+    // Display agent creation success message
+    const agentUrl = `${AGENTCOIN_FUN_API_URL}/agent/${agentId}`
+    const boxWidth = Math.max(70, agentUrl.length + 6) // Ensure minimum width of 70 chars
+
+    console.log('\n┌' + '─'.repeat(boxWidth) + '┐')
+    console.log('│' + ' '.repeat(boxWidth) + '│')
+    console.log('│' + '  🎉 Congratulations! Your agent is created  '.padEnd(boxWidth, ' ') + '│')
+    console.log('│' + ' '.repeat(boxWidth) + '│')
+    console.log('│' + '  Check it out here:'.padEnd(boxWidth, ' ') + '│')
+    console.log('│' + ' '.repeat(boxWidth) + '│')
+    console.log('│' + `  ${agentUrl}`.padEnd(boxWidth, ' ') + '│')
+    console.log('│' + ' '.repeat(boxWidth) + '│')
+    console.log('└' + '─'.repeat(boxWidth) + '┘\n')
+
     return agentId
   }
 
@@ -205,7 +222,7 @@ export class AgentcoinService extends Service implements IAgentcoinService {
             clearInterval(waitingInterval)
             console.log('\n\n┌' + '─'.repeat(boxWidth) + '┐')
             console.log('│' + ' '.repeat(boxWidth) + '│')
-            console.log('│' + '  ✅ Authentication successful!  '.padEnd(boxWidth, ' ') + '│')
+            console.log('│' + '  ✅ Authentication successful!'.padEnd(boxWidth, ' ') + '│')
             console.log('│' + ' '.repeat(boxWidth) + '│')
             console.log('└' + '─'.repeat(boxWidth) + '┘\n')
 
@@ -248,20 +265,16 @@ export class AgentcoinService extends Service implements IAgentcoinService {
       this.pathManager.AGENT_PROVISION_FILE,
       JSON.stringify(toJsonTree(provisionState))
     )
+  }
 
-    // Display agent creation success message
-    const agentId = provisionState.agentId
-    const agentUrl = `${AGENTCOIN_FUN_API_URL}/agent/${agentId}`
-    const boxWidth = Math.max(70, agentUrl.length + 6) // Ensure minimum width of 70 chars
+  private async createCharacterFile(): Promise<void> {
+    const character = getDefaultCharacter()
+    fs.writeFileSync(this.pathManager.CHARACTER_FILE, JSON.stringify(toJsonTree(character)))
 
-    console.log('\n┌' + '─'.repeat(boxWidth) + '┐')
-    console.log('│' + ' '.repeat(boxWidth) + '│')
-    console.log('│' + '  🎉 Congratulations! Your agent is created  '.padEnd(boxWidth, ' ') + '│')
-    console.log('│' + ' '.repeat(boxWidth) + '│')
-    console.log('│' + '  Check it out here:'.padEnd(boxWidth, ' ') + '│')
-    console.log('│' + ' '.repeat(boxWidth) + '│')
-    console.log('│' + `  ${agentUrl}`.padEnd(boxWidth, ' ') + '│')
-    console.log('│' + ' '.repeat(boxWidth) + '│')
-    console.log('└' + '─'.repeat(boxWidth) + '┘\n')
+    // FIXME: avp: temp fix to ensure env.production is created
+    const envFile = this.pathManager.ENV_FILE
+    if (!fs.existsSync(envFile)) {
+      fs.writeFileSync(envFile, '')
+    }
   }
 }

@@ -97,7 +97,7 @@ export class AgentcoinClient {
       kind: ChatChannelKind.COIN,
       chainId: 8453,
       // FIXME: avp: change channel to agentID
-      address: '0x0'
+      address: '0xf4D70D2fd1DE59ff34aA0350263ba742cb94b1c8'
     })
 
     this.socket.on(serializeChannel(coinChannel), async (data: unknown) => {
@@ -137,7 +137,7 @@ export class AgentcoinClient {
             break
           }
           case 'status':
-            elizaLogger.info('received status', event.data.status)
+            elizaLogger.info('Received status', event.data.status)
             break
         }
       } catch (error) {
