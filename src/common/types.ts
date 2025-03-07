@@ -194,7 +194,7 @@ export const AgentRegistrationSchema = z.object({
 export type AgentRegistration = z.infer<typeof AgentRegistrationSchema>
 
 export const AgentProvisionResponseSchema = z.object({
-  agentId: IdentitySchema
+  agentId: AgentIdentitySchema
 })
 
 export type AgentProvisionResponse = z.infer<typeof AgentProvisionResponseSchema>
@@ -434,3 +434,21 @@ export type MessageEvent = z.infer<typeof MessageEventSchema>
 
 // type alias for some Eliza types
 export type Tool = Action
+
+export const CliAuthResponseSchema = z.object({
+  id: z.string()
+})
+
+export type CliAuthResponse = z.infer<typeof CliAuthResponseSchema>
+
+export const CliAuthRequestSchema = z.object({
+  token: z.string()
+})
+
+export type CliAuthRequest = z.infer<typeof CliAuthRequestSchema>
+
+export const CredentialsSchema = z.object({
+  token: z.string()
+})
+
+export type Credentials = z.infer<typeof CredentialsSchema>

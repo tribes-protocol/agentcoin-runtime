@@ -1,4 +1,3 @@
-import { TOKEN_ADDRESS } from '@/common/env'
 import { isNull } from '@/common/functions'
 import { AgentcoinRuntime } from '@/common/runtime'
 import { EthAddressSchema } from '@/common/types'
@@ -133,7 +132,8 @@ export const tipForJokeAction: Action = {
       })
 
       const txHash = await walletService.signAndSubmitTransaction(wallet, {
-        to: TOKEN_ADDRESS,
+        // FIXME: avp
+        to: '0x0',
         data
       })
 
