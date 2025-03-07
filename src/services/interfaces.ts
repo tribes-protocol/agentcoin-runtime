@@ -10,7 +10,7 @@ import {
 } from '@/common/types'
 
 import { RagKnowledgeItemContent } from '@/common/schema'
-import { RAGKnowledgeItem, UUID } from '@elizaos/core'
+import { Memory, RAGKnowledgeItem, UUID } from '@elizaos/core'
 
 export interface IWalletService {
   signPersonalMessage(wallet: AgentWallet, message: string): Promise<string>
@@ -41,4 +41,13 @@ export interface IKnowledgeBaseService {
     tag?: string
     matchThreshold?: number
   }): Promise<RAGKnowledgeItem[]>
+}
+
+export interface IMemoriesService {
+  search(options: {
+    q: string
+    limit: number
+    type?: string
+    matchThreshold?: number
+  }): Promise<Memory[]>
 }

@@ -137,7 +137,7 @@ export class AgentcoinClient {
             break
           }
           case 'status':
-            console.log('received status', event.data.status)
+            elizaLogger.info('received status', event.data.status)
             break
         }
       } catch (error) {
@@ -170,16 +170,16 @@ export class AgentcoinClient {
   private async handleAdminCommand(command: SentinelCommand): Promise<void> {
     switch (command.kind) {
       case 'set_git':
-        console.log('ignoring set_git. sentinel service is handling this', command)
+        elizaLogger.info('ignoring set_git. sentinel service is handling this', command)
         break
       case 'set_character_n_envvars':
         await this.handleSetCharacterAndEnvvars(command.character, command.envVars)
         break
       case 'set_knowledge':
-        console.log('ignoring set_knowledge', command)
+        elizaLogger.info('ignoring set_knowledge', command)
         break
       case 'delete_knowledge':
-        console.log('ignoring delete_knowledge', command)
+        elizaLogger.info('ignoring delete_knowledge', command)
         break
       default:
         throw new Error('Invalid command')

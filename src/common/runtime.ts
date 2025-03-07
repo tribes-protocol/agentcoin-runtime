@@ -1,6 +1,7 @@
 import { formatKnowledge, isNull } from '@/common/functions'
 import { Context, SdkEventKind } from '@/common/types'
 import { KnowledgeBaseService } from '@/services/knowledge-base'
+import { MemoriesService } from '@/services/memories'
 import {
   Action,
   AgentRuntime,
@@ -10,6 +11,7 @@ import {
   ICacheManager,
   IDatabaseAdapter,
   IMemoryManager,
+  KnowledgeItem,
   Memory,
   ModelProviderName,
   Plugin,
@@ -170,16 +172,33 @@ export class AgentcoinRuntime extends AgentRuntime {
     // Since ElizaOS rag knowledge is currently broken on postgres adapter, we're just going
     // to override the knowledge state with our own kb service results
     const kbService = this.getService(KnowledgeBaseService)
-    const kbItems = await kbService.search({
-      q: message.content.text,
-      limit: 10,
-      matchThreshold: 0.3
-    })
+    const memService = this.getService(MemoriesService)
+    // Run both searches in parallel
+    const [kbItems, memItems] = await Promise.all([
+      kbService.search({
+        q: message.content.text,
+        limit: 10,
+        matchThreshold: 0.3
+      }),
+      memService.search({
+        q: message.content.text,
+        limit: 10,
+        type: 'fragments',
+        matchThreshold: 0.3
+      })
+    ])
 
-    state.knowledge = (state.knowledge ?? '') + '\n\n' + formatKnowledge(kbItems)
-    state.knowledgeData = [...(state.knowledgeData ?? []), ...kbItems]
-    state.ragKnowledgeData = []
-    state.ragKnowledge = ''
+    // Set RAG knowledge from kbService
+    state.ragKnowledgeData = kbItems
+    state.ragKnowledge = formatKnowledge(kbItems).trim()
+
+    // Set regular knowledge from memService
+    const knowledgeItems: KnowledgeItem[] = memItems.map((item) => ({
+      id: item.id,
+      content: item.content
+    }))
+    state.knowledge = formatKnowledge(knowledgeItems).trim()
+    state.knowledgeData = knowledgeItems
 
     return state
   }

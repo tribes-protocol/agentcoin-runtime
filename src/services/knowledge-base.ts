@@ -14,7 +14,7 @@ import {
   stringToUuid,
   UUID
 } from '@elizaos/core'
-import { cosineDistance, desc, gt, sql } from 'drizzle-orm'
+import { and, cosineDistance, desc, eq, gt, sql } from 'drizzle-orm'
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter'
 
 export class KnowledgeBaseService extends Service implements IKnowledgeBaseService {
@@ -49,9 +49,9 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
   }): Promise<RAGKnowledgeItem[]> {
     const { q, limit, matchThreshold = 0.5 } = options
     const embedding = await embed(this.runtime, q)
-
-    console.log('[Embeddings] Generating embedding for query:', q)
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
     const similarity = sql<number>`1 - (${cosineDistance(Knowledges.embedding, embedding)})`
+
     const results = await drizzleDB
       .select({
         id: Knowledges.id,
@@ -66,11 +66,9 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
         similarity
       })
       .from(Knowledges)
-      .where(gt(similarity, matchThreshold))
+      .where(and(gt(similarity, matchThreshold), eq(Knowledges.agentId, this.runtime.agentId)))
       .orderBy((t) => desc(t.similarity))
       .limit(limit)
-
-    console.log(`[Embeddings] Query results:`, JSON.stringify(results, null, 2))
 
     // Convert the database results to RAGKnowledgeItem format
     const entries = results.map((result) => {
@@ -123,6 +121,7 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
       }
       return item
     })
+    /* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
     return entries
   }
