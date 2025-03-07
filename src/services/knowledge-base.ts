@@ -49,6 +49,7 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
   }): Promise<RAGKnowledgeItem[]> {
     const { q, limit, matchThreshold = 0.5 } = options
     const embedding = await embed(this.runtime, q)
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
     const similarity = sql<number>`1 - (${cosineDistance(Knowledges.embedding, embedding)})`
 
     const results = await drizzleDB
@@ -120,6 +121,7 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
       }
       return item
     })
+    /* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
     return entries
   }
