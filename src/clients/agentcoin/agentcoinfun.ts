@@ -212,12 +212,14 @@ export class AgentcoinClient {
 
   private async sendMessageAsAgent({
     identity,
-    content
+    content,
+    channel
   }: {
     identity: Identity
     content: Content
+    channel: ChatChannel
   }): Promise<Memory> {
-    const { text, action, channel, inReplyTo, attachments } = content
+    const { text, action, inReplyTo, attachments } = content
 
     // FIXME: hish - need to update code to handle multiple attachments
     const firstAttachment = attachments?.[0]
@@ -368,7 +370,8 @@ export class AgentcoinClient {
     } else {
       const responseMessage = await this.sendMessageAsAgent({
         identity,
-        content: response
+        content: response,
+        channel
       })
       await this.runtime.evaluate(responseMessage, state, true)
       messageResponses.push(responseMessage)
@@ -415,7 +418,8 @@ export class AgentcoinClient {
 
         const newMemory = await this.sendMessageAsAgent({
           identity,
-          content: newMessage
+          content: newMessage,
+          channel
         })
 
         await this.runtime.evaluate(newMemory, state, true)
