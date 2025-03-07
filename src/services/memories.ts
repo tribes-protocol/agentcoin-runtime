@@ -54,8 +54,6 @@ export class MemoriesService extends Service implements IMemoriesService {
 
     const results = await query
 
-    console.log(`[Memories] Query results:`, JSON.stringify(results, null, 2))
-
     // Convert the database results to Memory format
     const entries = results.map((result) => {
       const mem = result.memory

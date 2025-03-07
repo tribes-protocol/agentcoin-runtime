@@ -70,8 +70,6 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
       .orderBy((t) => desc(t.similarity))
       .limit(limit)
 
-    console.log(`[Embeddings] Query results:`, JSON.stringify(results, null, 2))
-
     // Convert the database results to RAGKnowledgeItem format
     const entries = results.map((result) => {
       // Extract content text

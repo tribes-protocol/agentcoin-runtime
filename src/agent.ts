@@ -149,12 +149,10 @@ export class Agent implements IAyaAgent {
             }
           }
 
-          console.log('The End.')
           elizaLogger.success('The End.')
           process.exit(0)
         } catch (error) {
           elizaLogger.error('Error shutting down:', error)
-          console.log('The End.')
           elizaLogger.success('The End.')
           process.exit(1)
         }
