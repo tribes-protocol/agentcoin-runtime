@@ -49,9 +49,8 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
   }): Promise<RAGKnowledgeItem[]> {
     const { q, limit, matchThreshold = 0.5 } = options
     const embedding = await embed(this.runtime, q)
-
-    console.log('[Embeddings] Generating embedding for query:', q)
     const similarity = sql<number>`1 - (${cosineDistance(Knowledges.embedding, embedding)})`
+
     const results = await drizzleDB
       .select({
         id: Knowledges.id,

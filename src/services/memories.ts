@@ -28,7 +28,6 @@ export class MemoriesService extends Service implements IMemoriesService {
     const { q, limit, type, matchThreshold = 0.5 } = options
     const embedding = await embed(this.runtime, q)
 
-    console.log('[Memories] Generating embedding for query:', q)
     const similarity = sql<number>`1 - (${cosineDistance(Memories.embedding, embedding)})`
 
     // Start with base query and initial condition
