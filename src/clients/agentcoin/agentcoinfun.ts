@@ -1,5 +1,4 @@
-import { CHARACTER_FILE, ENV_FILE } from '@/common/constants'
-import { AGENT_ADMIN_PUBLIC_KEY, AGENTCOIN_FUN_API_URL, TOKEN_ADDRESS } from '@/common/env'
+import { AGENT_ADMIN_PUBLIC_KEY, AGENTCOIN_FUN_API_URL } from '@/common/env'
 import {
   hasActions,
   isNull,
@@ -97,7 +96,8 @@ export class AgentcoinClient {
     const coinChannel = CoinChannelSchema.parse({
       kind: ChatChannelKind.COIN,
       chainId: 8453,
-      address: TOKEN_ADDRESS
+      // FIXME: avp: change channel to agentID
+      address: '0x0'
     })
 
     this.socket.on(serializeChannel(coinChannel), async (data: unknown) => {
@@ -191,14 +191,17 @@ export class AgentcoinClient {
     envVars: Record<string, string>
   ): Promise<void> {
     // write the character to the character file
-    await fs.promises.writeFile(CHARACTER_FILE, JSON.stringify(character, null, 2))
+    await fs.promises.writeFile(
+      this.runtime.pathManager.CHARACTER_FILE,
+      JSON.stringify(character, null, 2)
+    )
 
     // write the env vars to the env file
     const envContent = Object.entries(envVars)
       .map(([key, value]) => `${key}=${value}`)
       .join('\n')
 
-    await fs.promises.writeFile(ENV_FILE, envContent)
+    await fs.promises.writeFile(this.runtime.pathManager.ENV_FILE, envContent)
 
     // notify config service
     await this.configService.checkEnvAndCharacterUpdate()

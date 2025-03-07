@@ -1,4 +1,3 @@
-import { KEYPAIR_FILE } from '@/common/constants'
 import { KeyPair, KeyPairSchema } from '@/common/types'
 import { ApiKeyStamper } from '@turnkey/sdk-server'
 import { createDecipheriv, createHash } from 'crypto'
@@ -22,9 +21,7 @@ export class KeychainService {
     })
   }
 
-  constructor() {
-    const keyPairPath = KEYPAIR_FILE
-
+  constructor(keyPairPath: string) {
     if (!fs.existsSync(keyPairPath)) {
       const keyPair = ec.genKeyPair()
       this.keyPairData = {

@@ -1,7 +1,6 @@
 import { AgentcoinAPI } from '@/apis/agentcoinfun'
 import { initializeClients } from '@/clients'
 import { getTokenForProvider } from '@/common/config'
-import { CHARACTER_FILE } from '@/common/constants'
 import { initializeDatabase } from '@/common/db'
 import { AgentcoinRuntime } from '@/common/runtime'
 import { Context, ContextHandler, SdkEventKind, Tool } from '@/common/types'
@@ -30,8 +29,7 @@ import {
 import { bootstrapPlugin } from '@elizaos/plugin-bootstrap'
 import { createNodePlugin } from '@elizaos/plugin-node'
 import fs from 'fs'
-import { fileURLToPath } from 'url'
-const __filename = fileURLToPath(import.meta.url)
+import { PathManager } from '@/services/paths'
 
 export class Agent implements IAyaAgent {
   private preLLMHandlers: ContextHandler[] = []
@@ -44,6 +42,7 @@ export class Agent implements IAyaAgent {
   private plugins: Plugin[] = []
   private evaluators: Evaluator[] = []
   private runtime_: AgentcoinRuntime | undefined
+  private pathManager: PathManager
 
   get runtime(): AgentcoinRuntime {
     if (!this.runtime_) {
@@ -64,6 +63,10 @@ export class Agent implements IAyaAgent {
     return this.runtime.getService(MemoriesService)
   }
 
+  constructor(baseDir?: string) {
+    this.pathManager = new PathManager(baseDir)
+  }
+
   async start(): Promise<void> {
     let runtime: AgentcoinRuntime | undefined
 
@@ -71,9 +74,9 @@ export class Agent implements IAyaAgent {
       elizaLogger.info('Starting agent...')
 
       // step 1: provision the hardware if needed.
-      const keychainService = new KeychainService()
+      const keychainService = new KeychainService(this.pathManager.KEYPAIR_FILE)
       const agentcoinAPI = new AgentcoinAPI()
-      const agentcoinService = new AgentcoinService(keychainService, agentcoinAPI)
+      const agentcoinService = new AgentcoinService(keychainService, agentcoinAPI, this.pathManager)
       await agentcoinService.provisionIfNeeded()
 
       // eagerly start event service
@@ -89,13 +92,13 @@ export class Agent implements IAyaAgent {
         keychainService.turnkeyApiKeyStamper
       )
       const processService = new ProcessService()
-      const configService = new ConfigService(eventService, processService)
+      const configService = new ConfigService(eventService, processService, this.pathManager)
 
       // step 2: load character and initialize database
       elizaLogger.info('Loading character...')
       const [db, charString] = await Promise.all([
         initializeDatabase(),
-        fs.promises.readFile(CHARACTER_FILE, 'utf8')
+        fs.promises.readFile(this.pathManager.CHARACTER_FILE, 'utf8')
       ])
 
       const character: Character = JSON.parse(charString)
@@ -117,7 +120,8 @@ export class Agent implements IAyaAgent {
           services: [agentcoinService, walletService, configService, ...this.services],
           managers: [],
           cacheManager: cache
-        }
+        },
+        pathManager: this.pathManager
       })
       this.runtime_ = runtime
 

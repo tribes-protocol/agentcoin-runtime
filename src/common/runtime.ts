@@ -21,11 +21,13 @@ import {
   State,
   UUID
 } from '@elizaos/core'
+import { PathManager } from '@/services/paths'
 
 type AgentEventHandler = (event: SdkEventKind, params: Context) => Promise<boolean>
 
 export class AgentcoinRuntime extends AgentRuntime {
   private eventHandler: AgentEventHandler | undefined
+  public pathManager: PathManager
 
   public constructor(opts: {
     eliza: {
@@ -47,8 +49,10 @@ export class AgentcoinRuntime extends AgentRuntime {
       cacheManager: ICacheManager
       logging?: boolean
     }
+    pathManager: PathManager
   }) {
     super(opts.eliza)
+    this.pathManager = opts.pathManager
   }
 
   async initialize(options?: { eventHandler: AgentEventHandler }): Promise<void> {
