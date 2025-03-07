@@ -1,5 +1,11 @@
 # @tribesxyz/ayaos
 
+## 0.0.12
+
+### Patch Changes
+
+- 2ea7755: fix knowledge lookup
+
 ## 0.0.11
 
 ### Patch Changes
