@@ -1,5 +1,11 @@
 # @tribesxyz/ayaos
 
+## 0.0.13
+
+### Patch Changes
+
+- 8590038: send attachment
+
 ## 0.0.12
 
 ### Patch Changes
