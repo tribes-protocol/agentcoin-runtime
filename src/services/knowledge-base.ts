@@ -7,6 +7,7 @@ import { IKnowledgeBaseService } from '@/services/interfaces'
 import {
   elizaLogger,
   embed,
+  getEmbeddingZeroVector,
   IAgentRuntime,
   RAGKnowledgeItem,
   Service,
@@ -148,13 +149,9 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
     )[0]
 
     if (storedKB?.content.metadata?.checksum === checksum) {
-      elizaLogger.info(`[${kbType}] knowledge=[${id}] already exists. skipping...`)
+      elizaLogger.debug(`[${kbType}] knowledge=[${id}] already exists. skipping...`)
       return
     }
-
-    // elizaLogger.info(
-    //   `knowledge=[${id}/${kbType}] ${checksum} vs ${storedKB?.content.metadata?.checksum}`
-    // )
 
     // create main knowledge item
     const knowledgeItem: RAGKnowledgeItem = {
@@ -173,7 +170,7 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
         }
       },
       embedding: shouldChunk
-        ? undefined
+        ? new Float32Array(getEmbeddingZeroVector())
         : new Float32Array(await embed(this.runtime, knowledge.text)),
       createdAt: Date.now()
     }
