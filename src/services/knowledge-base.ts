@@ -8,7 +8,6 @@ import {
   elizaLogger,
   embed,
   getEmbeddingZeroVector,
-  IAgentRuntime,
   RAGKnowledgeItem,
   Service,
   ServiceType,
@@ -34,13 +33,50 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
     return ServiceKind.knowledgeBase as unknown as ServiceType
   }
 
-  async initialize(_: IAgentRuntime): Promise<void> {}
+  async initialize(_: AgentcoinRuntime): Promise<void> {
+    elizaLogger.info('initializing knowledge base service')
+    // Create index on knowledge.content.type
+    await drizzleDB.execute(
+      sql`CREATE INDEX IF NOT EXISTS idx_knowledge_content_type 
+          ON knowledge((content->'metadata'->>'type'));`
+    )
+  }
 
-  async list(): Promise<RAGKnowledgeItem[]> {
-    // not efficient. need to implement pagination in the future
-    const databaseAdapter = this.runtime.databaseAdapter
-    const knowledges = await databaseAdapter.getKnowledge({ agentId: this.runtime.agentId })
-    return knowledges
+  async list(options: {
+    limit?: number
+    contentType?: string
+    sortDirection?: 'asc' | 'desc'
+  }): Promise<RAGKnowledgeItem[]> {
+    const { limit = 10, contentType, sortDirection = 'desc' } = options
+
+    // Build the query conditions
+    const conditions = [eq(Knowledges.agentId, this.runtime.agentId)]
+
+    // Add content type filter if specified
+    if (contentType) {
+      conditions.push(sql`${Knowledges.content}->'metadata'->>'type' = ${contentType}`)
+    }
+
+    // Execute the query with proper sorting
+    const results = await drizzleDB
+      .select({
+        id: Knowledges.id,
+        agentId: Knowledges.agentId,
+        content: Knowledges.content,
+        embedding: Knowledges.embedding,
+        createdAt: Knowledges.createdAt,
+        isMain: Knowledges.isMain,
+        originalId: Knowledges.originalId,
+        chunkIndex: Knowledges.chunkIndex,
+        isShared: Knowledges.isShared
+      })
+      .from(Knowledges)
+      .where(and(...conditions))
+      .orderBy(sortDirection === 'desc' ? desc(Knowledges.createdAt) : Knowledges.createdAt)
+      .limit(limit)
+
+    // Convert the database results to RAGKnowledgeItem format
+    return this.convertToRAGKnowledgeItems(results)
   }
 
   async search(options: {
@@ -71,8 +107,31 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
       .orderBy((t) => desc(t.similarity))
       .limit(limit)
 
-    // Convert the database results to RAGKnowledgeItem format
-    const entries = results.map((result) => {
+    /* eslint-enable @typescript-eslint/no-unsafe-member-access */
+    return this.convertToRAGKnowledgeItems(results)
+  }
+
+  /**
+   * Converts database query results to RAGKnowledgeItem objects
+   * @param results - The database query results
+   * @returns An array of RAGKnowledgeItem objects
+   * @private
+   */
+  private convertToRAGKnowledgeItems(
+    results: Array<{
+      id: string
+      agentId: string
+      content: RagKnowledgeItemContent
+      embedding?: number[]
+      createdAt?: Date
+      isMain?: boolean
+      originalId?: string
+      chunkIndex?: number
+      isShared?: boolean
+      similarity?: number
+    }>
+  ): RAGKnowledgeItem[] {
+    return results.map((result) => {
       // Extract content text
       let text = ''
       if (typeof result.content === 'object' && result.content && 'text' in result.content) {
@@ -116,22 +175,36 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
           text,
           metadata
         },
-        similarity: result.similarity,
+        ...(result.similarity !== undefined ? { similarity: result.similarity } : {}),
         ...(result.embedding ? { embedding: new Float32Array(result.embedding) } : {}),
         ...(result.createdAt ? { createdAt: result.createdAt.getTime() } : {})
       }
       return item
     })
-    /* eslint-enable @typescript-eslint/no-unsafe-member-access */
-
-    return entries
   }
 
   async get(id: UUID): Promise<RAGKnowledgeItem | undefined> {
-    return this.runtime.databaseAdapter.getKnowledge({
-      id,
-      agentId: this.runtime.agentId
-    })[0]
+    const results = await drizzleDB
+      .select({
+        id: Knowledges.id,
+        agentId: Knowledges.agentId,
+        content: Knowledges.content,
+        embedding: Knowledges.embedding,
+        createdAt: Knowledges.createdAt,
+        isMain: Knowledges.isMain,
+        originalId: Knowledges.originalId,
+        chunkIndex: Knowledges.chunkIndex,
+        isShared: Knowledges.isShared
+      })
+      .from(Knowledges)
+      .where(and(eq(Knowledges.id, id), eq(Knowledges.agentId, this.runtime.agentId)))
+      .limit(1)
+
+    if (results.length === 0) {
+      return undefined
+    }
+
+    return this.convertToRAGKnowledgeItems(results)[0]
   }
 
   async add(id: UUID, knowledge: RagKnowledgeItemContent): Promise<void> {
