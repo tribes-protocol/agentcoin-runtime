@@ -1,5 +1,11 @@
 # @tribesxyz/ayaos
 
+## 0.0.15
+
+### Patch Changes
+
+- 3a4ccd9: fix typing status in tg + fix farcaster posting frequency
+
 ## 0.0.14
 
 ### Patch Changes
