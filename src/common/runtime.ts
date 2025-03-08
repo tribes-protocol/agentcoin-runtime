@@ -178,13 +178,13 @@ export class AgentcoinRuntime extends AgentRuntime {
       kbService.search({
         q: message.content.text,
         limit: 10,
-        matchThreshold: 0.5
+        matchThreshold: 0.3
       }),
       memService.search({
         q: message.content.text,
         limit: 10,
         type: 'fragments',
-        matchThreshold: 0.5
+        matchThreshold: 0.3
       })
     ])
 
@@ -201,5 +201,32 @@ export class AgentcoinRuntime extends AgentRuntime {
     state.knowledgeData = knowledgeItems
 
     return state
+  }
+
+  async registerService(service: Service): Promise<void> {
+    const serviceType = service.serviceType
+    elizaLogger.log(`${this.character.name}(${this.agentId}) - Registering service:`, serviceType)
+
+    if (this.services.has(serviceType)) {
+      elizaLogger.warn(
+        `${this.character.name}(${this.agentId}) - Service ${serviceType}` +
+          ` is already registered. Skipping registration.`
+      )
+      return
+    }
+
+    try {
+      await service.initialize(this)
+      this.services.set(serviceType, service)
+      elizaLogger.success(
+        `${this.character.name}(${this.agentId}) - Service ${serviceType} initialized successfully`
+      )
+    } catch (error) {
+      elizaLogger.error(
+        `${this.character.name}(${this.agentId}) - Failed to initialize service ${serviceType}:`,
+        error
+      )
+      throw error
+    }
   }
 }
