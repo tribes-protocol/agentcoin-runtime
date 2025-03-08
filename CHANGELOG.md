@@ -1,5 +1,11 @@
 # @tribesxyz/ayaos
 
+## 0.0.14
+
+### Patch Changes
+
+- 6d8a198: fix send message
+
 ## 0.0.13
 
 ### Patch Changes
