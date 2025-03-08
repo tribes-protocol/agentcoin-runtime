@@ -1,5 +1,11 @@
 # @tribesxyz/ayaos
 
+## 0.0.19
+
+### Patch Changes
+
+- 35b8dcf: fix list on kb service
+
 ## 0.0.18
 
 ### Patch Changes
