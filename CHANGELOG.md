@@ -1,5 +1,11 @@
 # @tribesxyz/ayaos
 
+## 0.0.16
+
+### Patch Changes
+
+- c76081d: up the match threshold for embeddings
+
 ## 0.0.15
 
 ### Patch Changes
