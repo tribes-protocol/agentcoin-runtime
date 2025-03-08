@@ -47,6 +47,7 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
     contentType?: string
     sortDirection?: 'asc' | 'desc'
   }): Promise<RAGKnowledgeItem[]> {
+    /* eslint-disable @typescript-eslint/no-unsafe-member-access */
     const { limit = 10, contentType, sortDirection = 'desc' } = options
 
     // Build the query conditions
@@ -58,6 +59,7 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
     }
 
     // Execute the query with proper sorting
+
     const results = await drizzleDB
       .select({
         id: Knowledges.id,
@@ -74,6 +76,7 @@ export class KnowledgeBaseService extends Service implements IKnowledgeBaseServi
       .where(and(...conditions))
       .orderBy(sortDirection === 'desc' ? desc(Knowledges.createdAt) : Knowledges.createdAt)
       .limit(limit)
+    /* eslint-enable @typescript-eslint/no-unsafe-member-access */
 
     // Convert the database results to RAGKnowledgeItem format
     return this.convertToRAGKnowledgeItems(results)

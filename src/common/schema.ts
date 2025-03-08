@@ -181,8 +181,7 @@ export const Knowledges = pgTable('knowledge', {
   embedding: vector('embedding', { dimensions: 1536 }),
   createdAt: timestamp('createdAt', { withTimezone: true }).defaultNow(),
   isMain: boolean('isMain').default(false),
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-  originalId: uuid('originalId').references(() => Knowledges.id),
+  originalId: uuid('originalId'),
   chunkIndex: integer('chunkIndex'),
   isShared: boolean('isShared').default(false)
 })
