@@ -1,5 +1,11 @@
 # @tribesxyz/ayaos
 
+## 0.0.18
+
+### Patch Changes
+
+- 79e98bd: add index to knowledge base
+
 ## 0.0.17
 
 ### Patch Changes
