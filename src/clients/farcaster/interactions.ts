@@ -69,7 +69,6 @@ export class FarcasterInteractionManager {
 
     const agent = await this.client.getProfile(agentFid)
     for (const mention of mentions) {
-      console.log('mention received:', mention.text)
       const messageHash = toHex(mention.hash)
       const conversationId = `${messageHash}-${this.runtime.agentId}`
       const roomId = stringToUuid(conversationId)
@@ -85,6 +84,8 @@ export class FarcasterInteractionManager {
       if (pastMemory) {
         continue
       }
+
+      elizaLogger.info('new mention received:', mention.text)
 
       const username = mention.profile.username
 
