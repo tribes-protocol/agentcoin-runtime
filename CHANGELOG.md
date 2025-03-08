@@ -1,5 +1,11 @@
 # @tribesxyz/ayaos
 
+## 0.0.17
+
+### Patch Changes
+
+- 38e13f1: disable embeddings in messages
+
 ## 0.0.16
 
 ### Patch Changes
