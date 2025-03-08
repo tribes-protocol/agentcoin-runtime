@@ -64,7 +64,7 @@ export class FarcasterInteractionManager {
 
     const mentions = await this.client.getMentions({
       fid: agentFid,
-      pageSize: 10
+      pageSize: 20
     })
 
     const agent = await this.client.getProfile(agentFid)
