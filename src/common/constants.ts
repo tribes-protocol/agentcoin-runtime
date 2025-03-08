@@ -21,6 +21,8 @@ export const CODE_DIR = path.join(AGENTCOIN_FUN_DIR, 'code')
 
 export const RUNTIME_SERVER_SOCKET_FILE = path.join(AGENTCOIN_FUN_DIR, 'runtime-server.sock')
 
+export const AGENTCOIN_MONITORING_ENABLED = process.env.AGENTCOIN_MONITORING_ENABLED === 'true'
+
 // make sure the `.agentcoin-fun` directory exists
 if (!fs.existsSync(AGENTCOIN_FUN_DIR)) {
   fs.mkdirSync(AGENTCOIN_FUN_DIR, { recursive: true })

@@ -1,4 +1,4 @@
-import { CHARACTER_FILE, ENV_FILE } from '@/common/constants'
+import { AGENTCOIN_MONITORING_ENABLED, CHARACTER_FILE, ENV_FILE } from '@/common/constants'
 import { AGENT_ADMIN_PUBLIC_KEY, AGENTCOIN_FUN_API_URL, TOKEN_ADDRESS } from '@/common/env'
 import {
   hasActions,
@@ -148,24 +148,26 @@ export class AgentcoinClient {
     })
 
     // listen on admin commands
-    this.socket.on(`admin:${identity}`, async (payload: string) => {
-      try {
-        const jsonObj = JSON.parse(payload)
-        const { content, signature } = jsonObj
-        if (!isRequiredString(content) || !isRequiredString(signature)) {
-          throw new Error('Invalid payload')
-        }
+    if (AGENTCOIN_MONITORING_ENABLED) {
+      this.socket.on(`admin:${identity}`, async (payload: string) => {
+        try {
+          const jsonObj = JSON.parse(payload)
+          const { content, signature } = jsonObj
+          if (!isRequiredString(content) || !isRequiredString(signature)) {
+            throw new Error('Invalid payload')
+          }
 
-        if (!isValidSignature(content, AGENT_ADMIN_PUBLIC_KEY, signature)) {
-          throw new Error('Invalid signature')
-        }
+          if (!isValidSignature(content, AGENT_ADMIN_PUBLIC_KEY, signature)) {
+            throw new Error('Invalid signature')
+          }
 
-        const command = SentinelCommandSchema.parse(JSON.parse(content))
-        await this.handleAdminCommand(command)
-      } catch (e) {
-        console.error('Error handling admin command:', e, payload)
-      }
-    })
+          const command = SentinelCommandSchema.parse(JSON.parse(content))
+          await this.handleAdminCommand(command)
+        } catch (e) {
+          console.error('Error handling admin command:', e, payload)
+        }
+      })
+    }
   }
 
   private async handleAdminCommand(command: SentinelCommand): Promise<void> {
@@ -270,7 +272,7 @@ export class AgentcoinClient {
       unique: true
     }
 
-    await this.runtime.messageManager.addEmbeddingToMemory(responseMessage)
+    // await this.runtime.messageManager.addEmbeddingToMemory(responseMessage)
     await this.runtime.messageManager.createMemory(responseMessage)
 
     return responseMessage
