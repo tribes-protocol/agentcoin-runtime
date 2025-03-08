@@ -1,4 +1,10 @@
-import { CHARACTER_FILE, CODE_DIR, ENV_FILE, RUNTIME_SERVER_SOCKET_FILE } from '@/common/constants'
+import {
+  AGENTCOIN_MONITORING_ENABLED,
+  CHARACTER_FILE,
+  CODE_DIR,
+  ENV_FILE,
+  RUNTIME_SERVER_SOCKET_FILE
+} from '@/common/constants'
 import { isNull, isRequiredString } from '@/common/functions'
 import { OperationQueue } from '@/common/lang/operation_queue'
 import { CharacterSchema, ServiceKind } from '@/common/types'
@@ -39,6 +45,11 @@ export class ConfigService extends Service implements IConfigService {
     // disable in dev mode
     if (process.env.NODE_ENV !== 'production') {
       elizaLogger.info('Config service disabled in dev mode')
+      return
+    }
+
+    if (!AGENTCOIN_MONITORING_ENABLED) {
+      elizaLogger.info('Agentcoin monitoring disabled')
       return
     }
 

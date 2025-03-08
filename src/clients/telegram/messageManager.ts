@@ -1107,11 +1107,12 @@ export class MessageManager {
         roomId,
         content,
         createdAt: message.date * 1000,
+        embedding: getEmbeddingZeroVector(),
         unique: true
       }
 
       // Create memory
-      await this.runtime.messageManager.addEmbeddingToMemory(memory)
+      // await this.runtime.messageManager.addEmbeddingToMemory(memory)
       await this.runtime.messageManager.createMemory(memory)
 
       // Update state with the new memory
@@ -1150,7 +1151,7 @@ export class MessageManager {
             // For the last message, use the original action from the response content
             memory.content.action = !isLastMessage ? 'CONTINUE' : content.action
 
-            await this.runtime.messageManager.addEmbeddingToMemory(memory)
+            // await this.runtime.messageManager.addEmbeddingToMemory(memory)
             await this.runtime.messageManager.createMemory(memory)
             memories.push(memory)
           }
