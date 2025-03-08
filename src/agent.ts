@@ -10,7 +10,7 @@ import agentcoinPlugin from '@/plugins/agentcoin'
 import { AgentcoinService } from '@/services/agentcoinfun'
 import { ConfigService } from '@/services/config'
 import { EventService } from '@/services/event'
-import { IKnowledgeBaseService, IMemoriesService } from '@/services/interfaces'
+import { IKnowledgeBaseService, IMemoriesService, IWalletService } from '@/services/interfaces'
 import { KeychainService } from '@/services/keychain'
 import { KnowledgeBaseService } from '@/services/knowledge-base'
 import { MemoriesService } from '@/services/memories'
@@ -62,6 +62,10 @@ export class Agent implements IAyaAgent {
 
   get memories(): IMemoriesService {
     return this.runtime.getService(MemoriesService)
+  }
+
+  get wallet(): IWalletService {
+    return this.runtime.getService(WalletService)
   }
 
   async start(): Promise<void> {

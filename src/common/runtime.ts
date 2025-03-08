@@ -178,13 +178,13 @@ export class AgentcoinRuntime extends AgentRuntime {
       kbService.search({
         q: message.content.text,
         limit: 10,
-        matchThreshold: 0.3
+        matchThreshold: 0.5
       }),
       memService.search({
         q: message.content.text,
         limit: 10,
         type: 'fragments',
-        matchThreshold: 0.3
+        matchThreshold: 0.5
       })
     ])
 
